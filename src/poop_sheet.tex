@@ -1,0 +1,70 @@
+% The next three lines enable
+% 1) search in acrobat reader using unicode search strings
+% 2) copy and paste of unicode text from acrobat reader
+\input glyphtounicode.tex
+\input glyphtounicode-cmr.tex
+\pdfgentounicode=1
+
+\documentclass[11pt, letterpaper, oneside]{article}
+\usepackage[hmargin={0.5in,0.5in},vmargin={2.58in,1.2in},
+            showframe,
+            %headheight=1.2in,
+            %headsep=15pt,
+            verbose]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{wasysym}
+\usepackage{pifont}
+\usepackage[onlytext]{MinionPro}
+\usepackage[normalem]{ulem}
+\usepackage[inline]{enumitem}
+\usepackage{amssymb}
+\usepackage{adjustbox}
+\usepackage{graphicx}
+\usepackage[yyyymmdd,hhmmss]{datetime}
+\usepackage{eso-pic}
+\usepackage{longtable}
+
+\graphicspath{{./src/}}
+
+%\usepackage{fontspec}
+%\setmainfont{Helvetica Neue}
+%\setmainfont{Gill Sans}
+%\setmainfont{PT Sans}
+
+\usepackage{microtype}
+\usepackage[colorlinks,citecolor=black,urlcolor=blue,breaklinks,unicode]{hyperref}
+
+\setlength{\parskip}{1.5ex} % 1ex plus 0.5ex minus 0.2ex}
+\setlength{\parindent}{0pt}
+
+\title{}
+\author{}
+
+\newcommand\BackgroundPic{
+    \put(0,0){
+    \parbox[b][\paperheight]{\paperwidth}{%
+    \vfill
+    \centering
+    \includegraphics[width=\paperwidth,height=\paperheight]{poop_sheet_bkg.jpg}
+    \vfill
+    }}}
+
+%\renewcommand{\baselinestretch}{1.01}
+
+\begin{document}
+\AddToShipoutPicture{\BackgroundPic}
+\selectlanguage{english}
+
+\BLOCK{set ns = namespace(section = "")}
+\BLOCK{set breakpoints = ["A","G","M","S"]}
+\BLOCK{set split = ["A--F","G--L","M--R","S--Z"]}
+\BLOCK{set headers = split.copy()}
+\begin{longtable}[l]{l l l l l}
+\BLOCK{for row in data}
+\parbox{2.55in}{\VAR{row["Payor"]}} & \parbox{2.6in}{\VAR{row["Purpose"]}} & \parbox{0.35in}{\raggedleft \VAR{row["Method"]}} & \parbox{0.4in}{\raggedleft \VAR{row["Identifier"]}} & \parbox{0.3in}{\raggedleft \VAR{row["Amount"]}} \\
+\BLOCK{endfor}
+\end{longtable}
+
+\end{document}
+

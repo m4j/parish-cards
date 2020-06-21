@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS ParishSoft_MemberList;
+DROP TABLE IF EXISTS ParishSoft_FamilyList;
+.mode csv
+.import import/MemberList.csv ParishSoft_MemberList
+.import import/FamilyList.csv ParishSoft_FamilyList
