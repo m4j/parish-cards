@@ -5,17 +5,19 @@
 \input glyphtounicode-cmr.tex
 \pdfgentounicode=1
 
-\documentclass[11pt, letterpaper, oneside]{article}
+\documentclass[10pt, letterpaper, oneside]{article}
 \usepackage[hmargin={0.5in,0.5in},vmargin={2.58in,1.2in},
             showframe,
             %headheight=1.2in,
             %headsep=15pt,
             verbose]{geometry}
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage[english]{babel}
 \usepackage{wasysym}
 \usepackage{pifont}
-\usepackage[onlytext]{MinionPro}
+%\usepackage[onlytext]{MinionPro}
+\usepackage{mathptmx}
 \usepackage[normalem]{ulem}
 \usepackage[inline]{enumitem}
 \usepackage{amssymb}
@@ -50,19 +52,42 @@
     \vfill
     }}}
 
-%\renewcommand{\baselinestretch}{1.01}
+\renewcommand{\baselinestretch}{1.14}
+
+\newcommand{\rpt}{%
+        \raisebox{.2ex}{:}%
+        \raisebox{-.4ex}{\rule{.1ex}{2.5ex}\,\rule{.3ex}{2.5ex}}}
+\newcommand{\revrpt}{%
+        \raisebox{-.4ex}{\rule{.3ex}{2.5ex}\,\rule{.1ex}{2.5ex}}%
+        \raisebox{.2ex}{:}}
 
 \begin{document}
 \AddToShipoutPicture{\BackgroundPic}
 \selectlanguage{english}
 
-\BLOCK{set ns = namespace(section = "")}
-\BLOCK{set breakpoints = ["A","G","M","S"]}
-\BLOCK{set split = ["A--F","G--L","M--R","S--Z"]}
-\BLOCK{set headers = split.copy()}
+\BLOCK{set ns = namespace(payor = "",method="",identifier="")}
 \begin{longtable}[l]{l l l l l}
 \BLOCK{for row in data}
-\parbox{2.55in}{\VAR{row["Payor"]}} & \parbox{2.6in}{\VAR{row["Purpose"]}} & \parbox{0.35in}{\raggedleft \VAR{row["Method"]}} & \parbox{0.4in}{\raggedleft \VAR{row["Identifier"]}} & \parbox{0.3in}{\raggedleft \VAR{row["Amount"]}} \\
+    \BLOCK{set payor = row["Payor"]}
+    \BLOCK{set method = row["Method"]}
+    \parbox{2.55in}{
+        \BLOCK{if payor != ns.payor}
+            \BLOCK{set ns.payor = payor}
+            \VAR{payor}
+        \BLOCK{else}
+            ~~~~~ \textquotedbl ~~~~~ \textquotedbl ~~~~~ \textquotedbl
+        \BLOCK{endif}
+    } &
+    \parbox{2.6in}{\VAR{row["Purpose"]}} & 
+    \parbox{0.35in}{\raggedleft 
+        \BLOCK{if method == ""}
+            ~
+        \BLOCK{else}
+            \VAR{method}
+        \BLOCK{endif}
+    } & 
+    \parbox{0.4in}{\raggedleft \VAR{row["Identifier"]}} & 
+    \parbox{0.3in}{\raggedleft \VAR{row["Amount"]}} \\
 \BLOCK{endfor}
 \end{longtable}
 
