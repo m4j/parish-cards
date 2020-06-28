@@ -1,10 +1,3 @@
-% The next three lines enable
-% 1) search in acrobat reader using unicode search strings
-% 2) copy and paste of unicode text from acrobat reader
-\input glyphtounicode.tex
-\input glyphtounicode-cmr.tex
-\pdfgentounicode=1
-
 \documentclass[10pt, letterpaper, oneside]{article}
 \usepackage[hmargin={0.5in,0.5in},vmargin={2.58in,1.2in},
             showframe,
@@ -14,10 +7,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[english]{babel}
-\usepackage{wasysym}
-\usepackage{pifont}
 %\usepackage[onlytext]{MinionPro}
-\usepackage{mathptmx}
 \usepackage[normalem]{ulem}
 \usepackage[inline]{enumitem}
 \usepackage{amssymb}
@@ -29,8 +19,8 @@
 
 \graphicspath{{./src/}}
 
-%\usepackage{fontspec}
-%\setmainfont{Helvetica Neue}
+\usepackage{fontspec}
+\setmainfont{Helvetica Neue}
 %\setmainfont{Gill Sans}
 %\setmainfont{PT Sans}
 
@@ -65,12 +55,18 @@
 \AddToShipoutPicture{\BackgroundPic}
 \selectlanguage{english}
 
-\BLOCK{set ns = namespace(payor = "",method="",identifier="")}
+\BLOCK{set ns = namespace(payor = "",method="",identifier="",charge="")}
 \begin{longtable}[l]{l l l l l}
 \BLOCK{for row in data}
     \BLOCK{set payor = row["Payor"]}
     \BLOCK{set method = row["Method"]}
-    \parbox{2.55in}{
+    \BLOCK{set charge = row["Charge"]}
+    \BLOCK{if charge != ns.charge}
+        \BLOCK{set ns.charge = charge}
+        \\
+        \\
+    \BLOCK{endif}
+    \parbox{2.75in}{
         \BLOCK{if payor != ns.payor}
             \BLOCK{set ns.payor = payor}
             \VAR{payor}
@@ -78,7 +74,7 @@
             ~~~~~ \textquotedbl ~~~~~ \textquotedbl ~~~~~ \textquotedbl
         \BLOCK{endif}
     } &
-    \parbox{2.6in}{\VAR{row["Purpose"]}} & 
+    \parbox{2.4in}{\VAR{row["Purpose"]}} & 
     \parbox{0.35in}{\raggedleft 
         \BLOCK{if method == ""}
             ~
