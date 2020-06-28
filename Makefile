@@ -8,7 +8,8 @@ DATABASE=../StJohnDC.db
 
 MERGE=src/merge.py
 #LATEX=pdflatex -output-directory=$(TARGET_DIR)
-LATEX=pdflatex -halt-on-error
+#LATEX=pdflatex -halt-on-error
+LATEX=xelatex -halt-on-error
 PDFTK=pdftk
 
 UNAME=$(shell uname)
