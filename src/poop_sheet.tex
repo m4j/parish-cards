@@ -16,6 +16,7 @@
 \usepackage[yyyymmdd,hhmmss]{datetime}
 \usepackage{eso-pic}
 \usepackage{longtable}
+\usepackage{array}
 
 \graphicspath{{./src/}}
 
@@ -56,7 +57,7 @@
 \selectlanguage{english}
 
 \BLOCK{set ns = namespace(payor = "",method="",identifier="",charge="")}
-\begin{longtable}[l]{l l l l l}
+\begin{longtable}[l]{p{2.85in} >{\raggedright}p{2.3in} l l l l}
 \BLOCK{for row in data}
     \BLOCK{set payor = row["Payor"]}
     \BLOCK{set method = row["Method"]}
@@ -64,17 +65,15 @@
     \BLOCK{if charge != ns.charge}
         \BLOCK{set ns.charge = charge}
         \\
-        \\
     \BLOCK{endif}
-    \parbox{2.75in}{
-        \BLOCK{if payor != ns.payor}
-            \BLOCK{set ns.payor = payor}
-            \VAR{payor}
-        \BLOCK{else}
-            ~~~~~ \textquotedbl ~~~~~ \textquotedbl ~~~~~ \textquotedbl
-        \BLOCK{endif}
-    } &
-    \parbox{2.4in}{\VAR{row["Purpose"]}} & 
+    \BLOCK{if payor != ns.payor}
+        \BLOCK{set ns.payor = payor}
+        \VAR{payor}
+    \BLOCK{else}
+        ~~~~~ \textquotedbl ~~~~~ \textquotedbl ~~~~~ \textquotedbl
+    \BLOCK{endif}
+    &
+    {\raggedright \VAR{row["Purpose"]}} & 
     \parbox{0.35in}{\raggedleft 
         \BLOCK{if method == ""}
             ~
