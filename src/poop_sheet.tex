@@ -56,14 +56,14 @@
 \AddToShipoutPicture{\BackgroundPic}
 \selectlanguage{english}
 
-\BLOCK{set ns = namespace(payor = "",method="",identifier="",charge="")}
+\BLOCK{set ns = namespace(payor = "",method="",identifier="",section="")}
 \begin{longtable}[l]{p{2.85in} >{\raggedright}p{2.3in} l l l l}
 \BLOCK{for row in data}
     \BLOCK{set payor = row["Payor"]}
     \BLOCK{set method = row["Method"]}
-    \BLOCK{set charge = row["Charge"]}
-    \BLOCK{if charge != ns.charge}
-        \BLOCK{set ns.charge = charge}
+    \BLOCK{set section = row["Section"]}
+    \BLOCK{if section != ns.section}
+        \BLOCK{set ns.section = section}
         \\
     \BLOCK{endif}
     \BLOCK{if payor != ns.payor}
@@ -74,7 +74,7 @@
     \BLOCK{endif}
     &
     {\raggedright \VAR{row["Purpose"]}} & 
-    \parbox{0.35in}{\raggedleft 
+    \parbox{0.38in}{\raggedleft 
         \BLOCK{if method == ""}
             ~
         \BLOCK{else}
