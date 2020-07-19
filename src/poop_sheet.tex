@@ -1,6 +1,6 @@
 \documentclass[10pt, letterpaper, oneside]{article}
-\usepackage[hmargin={0.5in,0.5in},vmargin={2.58in,1.2in},
-            showframe,
+\usepackage[hmargin={0.3in,0.3in},vmargin={0.49in,0.9in},
+            %showframe,
             %headheight=1.2in,
             %headsep=15pt,
             verbose]{geometry}
@@ -12,78 +12,115 @@
 \usepackage[inline]{enumitem}
 \usepackage{amssymb}
 \usepackage{adjustbox}
-\usepackage{graphicx}
+\usepackage[table]{xcolor}
 \usepackage[yyyymmdd,hhmmss]{datetime}
 \usepackage{eso-pic}
 \usepackage{longtable}
+\usepackage{multirow}
+\usepackage{arydshln}
 \usepackage{array}
-
-\graphicspath{{./src/}}
+\usepackage{bigdelim}
 
 \usepackage{fontspec}
 \setmainfont{Helvetica Neue}
-%\setmainfont{Gill Sans}
-%\setmainfont{PT Sans}
 
-\usepackage{microtype}
-\usepackage[colorlinks,citecolor=black,urlcolor=blue,breaklinks,unicode]{hyperref}
-
-\setlength{\parskip}{1.5ex} % 1ex plus 0.5ex minus 0.2ex}
 \setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{3pt}
 
 \title{}
 \author{}
 
-\newcommand\BackgroundPic{
-    \put(0,0){
-    \parbox[b][\paperheight]{\paperwidth}{%
-    \vfill
-    \centering
-    \includegraphics[width=\paperwidth,height=\paperheight]{poop_sheet_bkg.jpg}
-    \vfill
-    }}}
+\newcommand{\mline}{\cline{2-6}}
+\newcommand{\mdashline}{\cdashline{2-6}}
 
-\renewcommand{\baselinestretch}{1.14}
-
-\newcommand{\rpt}{%
-        \raisebox{.2ex}{:}%
-        \raisebox{-.4ex}{\rule{.1ex}{2.5ex}\,\rule{.3ex}{2.5ex}}}
-\newcommand{\revrpt}{%
-        \raisebox{-.4ex}{\rule{.3ex}{2.5ex}\,\rule{.1ex}{2.5ex}}%
-        \raisebox{.2ex}{:}}
+% Disable hyphenation, see https://tex.stackexchange.com/a/177179
+\tolerance=1
+\emergencystretch=\maxdimen
+\hyphenpenalty=10000
+\hbadness=10000
 
 \begin{document}
-\AddToShipoutPicture{\BackgroundPic}
 \selectlanguage{english}
+\arrayrulecolor{gray!70}
 
-\BLOCK{set ns = namespace(payor = "",method="",identifier="",charge="")}
-\begin{longtable}[l]{p{2.85in} >{\raggedright}p{2.3in} l l l l}
+\BLOCK{set previous = namespace(payor = "",method="",identifier="",section="")}
+{\renewcommand{\arraystretch}{1.5}
+\begin{longtable}[l]{p{0.07in} p{2in} p{3.45in} p{0.4in} p{0.5in} p{0.5in}l}
+    & \large Service & ~ & ~ & \multicolumn{2}{l}{\large Record \#} & \tabularnewline 
+    & \multicolumn{4}{l}{\large Date} & & \tabularnewline
+\end{longtable}
+}
+
+\vspace{-3.3em}
+\begin{longtable}[l]{p{0.07in} | >{\raggedright}p{2in} | >{\raggedright}p{3.45in} >{\raggedleft}p{0.4in}| >{\raggedleft}p{0.5in} | >{\raggedleft}p{0.5in} |@{}l}
+    \cline{5-6}
+    \multicolumn{4}{l}{} & \multicolumn{1}{|l|}{\small Signature} & \small Amount  & \tabularnewline
+    \mline
+    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Collection for church needs} & & & \tabularnewline
+    \mline
+    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Collection for Benevolent Fund} & &  & \tabularnewline
+    \mline
+    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Collection by the cross/Purpose ~~~~~~~~~~~~~~~~~~~~~~~~~~~} & &  & \tabularnewline
+    \mline
+    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Candle stand} & &  & \tabularnewline
+    \mline
+    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Collection box} & &  & \tabularnewline
+    \mline
+    & & & & & & \tabularnewline \mline
+    & & & & & & \tabularnewline \mline
 \BLOCK{for row in data}
     \BLOCK{set payor = row["Payor"]}
     \BLOCK{set method = row["Method"]}
-    \BLOCK{set charge = row["Charge"]}
-    \BLOCK{if charge != ns.charge}
-        \BLOCK{set ns.charge = charge}
-        \\
+    \BLOCK{set identifier = row["Identifier"]}
+    \BLOCK{set section = row["Section"]}
+    \BLOCK{set sectionName = row["Section Name"]}
+    \BLOCK{set numberOfItems = row["NumberOfItems"]}
+    \BLOCK{set amount = row["Amount"]}
+    \BLOCK{set total = row["Total"]}
+    \BLOCK{set shouldDrawDelims = (method != previous.method or identifier != previous.identifier) and numberOfItems != "1"}
+    \BLOCK{if shouldDrawDelims}
+        \BLOCK{set previous.method = method}
+        \BLOCK{set previous.identifier = identifier}
     \BLOCK{endif}
-    \BLOCK{if payor != ns.payor}
-        \BLOCK{set ns.payor = payor}
-        \VAR{payor}
-    \BLOCK{else}
-        ~~~~~ \textquotedbl ~~~~~ \textquotedbl ~~~~~ \textquotedbl
+    \BLOCK{if section != previous.section}
+        \BLOCK{set previous.section = section}
+        \BLOCK{set previous.payor = ""}
+        \mline
+        & & & & & & \tabularnewline
+        \mline
+        & & & & \multicolumn{1}{c|}{\small \VAR{sectionName}} & & \tabularnewline
     \BLOCK{endif}
-    &
-    {\raggedright \VAR{row["Purpose"]}} & 
-    \parbox{0.35in}{\raggedleft 
-        \BLOCK{if method == ""}
-            ~
-        \BLOCK{else}
-            \VAR{method}
+    \BLOCK{if payor != previous.payor}
+        \mline
+    \BLOCK{endif}
+    \BLOCK{if shouldDrawDelims}
+        \BLOCK{if payor == previous.payor}
+            \mdashline
         \BLOCK{endif}
-    } & 
-    \parbox{0.4in}{\raggedleft \VAR{row["Identifier"]}} & 
-    \parbox{0.3in}{\raggedleft \VAR{row["Amount"]}} \\
+        \ldelim\{{\VAR{numberOfItems}}{0pt}
+    \BLOCK{endif}
+    \BLOCK{if payor != previous.payor}
+        \BLOCK{set previous.payor = payor}
+        &
+        \BLOCK{if numberOfItems != "1"}
+            \multirow[t]{\VAR{numberOfItems}}{=}{\VAR{payor}}
+        \BLOCK{else}
+            \VAR{payor}
+        \BLOCK{endif}
+    \BLOCK{else}
+        & 
+    \BLOCK{endif}
+    & \VAR{row["Purpose"]}
+    \BLOCK{if method == ""}
+        & ~
+    \BLOCK{else}
+        & \VAR{method}
+    \BLOCK{endif}
+    & \VAR{identifier}
+    & \VAR{amount} & \BLOCK{if shouldDrawDelims}\rdelim\}{\VAR{numberOfItems}}{*}[\VAR{total}]\BLOCK{endif}
+    \tabularnewline
 \BLOCK{endfor}
+    \mline
 \end{longtable}
 
 \end{document}
