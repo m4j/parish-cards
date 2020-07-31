@@ -43,6 +43,7 @@
 \selectlanguage{english}
 \arrayrulecolor{gray!70}
 
+<<<<<<< HEAD
 \BLOCK{set previous = namespace(payor = "",method="",identifier="",section="")}
 {\renewcommand{\arraystretch}{1.5}
 \begin{longtable}[l]{p{0.07in} p{2in} p{3.45in} p{0.4in} p{0.5in} p{0.5in}l}
@@ -67,6 +68,7 @@
     & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Collection box} & &  & \tabularnewline
     \mline
     & & & & & & \tabularnewline \mline
+    & & & & & & \tabularnewline \mline
 \BLOCK{for row in data}
     \BLOCK{set payor = row["Payor"]}
     \BLOCK{set method = row["Method"]}
@@ -80,6 +82,17 @@
     \BLOCK{if shouldDrawDelims}
         \BLOCK{set previous.method = method}
         \BLOCK{set previous.identifier = identifier}
+=======
+\BLOCK{set ns = namespace(payor = "",method="",identifier="",section="")}
+\begin{longtable}[l]{p{2.85in} >{\raggedright}p{2.3in} l l l l}
+\BLOCK{for row in data}
+    \BLOCK{set payor = row["Payor"]}
+    \BLOCK{set method = row["Method"]}
+    \BLOCK{set section = row["Section"]}
+    \BLOCK{if section != ns.section}
+        \BLOCK{set ns.section = section}
+        \\
+>>>>>>> 14298a57ed3060227f0ac94a205d953a0f6ddb67
     \BLOCK{endif}
     \BLOCK{if section != previous.section}
         \BLOCK{set previous.section = section}
@@ -92,6 +105,7 @@
     \BLOCK{if payor != previous.payor}
         \mline
     \BLOCK{endif}
+<<<<<<< HEAD
     \BLOCK{if shouldDrawDelims}
         \BLOCK{if payor == previous.payor}
             \mdashline
@@ -103,6 +117,13 @@
         &
         \BLOCK{if numberOfItems != "1"}
             \multirow[t]{\VAR{numberOfItems}}{=}{\VAR{payor}}
+=======
+    &
+    {\raggedright \VAR{row["Purpose"]}} & 
+    \parbox{0.38in}{\raggedleft 
+        \BLOCK{if method == ""}
+            ~
+>>>>>>> 14298a57ed3060227f0ac94a205d953a0f6ddb67
         \BLOCK{else}
             \VAR{payor}
         \BLOCK{endif}
@@ -120,13 +141,6 @@
     \tabularnewline
 \BLOCK{endfor}
     \mline
-    & & & & & & \tabularnewline \mline
-    & & & & & & \tabularnewline \mline
-    & & & & & & \tabularnewline \mline
-    & & & & & & \tabularnewline \mline
-    & & & & & & \tabularnewline \mline
-    & & & & & & \tabularnewline \mline
-    & & & & & & \tabularnewline \mline
 \end{longtable}
 
 \end{document}
