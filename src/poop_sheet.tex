@@ -5,9 +5,8 @@
             %headsep=15pt,
             verbose]{geometry}
 \usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage[english]{babel}
-%\usepackage[onlytext]{MinionPro}
+% \usepackage[T1]{fontenc}
+\usepackage[russian,english]{babel}
 \usepackage[normalem]{ulem}
 \usepackage[inline]{enumitem}
 \usepackage{amssymb}
@@ -46,8 +45,8 @@
 \BLOCK{set previous = namespace(payor = "",method="",identifier="",section="")}
 {\renewcommand{\arraystretch}{1.5}
 \begin{longtable}[l]{p{0.07in} p{2in} p{3.45in} p{0.4in} p{0.5in} p{0.5in}l}
-    & \large Service & ~ & ~ & \multicolumn{2}{l}{\large Record \#} & \tabularnewline 
-    & \multicolumn{4}{l}{\large Date} & & \tabularnewline
+    & \large Служба/Service & ~ & ~ & \multicolumn{2}{l}{\large Record \#} & \tabularnewline 
+    & \multicolumn{4}{l}{\large Число/Date} & & \tabularnewline
 \end{longtable}
 }
 
@@ -56,17 +55,17 @@
     \cline{5-6}
     \multicolumn{4}{l}{} & \multicolumn{1}{|l|}{\small Signature} & \small Amount  & \tabularnewline
     \mline
-    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Collection for church needs} & & & \tabularnewline
+    & \multicolumn{1}{l}{cash -- \hspace{0.5in} checks --} & \multicolumn{2}{r|}{\small Сбор на нужды храма/Collection for church needs} & & & \tabularnewline
     \mline
-    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Collection for Benevolent Fund} & &  & \tabularnewline
+    & \multicolumn{1}{l}{cash -- \hspace{0.5in} checks --} & \multicolumn{2}{r|}{\small Сбор на Благотворительный Фонд/Collection for Benevolent Fund} & &  & \tabularnewline
     \mline
-    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Collection by the cross/Purpose ~~~~~~~~~~~~~~~~~~~~~~~~~~~} & &  & \tabularnewline
+    & \multicolumn{1}{l}{cash -- \hspace{0.5in} checks --} & \multicolumn{2}{r|}{\small Сбор у креста/Collection by the cross} & &  & \tabularnewline
     \mline
-    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Candle stand} & &  & \tabularnewline
+    & \multicolumn{1}{l}{cash -- \hspace{0.5in} checks --} & \multicolumn{2}{r|}{\small Копилка/Collection box} & &  & \tabularnewline
     \mline
-    & \multicolumn{1}{l}{cash -- \hspace{0.8in} checks --} & \multicolumn{2}{r|}{Collection box} & &  & \tabularnewline
+    & \multicolumn{1}{l}{cash -- \hspace{0.5in} checks --} & \multicolumn{2}{r|}{\small Свечной ящик/Candle stand} & &  & \tabularnewline
     \mline
-    & & & & & & \tabularnewline \mline
+    & \multicolumn{1}{l}{} & \multicolumn{2}{r|}{} & &  & \tabularnewline
 \BLOCK{for row in data}
     \BLOCK{set payor = row["Payor"]}
     \BLOCK{set method = row["Method"]}
@@ -85,9 +84,9 @@
         \BLOCK{set previous.section = section}
         \BLOCK{set previous.payor = ""}
         \mline
-        & & & & & & \tabularnewline
+        & \multicolumn{1}{l}{} & \multicolumn{2}{r|}{} & &  & \tabularnewline
         \mline
-        & & & & \multicolumn{1}{c|}{\small \VAR{sectionName}} & & \tabularnewline
+        & \multicolumn{3}{l|}{} & \multicolumn{1}{c|}{\small \VAR{sectionName}} & & \tabularnewline
     \BLOCK{endif}
     \BLOCK{if payor != previous.payor}
         \mline
