@@ -30,9 +30,9 @@ class LaTexReader:
         return self
 
     def escape_special_characters(self, el_str):
-        s = el_str.replace('<', '$<$')
+        s = el_str.replace('$', '\\$')
+        s = s.replace('<', '$<$')
         s = s.replace('>', '$>$')
-        s = s.replace(' - ', u' — ')
         s = s.replace('#', '\\#')
         s = s.replace('_', '\\_')
         s = s.replace('&', '\\&')
