@@ -1,0 +1,225 @@
+\documentclass[12pt, letterpaper, oneside]{article}
+\usepackage[%hmargin={0.3in,0.3in},
+            %vmargin={0.49in,0.9in},
+            margin=1in,
+            %showframe,
+            %headheight=1.2in,
+            %headsep=15pt,
+            verbose]{geometry}
+\usepackage[russian,english]{babel}
+\usepackage[normalem]{ulem}
+\usepackage[inline]{enumitem}
+\usepackage{amssymb}
+\usepackage{adjustbox}
+\usepackage[table]{xcolor}
+\usepackage[yyyymmdd,hhmmss]{datetime}
+\usepackage{eso-pic}
+\usepackage{arydshln}
+\usepackage{array}
+\usepackage{bigdelim}
+\usepackage{multicol}
+
+\usepackage{fontspec}
+\setmainfont{Helvetica Neue}
+
+\title{Помянники и просфоры\\{\large Commemoration books and prosphoras}}
+\date{\vspace{-2\baselineskip}Январь 2021\\{\small January of 2021}}
+
+% Disable hyphenation, see https://tex.stackexchange.com/a/177179
+\tolerance=1
+\emergencystretch=\maxdimen
+\hyphenpenalty=10000
+\hbadness=10000
+
+\raggedbottom
+
+\setlength{\parskip}{1.5ex} % 1ex plus 0.5ex minus 0.2ex}
+\setlength{\parindent}{0pt}
+
+\usepackage{sectsty}
+\allsectionsfont{\centering}
+% no section numbering
+\setcounter{secnumdepth}{0}
+
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftsecdotsep}}
+\renewcommand\cftsecdotsep{\cftdot}
+%\renewcommand\cfttoctitlefont{\huge}
+\usepackage[object=vectorian]{pgfornament}
+\begin{document}
+
+\selectlanguage{russian}
+\renewcommand{\contentsname}{}
+
+\maketitle
+
+\tableofcontents
+
+\vspace{1cm}
+\hfil  \pgfornament[width=4cm]{84}\hfil
+
+\pagebreak
+
+\section{Воскресная английская литургия\\Sunday English Liturgy}
+
+\begin{multicols}{2}
+
+\BLOCK{for row in data}
+    \BLOCK{set quantity = row["Quantity"]}
+    \BLOCK{set liturgy = row["Liturgy"]}
+    \BLOCK{set comment = row["Comment"]}
+    \BLOCK{if liturgy.strip().lower() == "english"}
+
+        \BLOCK{set enSurname = row["EN Surname"]}
+        \BLOCK{set enName = row["EN Name"]}
+        \BLOCK{if enSurname.strip()}
+            \BLOCK{set enSurname = enSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set enSurname = enName.upper()}
+            \BLOCK{set enName = ""}
+        \BLOCK{endif}
+        \BLOCK{set ruSurname = row["RU Surname"]}
+        \BLOCK{set ruName = row["RU Name"]}
+        \BLOCK{if ruSurname.strip()}
+            \BLOCK{set ruSurname = ruSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set ruSurname = ruName.upper()}
+            \BLOCK{set ruName = ""}
+        \BLOCK{endif}
+
+        \parbox{0.4\textwidth}{
+            \textbf{\VAR{enSurname}} {\small \VAR{enName}}\\
+            \textbf{\VAR{ruSurname}} {\small \VAR{ruName}}
+        }
+        \framebox{{\large\bfseries \VAR{quantity}}}
+    \BLOCK{endif}
+\BLOCK{endfor}
+
+\end{multicols}
+
+\vspace{1cm}
+\hfil  \pgfornament[width=4cm]{84}\hfil
+
+\pagebreak
+
+\section{Воскресная славянская литургия\\Sunday Slavonic Liturgy}
+
+\begin{multicols}{2}
+
+\BLOCK{for row in data}
+    \BLOCK{set quantity = row["Quantity"]}
+    \BLOCK{set liturgy = row["Liturgy"]}
+    \BLOCK{set comment = row["Comment"]}
+    \BLOCK{if liturgy.strip().lower() != "english"}
+
+        \BLOCK{set enSurname = row["EN Surname"]}
+        \BLOCK{set enName = row["EN Name"]}
+        \BLOCK{if enSurname.strip()}
+            \BLOCK{set enSurname = enSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set enSurname = enName.upper()}
+            \BLOCK{set enName = ""}
+        \BLOCK{endif}
+        \BLOCK{set ruSurname = row["RU Surname"]}
+        \BLOCK{set ruName = row["RU Name"]}
+        \BLOCK{if ruSurname.strip()}
+            \BLOCK{set ruSurname = ruSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set ruSurname = ruName.upper()}
+            \BLOCK{set ruName = ""}
+        \BLOCK{endif}
+
+        \parbox{0.4\textwidth}{
+            \textbf{\VAR{enSurname}} {\small \VAR{enName}}\\
+            \textbf{\VAR{ruSurname}} {\small \VAR{ruName}}
+        }
+        \framebox{{\large\bfseries \VAR{quantity}}}
+    \BLOCK{endif}
+\BLOCK{endfor}
+
+\end{multicols}
+
+\vspace{1cm}
+\hfil  \pgfornament[width=4cm]{84}\hfil
+
+\pagebreak
+
+\section{Литургия по двунадесятым праздникам\\12 Great Feasts Liturgy}
+
+\begin{multicols}{2}
+
+\BLOCK{for row in data}
+    \BLOCK{set quantity = row["Quantity"]}
+    \BLOCK{set liturgy = row["Liturgy"]}
+    \BLOCK{set comment = row["Comment"]}
+    \BLOCK{if comment.strip().lower() == "+12 feasts"}
+
+        \BLOCK{set enSurname = row["EN Surname"]}
+        \BLOCK{set enName = row["EN Name"]}
+        \BLOCK{if enSurname.strip()}
+            \BLOCK{set enSurname = enSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set enSurname = enName.upper()}
+            \BLOCK{set enName = ""}
+        \BLOCK{endif}
+        \BLOCK{set ruSurname = row["RU Surname"]}
+        \BLOCK{set ruName = row["RU Name"]}
+        \BLOCK{if ruSurname.strip()}
+            \BLOCK{set ruSurname = ruSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set ruSurname = ruName.upper()}
+            \BLOCK{set ruName = ""}
+        \BLOCK{endif}
+
+        \parbox{0.4\textwidth}{
+            \textbf{\VAR{enSurname}} {\small \VAR{enName}}\\
+            \textbf{\VAR{ruSurname}} {\small \VAR{ruName}}
+        }
+        \framebox{{\large\bfseries \VAR{quantity}}}
+    \BLOCK{endif}
+\BLOCK{endfor}
+
+\end{multicols}
+
+\vspace{1cm}
+\hfil  \pgfornament[width=4cm]{84}\hfil
+
+\pagebreak
+
+\section{Общий список\\All Commemoration Books}
+
+\begin{multicols}{2}
+
+\BLOCK{for row in data}
+    \BLOCK{set quantity = row["Quantity"]}
+    \BLOCK{set enSurname = row["EN Surname"]}
+    \BLOCK{set enName = row["EN Name"]}
+    \BLOCK{if enSurname.strip()}
+        \BLOCK{set enSurname = enSurname.upper()}
+    \BLOCK{else}
+        \BLOCK{set enSurname = enName.upper()}
+        \BLOCK{set enName = ""}
+    \BLOCK{endif}
+    \BLOCK{set ruSurname = row["RU Surname"]}
+    \BLOCK{set ruName = row["RU Name"]}
+    \BLOCK{if ruSurname.strip()}
+        \BLOCK{set ruSurname = ruSurname.upper()}
+    \BLOCK{else}
+        \BLOCK{set ruSurname = ruName.upper()}
+        \BLOCK{set ruName = ""}
+    \BLOCK{endif}
+
+    \parbox{0.4\textwidth}{
+        \textbf{\VAR{enSurname}} {\small \VAR{enName}}\\
+        \textbf{\VAR{ruSurname}} {\small \VAR{ruName}}
+    }
+    \framebox{{\large\bfseries \VAR{quantity}}}
+
+\BLOCK{endfor}
+\end{multicols}
+
+\vspace{1cm}
+\hfil  \pgfornament[width=4cm]{84}\hfil
+
+\end{document}
+
