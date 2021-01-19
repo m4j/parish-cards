@@ -8,7 +8,7 @@ script, arg_template, arg_data = argv
 
 with open(arg_data, encoding='utf-8', newline='') as csvfile:
     latexReader = LaTexReader(csvfile)
-    reader = csv.DictReader(latexReader)
+    reader = list(csv.DictReader(latexReader))
     #for row in reader:
         #print(row)
     template = jinja_env.get_template(arg_template)

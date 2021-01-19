@@ -1,55 +1,66 @@
 TOP := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-TARGET=poop_sheet
-TARGET_DIR=target
+PAYMENTS=poop_sheet
+PROSPHORAS=prosphoras
 VERSION=$(shell date '+%Y%m%d')
 DISTR_DIR=output
-DISTR_SHEET=$(DISTR_DIR)/$(TARGET)-$(VERSION).pdf
+DISTR_PAYMENTS=$(DISTR_DIR)/$(PAYMENTS)-$(VERSION).pdf
+DISTR_PROSPHORAS=$(DISTR_DIR)/$(PROSPHORAS)-$(VERSION).pdf
 DATABASE=../StJohnDC.db
 
 MERGE=src/merge.py
-#LATEX=pdflatex -output-directory=$(TARGET_DIR)
+#LATEX=pdflatex -output-directory=$(PAYMENTS_DIR)
 #LATEX=pdflatex -halt-on-error
 LATEX=xelatex -halt-on-error
-PDFTK=pdftk
 
 UNAME=$(shell uname)
 ifeq ($(UNAME), Linux)
 	SED_INPLACE=sed -i
+    HASH=md5sum
 endif
 ifeq ($(UNAME), Darwin)
 	SED_INPLACE=sed -i ''
+    HASH=md5 -q
 endif
 
-.PHONY: all clean distr sheet import
+.PHONY: all clean distr payments import
 .PRECIOUS: %.csv %.tex
 
 all: distr
 
-distr: $(DISTR_DIR) sheet 
+distr: $(DISTR_DIR) payments 
 
-sheet: $(DISTR_DIR) $(DISTR_SHEET)
+payments: $(DISTR_DIR) $(DISTR_PAYMENTS)
+
+prosphoras: $(DISTR_DIR) $(DISTR_PROSPHORAS)
 
 $(DISTR_DIR):
 	mkdir -p $@
 
-$(DISTR_SHEET): $(TARGET).pdf
+$(DISTR_PAYMENTS): $(PAYMENTS).pdf
+	cp $< $@
+
+$(DISTR_PROSPHORAS): $(PROSPHORAS).pdf
 	cp $< $@
 
 %.pdf: %.tex
-	$(LATEX) $<
-	latex_count=5 ; \
-	while egrep -s 'Rerun (LaTeX|to get (cross-references|outlines) right)' $(*F).log && [ $$latex_count -gt 0 ] ;\
+	aux_hash_prev="zzz" ; \
+	aux_hash=`$(HASH) $(*F).aux 2>/dev/null` ;\
+	while [ "$$aux_hash" != "$$aux_hash_prev" ];\
 		do \
-		  echo "Rerunning latex...." ;\
+          aux_hash_prev=$$aux_hash ;\
+		  echo "Rerunning latex....$$aux_hash" ;\
 		  $(LATEX) $< ;\
-		  latex_count=`expr $$latex_count - 1` ;\
+          aux_hash=`$(HASH) $(*F).aux 2>/dev/null` ;\
 		done
 
 %.tex: src/%.tex %.csv 
 	$(MERGE) $^ > $@
 
-%.csv: $(DATABASE) 
+$(PAYMENTS).csv: $(DATABASE)
 	sqlite3 $< -csv -header 'select * from Payments_Sheet where Date = "$(VERSION)";' > $@
+
+$(PROSPHORAS).csv: $(DATABASE)
+	sqlite3 $< -csv -header 'select * from Prosphoras_V order by Name;' > $@
 
 import: import_MemberList import_FamilyList $(DATABASE)
 
@@ -58,4 +69,4 @@ import_%: src/%.csv $(DATABASE)
 	sqlite3 -echo -csv $(DATABASE) '.import $< ParishSoft_$*'
 
 clean:
-	rm -f $(TARGET)*
+	rm -f $(PAYMENTS)* $(PROSPHORAS)*
