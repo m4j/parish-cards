@@ -51,7 +51,7 @@
 }
 
 \vspace{-3.3em}
-\begin{longtable}[l]{p{0.07in} | >{\raggedright}p{2in} | >{\raggedright}p{3.45in} >{\raggedleft}p{0.4in}| >{\raggedleft}p{0.5in} | >{\raggedleft}p{0.5in} |@{}l}
+\begin{longtable}[l]{p{0.07in} | >{\raggedright}p{1.75in} | >{\raggedright}p{3.7in} >{\raggedleft}p{0.4in}| >{\raggedleft}p{0.5in} | >{\raggedleft}p{0.5in} |@{}l}
     \cline{5-6}
     \multicolumn{4}{l}{} & \multicolumn{1}{|l|}{\small Signature} & \small Amount  & \tabularnewline
     \mline
@@ -65,9 +65,6 @@
     \mline
     & \multicolumn{1}{l}{cash -- \hspace{0.5in} checks --} & \multicolumn{2}{r|}{\small Свечной ящик/Candle stand} & &  & \tabularnewline
     \mline
-    & \multicolumn{1}{l}{} & \multicolumn{2}{r|}{} & &  & \tabularnewline
-    \mline
-    & \multicolumn{1}{l}{} & \multicolumn{2}{r|}{} & &  & \tabularnewline
 \BLOCK{for row in data}
     \BLOCK{set payor = row["Payor"]}
     \BLOCK{set method = row["Method"]}
@@ -116,7 +113,7 @@
     \BLOCK{else}
         & \VAR{method}
     \BLOCK{endif}
-    & \VAR{identifier}
+    & \texttt{\VAR{identifier}}
     & \VAR{amount} & \BLOCK{if shouldDrawDelims}\rdelim\}{\VAR{numberOfItems}}{*}[\VAR{total}]\BLOCK{endif}
     \tabularnewline
 \BLOCK{endfor}
