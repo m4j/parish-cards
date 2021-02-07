@@ -43,13 +43,14 @@ $(DISTR_PROSPHORAS): $(PROSPHORAS).pdf
 	cp $< $@
 
 %.pdf: %.tex
-	$(LATEX) $<
-	latex_count=5 ; \
-	while egrep -s 'Rerun (LaTeX|to get (cross-references|outlines) right)' $(*F).log && [ $$latex_count -gt 0 ] ;\
+	aux_hash_prev="zzz" ; \
+	aux_hash=`$(HASH) $(*F).aux 2>/dev/null` ;\
+	while [ "$$aux_hash" != "$$aux_hash_prev" ];\
 		do \
-		  echo "Rerunning latex...." ;\
+          aux_hash_prev=$$aux_hash ;\
+		  echo "Rerunning latex....$$aux_hash" ;\
 		  $(LATEX) $< ;\
-		  latex_count=`expr $$latex_count - 1` ;\
+          aux_hash=`$(HASH) $(*F).aux 2>/dev/null` ;\
 		done
 
 %.tex: src/%.tex %.csv 
