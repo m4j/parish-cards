@@ -152,7 +152,7 @@
     \BLOCK{set quantity = row["Quantity"]}
     \BLOCK{set liturgy = row["Liturgy"]}
     \BLOCK{set comment = row["Comment"]}
-    \BLOCK{if comment.strip().lower() == "+12 feasts"}
+    \BLOCK{if comment.strip().lower() == "+12 feasts" or liturgy.strip().lower() == "every"}
 
         \BLOCK{set enSurname = row["EN Surname"]}
         \BLOCK{set enName = row["EN Name"]}
