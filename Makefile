@@ -1,7 +1,7 @@
 TOP := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PAYMENTS=poop_sheet
 PROSPHORAS=prosphoras
-VERSION=$(shell date '+%Y%m%d')
+VERSION=9999-12-31
 DISTR_DIR=output
 DISTR_PAYMENTS=$(DISTR_DIR)/$(PAYMENTS)-$(VERSION).pdf
 DISTR_PROSPHORAS=$(DISTR_DIR)/$(PROSPHORAS)-$(VERSION).pdf
