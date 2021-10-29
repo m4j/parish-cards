@@ -9,11 +9,11 @@ SELECT PR.Payor,
        PD.Amount
   FROM Payments_Register PR,
        Payments_Dues PD
- WHERE PR.[Record Date] IN ('2021-06-06', '2021-06-13', '2021-06-21') AND 
+ WHERE PR.[Record Date] > '2021-08-28' AND 
        PR.Payor = PD.Payor AND 
        PR.Date = PD.Date AND 
        PR.Method = PD.Method AND 
-       PR.Identifier = PD.Identifier
+       IFNULL(PR.Identifier, '2.7182818284') = IFNULL(PD.Identifier,'2.7182818284')
  ORDER BY PR.Payor,
           PD.[Member Last],
           PD.[Member First],

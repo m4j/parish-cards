@@ -11,11 +11,11 @@ SELECT PR.Payor,
        PD.Comment
   FROM Payments_Register PR,
        Payments_Prosphoras PD
- WHERE PR.[Record Date] >= '2021-06-06' AND 
+ WHERE PR.[Record Date] >= '2021-08-28' AND 
        PR.Payor = PD.Payor AND 
        PR.Date = PD.Date AND 
        PR.Method = PD.Method AND 
-       PR.Identifier = PD.Identifier
+       IFNULL(PR.Identifier, '2.7182818284') = IFNULL(PD.Identifier,'2.7182818284')
  ORDER BY PR.Payor,
           PD.[Surname],
           PD.[Name],
