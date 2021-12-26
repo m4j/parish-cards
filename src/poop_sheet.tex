@@ -32,7 +32,10 @@
 
 \newcommand{\mline}{\cline{2-6}}
 \newcommand{\mdashline}{\cdashline{2-6}}
-
+\newcommand{\negpar}[1][-1em]{%
+  \ifvmode\else\par\fi
+  {\parindent=#1\leavevmode}\ignorespaces
+}
 % Disable hyphenation, see https://tex.stackexchange.com/a/177179
 \tolerance=1
 \emergencystretch=\maxdimen
@@ -52,7 +55,7 @@
 }
 
 \vspace{-3.3em}
-\begin{longtable}[l]{p{0.07in} | >{\raggedright}p{1.75in} | >{\raggedright}p{3.7in} >{\raggedleft}p{0.4in}| >{\raggedleft}p{0.5in} | >{\raggedleft}p{0.5in} |@{}l}
+\begin{longtable}[l]{p{0.07in} | >{\raggedright}p{1.95in} | >{\raggedright}p{3.5in} >{\raggedleft}p{0.4in}| >{\raggedleft}p{0.5in} | >{\raggedleft}p{0.5in} |@{}l}
     \cline{5-6}
     \multicolumn{4}{l}{} & \multicolumn{1}{|l|}{\small Signature} & \small Amount  & \tabularnewline
     \mline
