@@ -8,10 +8,11 @@ import re
 script, arg_template, arg_data = argv
 
 def markdown_to_latex(row, key):
-    string = row[key]
-    string = re.sub(r"\*\*(.*)\*\*", r"\\textbf{\1}", string)
     result = row.copy()
-    result[key] = string
+    if key in result:
+        string = result[key]
+        string = re.sub(r"\*\*(.*)\*\*", r"\\textbf{\1}", string)
+        result[key] = string
     return result
 
 with open(arg_data, encoding='utf-8', newline='') as csvfile:
