@@ -55,7 +55,7 @@
 }
 
 \vspace{-3.3em}
-\begin{longtable}[l]{p{0.07in} | >{\raggedright}p{1.95in} | >{\raggedright}p{3.5in} >{\raggedleft}p{0.4in}| >{\raggedleft}p{0.5in} | >{\raggedleft}p{0.5in} |@{}l}
+\begin{longtable}[l]{p{0.07in} | >{\raggedright}p{1.75in} | >{\raggedright}p{4.1in} >{\raggedleft}p{0.1in}| >{\raggedleft}p{0.5in} | >{\raggedleft}p{0.5in} |@{}l}
     \cline{5-6}
     \multicolumn{4}{l}{} & \multicolumn{1}{|l|}{\small Signature} & \small Amount  & \tabularnewline
     \mline
@@ -115,7 +115,7 @@
     \BLOCK{if method == ""}
         & ~
     \BLOCK{else}
-        & \VAR{method}
+        & \hspace*{0.3em} \small \VAR{method}
     \BLOCK{endif}
     & \texttt{\VAR{identifier}}
     & \VAR{amount} & \BLOCK{if shouldDrawDelims}\rdelim\}{\VAR{numberOfItems}}{*}[\VAR{total}]\BLOCK{endif}
