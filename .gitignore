@@ -39,3 +39,4 @@ tags
 
 __pycache__
 output
+*.pyc
