@@ -21,3 +21,6 @@ sql_dues_by_member = """select * from Payments_Dues
             where [Member Last] like :lname AND
                   [Member First] like :fname
              order by [Paid From], [Paid Through]"""
+
+distant_past = '1970-01'
+table_cell_width = 11
