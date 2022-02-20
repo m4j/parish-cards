@@ -3,8 +3,9 @@ import StJohnDC
 import re
 from datetime import datetime
 import os
+import sys
 
-def formatRow(row):
+def formatMemberName(row):
     ruName = row['RU Member Patronymic']
     ruName = '' if ruName is None else (' ' + ruName)
     return '%s, %s%s (%s, %s)' % (row['RU Member Last'], row['RU Member First'], ruName, row['Member Last'], row['Member First'])
@@ -38,7 +39,7 @@ def findMember(member, picker=pickByIndex):
     cursor = conn.cursor()
     cursor.execute(StJohnDC.sql_cards_by_name, {'name': selected})
     rows = cursor.fetchall()
-    formatted = list(map(formatRow, rows))
+    formatted = list(map(formatMemberName, rows))
     index = picker(formatted)
     return None if index is None else rows[index]
 
@@ -55,9 +56,9 @@ def paymentMethodShort(method):
     if method == 'Check':
         return '✓'
     if method == 'Discover':
-        return 'Disc'
+        return 'DISC'
     if method == 'PayPal':
-        return 'PayP'
+        return 'PP'
     return method
 
 def dateToMonths(date):
@@ -83,20 +84,47 @@ def paymentInfo(rows, date):
     if len(foundRows) > 0:
         found = foundRows[0]
 
-        method = paymentMethodShort(found['Method'])
+        method = paymentMethodShort(found['Method']) or '?'
         identifier = found['Identifier'] or ''
-        row1 = '{} {}'.format(method, identifier)
 
-        monthlyDue = ''
+        monthlyDue = None
         numberOfDues = numberOfDuesBetween(found['Paid From'], found['Paid Through'])
-        if numberOfDues is not None:
-            monthlyDue = int(int(found['Amount'])/numberOfDues)
-        row2 = '${}'.format(monthlyDue)
+        amount = found['Amount']
+        if numberOfDues is not None and amount is not None:
+            monthlyDue = int(found['Amount'])/numberOfDues
 
-        return (row1, row2)
-    return ('', '')
+        return (method, identifier, monthlyDue)
+    return None
+
+def historicalMemberDues(dateFrom, dateThru):
+    return [{
+            'Amount' : None,
+            'Identifier' : None,
+            'Method' : None,
+            'Paid From' : dateFrom,
+            'Paid Through' : dateThru,
+            }]
+
+def formatLine(values, topSep = '┬', bottomSep = '┼'):
+    line0 = f'─────{topSep}'
+    line1 =  '     │'
+    line2 = f'─────{bottomSep}'
+    for value in values:
+        line0 = f'{line0}{"" :─<{StJohnDC.table_cell_width}}{topSep}'
+        line1 = f'{line1}{value:^{StJohnDC.table_cell_width}}│'
+        line2 = f'{line2}{"" :─<{StJohnDC.table_cell_width}}{bottomSep}'
+    print(line0)
+    print(line1)
+    print(line2)
+
+def formatHeader(values):
+    formatLine(values, '┬', '┼')
+
+def formatFooter(values):
+    formatLine(values, '┼', '┴')
 
 def formatMemberDuesTable(member):
+    print(formatMemberName(member))
     dues = findMemberDues(member)
     firstFrom = dues[0]['Paid From'] if len(dues) > 0 else '2019-01'
     firstFrom = min(firstFrom, '2019-01')
@@ -106,27 +134,39 @@ def formatMemberDuesTable(member):
     lastYear = int(lastThrough.split('-')[0])
     months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
     monthNumbers = ['01','02','03','04','05','06','07','08','09','10','11','12']
-    header1 = '    │'
-    header2 = '────┼'
-    header0 = '────┬'
-    for year in range(firstYear, lastYear+1):
-        header1 = '{} {:^10}│'.format(header1, year)
-        header2 = '{}───────────┼'.format(header2)
-        header0 = '{}───────────┬'.format(header0)
-    print(header0)
-    print(header1)
-    print(header2)
+    formatHeader(range(firstYear, lastYear + 1))
+    yearTotals = list(map(lambda y: 0, range(firstYear, lastYear + 1)))
     for i, month in enumerate(months):
-        row1 = month + ' │'
-        row2 = '    │'
+        row1 = f' {month} │'
+        row2 = '     │'
         monthNumber = monthNumbers[i]
-        for year in range(firstYear, lastYear+1):
-            duesDate = '{}-{}'.format(year, monthNumber)
-            info = paymentInfo(dues, duesDate)
-            row1 = '{} {:^10}│'.format(row1,info[0])
-            row2 = '{} {:^10}│'.format(row2,info[1])
+        for j, year in enumerate(range(firstYear, lastYear + 1)):
+            cell1 = ''
+            cell2 = ''
+            duesDate = f'{year}-{monthNumber}'
+            memberFrom = member['Member From'] or StJohnDC.distant_past
+            if duesDate < memberFrom:
+                cell1 = f'{"" :░<{StJohnDC.table_cell_width}}'
+                cell2 = cell1
+            else:
+                historicalPaidThru = member['Dues Paid Through'] or StJohnDC.distant_past
+                allDues = historicalMemberDues(memberFrom, historicalPaidThru) + dues
+                info = paymentInfo(allDues, duesDate)
+                if info is not None:
+                    method = info[0]
+                    identifier = info[1]
+                    cell1 = f' {method} {identifier}'.rstrip()
+                    thisMonthDues = info[2] 
+                    cell2 = '?'
+                    if thisMonthDues:
+                        cell2 = f'${thisMonthDues}'
+                        yearTotals[j] = yearTotals[j] + thisMonthDues
+            row1 = f'{row1}{cell1:<{StJohnDC.table_cell_width}}│'
+            row2 = f'{row2}{cell2:^{StJohnDC.table_cell_width}}│'
         print(row1)
         print(row2)
+    formattedYearTotals = list(map(lambda t: f'${t}' if t else '', yearTotals))
+    formatFooter(formattedYearTotals)
 
 try:
     script, arg_member = argv
@@ -136,4 +176,8 @@ except ValueError:
 database = os.environ['STJB_DATABASE']
 conn = StJohnDC.connect(database)
 memberRow = findMember(arg_member)
-formatMemberDuesTable(memberRow)
+if memberRow:
+    formatMemberDuesTable(memberRow)
+else:
+    print('Нет данных (not found)', file=sys.stderr)
+
