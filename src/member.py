@@ -83,17 +83,14 @@ def paymentInfo(rows, date):
     foundRows = [row for row in rows if row['Paid From'] <= date <= row['Paid Through']]
     if len(foundRows) > 0:
         found = foundRows[0]
-
-        method = paymentMethodShort(found['Method']) or '?'
-        identifier = found['Identifier'] or ''
-
-        monthlyDue = None
-        numberOfDues = numberOfDuesBetween(found['Paid From'], found['Paid Through'])
+        method = paymentMethodShort(found['Method'])
+        identifier = found['Identifier']
         amount = found['Amount']
+        numberOfDues = numberOfDuesBetween(found['Paid From'], found['Paid Through'])
+        duesThisMonth = None
         if numberOfDues is not None and amount is not None:
-            monthlyDue = int(found['Amount'])/numberOfDues
-
-        return (method, identifier, monthlyDue)
+            duesThisMonth = int(amount)/numberOfDues
+        return (method, identifier, amount, duesThisMonth)
     return None
 
 def historicalMemberDues(dateFrom, dateThru):
@@ -106,22 +103,72 @@ def historicalMemberDues(dateFrom, dateThru):
             }]
 
 def formatLine(values, topSep = '┬', bottomSep = '┼'):
-    line0 = f'─────{topSep}'
-    line1 =  '     │'
-    line2 = f'─────{bottomSep}'
+    line0 = f'{topSep}{topSep}{topSep}{topSep}{topSep}{topSep}'
+    line1 =  '      '
+    line2 = f'{bottomSep}{bottomSep}{bottomSep}{bottomSep}{bottomSep}{bottomSep}'
     for value in values:
-        line0 = f'{line0}{"" :─<{StJohnDC.table_cell_width}}{topSep}'
-        line1 = f'{line1}{value:^{StJohnDC.table_cell_width}}│'
-        line2 = f'{line2}{"" :─<{StJohnDC.table_cell_width}}{bottomSep}'
+        line0 = f'{line0}{"" :{topSep}<{StJohnDC.table_cell_width}}{topSep}'
+        line1 = f'{line1}{value:^{StJohnDC.table_cell_width}} '
+        line2 = f'{line2}{"" :{bottomSep}<{StJohnDC.table_cell_width}}{bottomSep}'
     print(line0)
     print(line1)
     print(line2)
 
 def formatHeader(values):
-    formatLine(values, '┬', '┼')
+    formatLine(values, '━', '─')
 
 def formatFooter(values):
-    formatLine(values, '┼', '┴')
+    formatLine(values, '─', '━')
+
+def dateOfPreviousMonth(year, monthNumber):
+    y = year
+    m = monthNumber - 1
+    if monthNumber == 1:
+        y = year - 1
+        m = 12
+    return f'{y}-{m:02}'
+
+def dateOfNextMonth(year, monthNumber):
+    y = year
+    m = monthNumber + 1
+    if monthNumber == 12:
+        y = year + 1
+        m = 1
+    return f'{y}-{m:02}'
+
+def formatPaymentCellsFor(member, year, monthNumber):
+    cell1 = ''
+    cell2 = ''
+    duesThisMonth = None
+    duesDate = f'{year}-{monthNumber}'
+    memberFrom = member['Member From'] or StJohnDC.distant_past
+    if duesDate < memberFrom:
+        cell1 = f'{"" :░<{StJohnDC.table_cell_width}}'
+        cell2 = cell1
+    else:
+        historicalPaidThru = member['Dues Paid Through'] or StJohnDC.distant_past
+        allDues = findMemberDues(member) + historicalMemberDues(memberFrom, historicalPaidThru)
+        info = paymentInfo(allDues, duesDate)
+        if info is not None:
+            if info == (None, None, None, None):
+                cell1 = '...'
+                cell2 = '...'
+            else:
+                method = info[0]
+                identifier = info[1] or ''
+                amount = info[2] 
+                duesThisMonth = info[3]
+                previous = paymentInfo(allDues, dateOfPreviousMonth(year, int(monthNumber)))
+                if info == previous:
+                    cell1 = '─╮ ' if monthNumber == '01' else '│'
+                    following = paymentInfo(allDues, dateOfNextMonth(year, int(monthNumber)))
+                    cell2 = '▼'
+                    if info == following:
+                        cell2 = '     ╰─▶︎   ' if monthNumber == '12' else '│'
+                else:
+                    cell1 = f' {method} {identifier}'.rstrip()
+                    cell2 = f'${amount}' if amount else '?'
+    return (cell1, cell2, duesThisMonth)
 
 def formatMemberDuesTable(member):
     print(formatMemberName(member))
@@ -137,32 +184,18 @@ def formatMemberDuesTable(member):
     formatHeader(range(firstYear, lastYear + 1))
     yearTotals = list(map(lambda y: 0, range(firstYear, lastYear + 1)))
     for i, month in enumerate(months):
-        row1 = f' {month} │'
-        row2 = '     │'
+        row1 = f' {month}  '
+        row2 = '      '
         monthNumber = monthNumbers[i]
         for j, year in enumerate(range(firstYear, lastYear + 1)):
-            cell1 = ''
-            cell2 = ''
-            duesDate = f'{year}-{monthNumber}'
-            memberFrom = member['Member From'] or StJohnDC.distant_past
-            if duesDate < memberFrom:
-                cell1 = f'{"" :░<{StJohnDC.table_cell_width}}'
-                cell2 = cell1
-            else:
-                historicalPaidThru = member['Dues Paid Through'] or StJohnDC.distant_past
-                allDues = historicalMemberDues(memberFrom, historicalPaidThru) + dues
-                info = paymentInfo(allDues, duesDate)
-                if info is not None:
-                    method = info[0]
-                    identifier = info[1]
-                    cell1 = f' {method} {identifier}'.rstrip()
-                    thisMonthDues = info[2] 
-                    cell2 = '?'
-                    if thisMonthDues:
-                        cell2 = f'${thisMonthDues}'
-                        yearTotals[j] = yearTotals[j] + thisMonthDues
-            row1 = f'{row1}{cell1:<{StJohnDC.table_cell_width}}│'
-            row2 = f'{row2}{cell2:^{StJohnDC.table_cell_width}}│'
+            cells = formatPaymentCellsFor(member, year, monthNumber)
+            duesThisMonth = cells[2]
+            if duesThisMonth:
+                yearTotals[j] = yearTotals[j] + duesThisMonth
+            cell1 = cells[0]
+            cell2 = cells[1]
+            row1 = f'{row1}{cell1:^{StJohnDC.table_cell_width}} '
+            row2 = f'{row2}{cell2:^{StJohnDC.table_cell_width}} '
         print(row1)
         print(row2)
     formattedYearTotals = list(map(lambda t: f'${t}' if t else '', yearTotals))
