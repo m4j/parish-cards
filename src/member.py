@@ -8,7 +8,38 @@ import sys
 def formatMemberName(row):
     ruName = row['RU Member Patronymic']
     ruName = '' if ruName is None else (' ' + ruName)
-    return '%s, %s%s (%s, %s)' % (row['RU Member Last'], row['RU Member First'], ruName, row['Member Last'], row['Member First'])
+    name = '%s, %s%s (%s, %s)' % (row['RU Member Last'], row['RU Member First'], ruName, row['Member Last'], row['Member First'])
+    return f'{name} †' if row['Member Status'] == 'Deceased' else name
+
+def formatStatus(row):
+    status = row['Member Status']
+    duesAmount = row['Dues Amount']
+    memberFrom = formatDate(row['Member From']) or '?'
+    return f'{status}; dues: ${duesAmount}; member from: {memberFrom}'
+
+def formatContacts(row):
+    address = row['Address']
+    city = row['City']
+    state = row['State/Region']
+    postalCode = row['Postal Code']
+    plus4 = row['Plus 4']
+    zipCode = postalCode + (f'-{plus4}' if plus4 else '')
+    email = row['E-Mail Address']
+    homePhone = row['Home Phone']
+    homePhone = f'{homePhone} (home)' if homePhone else ''
+    mobilePhone = row['Mobile Phone']
+    mobilePhone = f'{mobilePhone} (mobile)' if mobilePhone else ''
+    workPhone = row['Work Phone']
+    workPhone = f'{workPhone} (work)' if workPhone else ''
+
+    result = (
+        f'{address}\n'
+        f'{city}, {state} {zipCode}\n'
+        f'{homePhone} {mobilePhone} {workPhone}'
+    )
+    if email:
+        result = f'{result}\n{email}'
+    return result
 
 def printErrorIncorrect():
     print('--------------------')
@@ -60,6 +91,15 @@ def paymentMethodShort(method):
     if method == 'PayPal':
         return 'PP'
     return method
+
+def formatDate(date):
+    split = date.split('-') if date else []
+    if len(split) >= 2:
+        year = split[0]
+        month = StJohnDC.months_dict[split[1]]
+        return f'{month} {year}'
+    else:
+        return None
 
 def dateToMonths(date):
     split = date.split('-')
@@ -172,6 +212,8 @@ def formatPaymentCellsFor(member, year, monthNumber):
 
 def formatMemberDuesTable(member):
     print(formatMemberName(member))
+    print(formatContacts(member))
+    print(formatStatus(member))
     dues = findMemberDues(member)
     firstFrom = dues[0]['Paid From'] if len(dues) > 0 else '2019-01'
     firstFrom = min(firstFrom, '2019-01')
@@ -179,14 +221,12 @@ def formatMemberDuesTable(member):
     lastThrough = max(lastThrough, '2024-12')
     firstYear = int(firstFrom.split('-')[0])
     lastYear = int(lastThrough.split('-')[0])
-    months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-    monthNumbers = ['01','02','03','04','05','06','07','08','09','10','11','12']
     formatHeader(range(firstYear, lastYear + 1))
     yearTotals = list(map(lambda y: 0, range(firstYear, lastYear + 1)))
-    for i, month in enumerate(months):
+    for i, month in enumerate(StJohnDC.months):
         row1 = f' {month}  '
         row2 = '      '
-        monthNumber = monthNumbers[i]
+        monthNumber = StJohnDC.month_numbers[i]
         for j, year in enumerate(range(firstYear, lastYear + 1)):
             cells = formatPaymentCellsFor(member, year, monthNumber)
             duesThisMonth = cells[2]
