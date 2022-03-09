@@ -11,31 +11,37 @@ def formatMemberName(row):
     name = '%s, %s%s (%s, %s)' % (row['RU Member Last'], row['RU Member First'], ruName, row['Member Last'], row['Member First'])
     return f'{name} †' if row['Member Status'] == 'Deceased' else name
 
-def formatStatus(row):
+def formatMemberDetails(row):
+    name = formatMemberName(row)
     status = row['Member Status']
     duesAmount = row['Dues Amount']
     memberFrom = formatDate(row['Member From']) or '?'
-    return f'{status}; dues: ${duesAmount}; member from: {memberFrom}'
-
-def formatContacts(row):
     address = row['Address']
     city = row['City']
     state = row['State/Region']
     postalCode = row['Postal Code']
     plus4 = row['Plus 4']
     zipCode = postalCode + (f'-{plus4}' if plus4 else '')
+    cityStateZip = f'{city}, {state} {zipCode}'
     email = row['E-Mail Address']
+    phones = []
     homePhone = row['Home Phone']
-    homePhone = f'{homePhone} (home)' if homePhone else ''
+    if homePhone:
+        phones.append(f'{homePhone} (home)')
     mobilePhone = row['Mobile Phone']
-    mobilePhone = f'{mobilePhone} (mobile)' if mobilePhone else ''
+    if mobilePhone:
+        phones.append(f'{mobilePhone} (mobile)')
     workPhone = row['Work Phone']
-    workPhone = f'{workPhone} (work)' if workPhone else ''
+    if workPhone: 
+        phones.append(f'{workPhone} (work)')
+    phonesLine = ', '.join(phones)
+    memberFrom = formatDate(row['Member from']) or '?'
 
     result = (
-        f'{address}\n'
-        f'{city}, {state} {zipCode}\n'
-        f'{homePhone} {mobilePhone} {workPhone}'
+        f'{name : <57}{status}\n'
+        f'{address : <57}Monthly dues: ${duesAmount}\n'
+        f'{cityStateZip : <57}Member from {memberFrom}\n'
+        f'{phonesLine}'
     )
     if email:
         result = f'{result}\n{email}'
@@ -211,9 +217,7 @@ def formatPaymentCellsFor(member, year, monthNumber):
     return (cell1, cell2, duesThisMonth)
 
 def formatMemberDuesTable(member):
-    print(formatMemberName(member))
-    print(formatContacts(member))
-    print(formatStatus(member))
+    print(formatMemberDetails(member))
     dues = findMemberDues(member)
     firstFrom = dues[0]['Paid From'] if len(dues) > 0 else '2019-01'
     firstFrom = min(firstFrom, '2019-01')
@@ -250,6 +254,7 @@ database = os.environ['STJB_DATABASE']
 conn = StJohnDC.connect(database)
 memberRow = findMember(arg_member)
 if memberRow:
+    print(list(memberRow))
     formatMemberDuesTable(memberRow)
 else:
     print('Нет данных (not found)', file=sys.stderr)
