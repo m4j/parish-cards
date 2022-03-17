@@ -132,15 +132,17 @@ def paymentInfo(rows, date):
         method = paymentMethodShort(found['Method'])
         identifier = found['Identifier']
         amount = found['Amount']
+        date = found['Date']
         numberOfDues = numberOfDuesBetween(found['Paid From'], found['Paid Through'])
         duesThisMonth = None
         if numberOfDues is not None and amount is not None:
             duesThisMonth = int(amount)/numberOfDues
-        return (method, identifier, amount, duesThisMonth)
+        return (method, identifier, amount, duesThisMonth, date)
     return None
 
 def historicalMemberDues(dateFrom, dateThru):
     return [{
+            'Date' : None,
             'Amount' : None,
             'Identifier' : None,
             'Method' : None,
@@ -196,7 +198,7 @@ def formatPaymentCellsFor(member, year, monthNumber):
         allDues = findMemberDues(member) + historicalMemberDues(memberFrom, historicalPaidThru)
         info = paymentInfo(allDues, duesDate)
         if info is not None:
-            if info == (None, None, None, None):
+            if info == (None, None, None, None, None):
                 cell1 = '...'
                 cell2 = '...'
             else:
