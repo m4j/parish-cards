@@ -5,15 +5,28 @@ from datetime import datetime
 import os
 import sys
 
-def formatMemberName(row):
-    ruName = row['RU Member Patronymic']
+def formatName(row, member):
+    ruName = row[f'RU {member} Patronymic']
     ruName = '' if ruName is None else (' ' + ruName)
-    name = '%s, %s%s (%s, %s)' % (row['RU Member Last'], row['RU Member First'], ruName, row['Member Last'], row['Member First'])
-    return f'{name} †' if row['Member Status'] == 'Deceased' else name
+    name = '%s, %s%s (%s, %s)' % (row[f'RU {member} Last'], row[f'RU {member} First'], ruName, row[f'{member} Last'], row[f'{member} First'])
+    return f'{name} †' if row[f'{member} Status'] == 'Deceased' else name
+
+def formatMemberName(row):
+    return formatName(row, 'Member')
+
+def formatSpouseName(row):
+    return formatName(row, 'Spouse')
 
 def formatMemberDetails(row):
-    name = formatMemberName(row)
     status = row['Member Status']
+    spouseStatus = ''
+    name = formatMemberName(row)
+    spouse = ''
+    if row['Spouse First'] and row['Spouse Last']:
+        spouse = formatSpouseName(row)
+        spouseStatus = row['Spouse Status']
+        spouseType = row['Spouse Type']
+        spouseStatus = f'{spouseType}, {spouseStatus}'
     duesAmount = row['Dues Amount']
     memberFrom = formatDate(row['Member From']) or '?'
     address = row['Address']
@@ -38,7 +51,8 @@ def formatMemberDetails(row):
     memberFrom = formatDate(row['Member from']) or '?'
 
     result = (
-        f'{name : <57}{status}\n'
+        f'✼ {name : <55}{status}\n'
+        f'  {spouse : <55}{spouseStatus}\n'
         f'{address : <57}Monthly dues: ${duesAmount}\n'
         f'{cityStateZip : <57}Member from {memberFrom}\n'
         f'{phonesLine}'
@@ -256,7 +270,7 @@ database = os.environ['STJB_DATABASE']
 conn = StJohnDC.connect(database)
 memberRow = findMember(arg_member)
 if memberRow:
-    print(list(memberRow))
+    #print(list(memberRow))
     formatMemberDuesTable(memberRow)
 else:
     print('Нет данных (not found)', file=sys.stderr)
