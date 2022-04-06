@@ -5,25 +5,33 @@ from datetime import datetime
 import os
 import sys
 
-def formatName(row, member):
-    ruName = row[f'RU {member} Patronymic']
-    ruName = '' if ruName is None else (' ' + ruName)
-    name = '%s, %s%s (%s, %s)' % (row[f'RU {member} Last'], row[f'RU {member} First'], ruName, row[f'{member} Last'], row[f'{member} First'])
-    return f'{name} †' if row[f'{member} Status'] == 'Deceased' else name
+class Member:
 
-def formatMemberName(row):
-    return formatName(row, 'Member')
+    def __init__(self, row):
+        self.row = row
 
-def formatSpouseName(row):
-    return formatName(row, 'Spouse')
+    def formatName(self, member):
+        ruName = self.row[f'RU {member} Patronymic']
+        ruName = '' if ruName is None else (' ' + ruName)
+        name = '%s, %s%s (%s, %s)' % (self.row[f'RU {member} Last'], self.row[f'RU {member} First'], ruName, self.row[f'{member} Last'], self.row[f'{member} First'])
+        return f'{name} †' if self.row[f'{member} Status'] == 'Deceased' else name
+
+    def formatMemberName(self):
+        return self.formatName('Member')
+
+    def formatSpouseName(self):
+        return self.formatName('Spouse')
+
+    def __getitem__(self, key):
+        return self.row[key]
 
 def formatMemberDetails(row):
     status = row['Member Status']
     spouseStatus = ''
-    name = formatMemberName(row)
+    name = row.formatMemberName()
     spouse = ''
     if row['Spouse First'] and row['Spouse Last']:
-        spouse = formatSpouseName(row)
+        spouse = row.formatSpouseName()
         spouseStatus = row['Spouse Status']
         spouseType = row['Spouse Type']
         spouseStatus = f'{spouseType}, {spouseStatus}'
@@ -61,38 +69,15 @@ def formatMemberDetails(row):
         result = f'{result}\n{email}'
     return result
 
-def printErrorIncorrect():
-    print('--------------------')
-    print('Incorrect, try again')
-    print('--------------------')
-
-def pickByIndex(rows):
-    count = len(rows)
-    if count == 0:
-        return None
-    if count == 1:
-        return 0
-    while True:
-        for i, row in enumerate(rows):
-            print('{}) {}'.format(i+1, row))
-        try:
-            selected = int(input('Pick one from the list:'))
-        except ValueError:
-            printErrorIncorrect()
-            continue
-        if selected-1 not in range(0, count):
-            printErrorIncorrect()
-            continue
-        return selected-1
-
-def findMember(member, picker=pickByIndex):
+def findMember(member, picker=StJohnDC.pickByIndex):
     selected = '%' + member + '%'
     cursor = conn.cursor()
     cursor.execute(StJohnDC.sql_cards_by_name, {'name': selected})
     rows = cursor.fetchall()
-    formatted = list(map(formatMemberName, rows))
+    members = list(map(Member, rows))
+    formatted = list(map(Member.formatMemberName, members))
     index = picker(formatted)
-    return None if index is None else rows[index]
+    return None if index is None else members[index]
 
 def findMemberDues(member):
     cursor = conn.cursor()
@@ -268,10 +253,10 @@ except ValueError:
     exit(-1)
 database = os.environ['STJB_DATABASE']
 conn = StJohnDC.connect(database)
-memberRow = findMember(arg_member)
-if memberRow:
+member = findMember(arg_member)
+if member:
     #print(list(memberRow))
-    formatMemberDuesTable(memberRow)
+    formatMemberDuesTable(member)
 else:
     print('Нет данных (not found)', file=sys.stderr)
 
