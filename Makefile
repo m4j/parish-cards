@@ -60,7 +60,7 @@ $(PAYMENTS).csv: $(DATABASE)
 	sqlite3 $< -csv -header 'select * from Payments_Sheet where Date = "$(VERSION)";' > $@
 
 $(PROSPHORAS).csv: $(DATABASE)
-	sqlite3 $< -csv -header 'select * from Prosphoras_V order by Name;' > $@
+	sqlite3 $< -csv -header 'select * from ProsphorasCurrent_V order by Name;' > $@
 
 import: import_MemberList import_FamilyList $(DATABASE)
 

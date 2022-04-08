@@ -1,4 +1,5 @@
 import sqlite3
+import decimal
 from abc import ABC, abstractmethod
 
 def connect(database):
@@ -128,8 +129,7 @@ def print_payments_table(member):
     payments = member.payments
     first_from = payments[0]['Paid From'] if len(payments) > 0 else '2019-01'
     first_from = min(first_from, '2019-01')
-    last_through = payments[-1]['Paid Through'] if len(payments) > 0 else '2024-12'
-    last_through = max(last_through, '2024-12')
+    last_through = '2024-12'
     first_year = int(first_from.split('-')[0])
     last_year = int(last_through.split('-')[0])
     print_header(range(first_year, last_year + 1))
@@ -149,7 +149,7 @@ def print_payments_table(member):
             row2 = f'{row2}{cell2:^{TABLE_CELL_WIDTH}} '
         print(row1)
         print(row2)
-    formatted_year_totals = list(map(lambda t: f'${t}' if t else '', year_totals))
+    formatted_year_totals = list(map(lambda t: f'${round(t, 2)}' if t else '', year_totals))
     print_footer(formatted_year_totals)
 
 def convert_payment_method(method):
@@ -190,7 +190,8 @@ def payment_info(rows, date):
         number_of_payments = number_of_payments_between(found['Paid From'], found['Paid Through'])
         payments_this_month = None
         if number_of_payments is not None and amount is not None:
-            payments_this_month = int(amount)/number_of_payments
+            amount = decimal.Decimal(amount)
+            payments_this_month = amount/number_of_payments
         return (method, identifier, amount, payments_this_month, date)
     return None
 
