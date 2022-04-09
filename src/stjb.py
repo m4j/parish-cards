@@ -74,6 +74,15 @@ def date_of_next_month(year, month_number):
         m = 1
     return f'{y}-{m:02}'
 
+def format_date(date):
+    split = date.split('-') if date else []
+    if len(split) >= 2:
+        year = split[0]
+        month = MONTHS_DICT[split[1]]
+        return f'{month} {year}'
+    else:
+        return None
+
 def format_payment_cells_for(member, year, month_number):
     cell1 = ''
     cell2 = ''
