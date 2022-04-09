@@ -63,7 +63,7 @@ def format_member_details(row):
         spouse_type = row['Spouse Type']
         spouse_status = f'{spouse_type}, {spouse_status}'
     dues_amount = row['Dues Amount']
-    member_from = format_date(row['Member From']) or '?'
+    member_from = stjb.format_date(row['Member From']) or '?'
     address = row['Address']
     city = row['City']
     state = row['State/Region']
@@ -83,7 +83,7 @@ def format_member_details(row):
     if work_phone: 
         phones.append(f'{work_phone} (work)')
     phones_line = ', '.join(phones)
-    member_from = format_date(row['Member from']) or '?'
+    member_from = stjb.format_date(row['Member from']) or '?'
 
     result = (
         f'✼ {name : <55}{status}\n'
@@ -114,15 +114,6 @@ def find_payments(member):
     }
     cursor.execute(SQL_PAYMENTS_BY_MEMBER, query_parameters)
     return cursor.fetchall()
-
-def format_date(date):
-    split = date.split('-') if date else []
-    if len(split) >= 2:
-        year = split[0]
-        month = stjb.MONTHS_DICT[split[1]]
-        return f'{month} {year}'
-    else:
-        return None
 
 try:
     script, arg_member = argv
