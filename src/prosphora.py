@@ -21,18 +21,22 @@ SQL_PAYMENTS_BY_MEMBER = """select * from Payments_Prosphoras
 
 class Member(stjb.AbstractMember):
 
+    def _format_name(self, surname, name, patronymic = None):
+        names = []
+        if surname:
+            names.append(surname)
+        if name:
+            names.append(name)
+        if len(names) > 0:
+            names[0] = names[0].upper()
+        fullname = ', '.join(names)
+        if patronymic:
+            fullname = f'{fullname} {patronymic}'
+        return fullname
+
     def format_name(self):
-        ru_fullname = self.row['RU Surname'].upper()
-        ru_name = self.row['RU Name']   
-        if ru_name:
-            ru_fullname = f'{ru_fullname}, {ru_name}'
-            ru_patronymic = self.row['RU Name Patronymic']
-            if ru_patronymic:
-                ru_fullname = f'{ru_fullname} {ru_patronymic}'
-        en_fullname = self.row['EN Surname'].upper()
-        en_name = self.row['EN Name']
-        if en_name:
-            en_fullname = f'{en_fullname}, {en_name}'
+        ru_fullname = self._format_name(self.row['RU Surname'], self.row['RU Name'], self.row['RU Name Patronymic'])
+        en_fullname = self._format_name(self.row['EN Surname'], self.row['EN Name'], None)
         return f'{en_fullname} ({ru_fullname})'
 
     @property
@@ -54,7 +58,7 @@ def format_member_details(row):
     return result
 
 def find_member(member, picker=stjb.pick_by_index):
-    selected = member + '%'
+    selected = '%' + member + '%'
     cursor = conn.cursor()
     cursor.execute(SQL_MEMBER_BY_NAME, {'name': selected})
     rows = cursor.fetchall()
