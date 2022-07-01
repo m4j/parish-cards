@@ -51,50 +51,52 @@ class Member(stjb.AbstractMember):
                 'Paid Through' : historical_paid_thru,
                 }]
 
-
-def format_member_details(row):
+def format_member_details_header(row):
+    left = []
+    right = []
     status = row['Member Status']
-    spouse_status = ''
+    dues_amount = row['Dues Amount']
     name = row.format_name()
-    spouse = ''
+    left.append(f'✼ {name}')
+    right.append(f'{status}, ${dues_amount}')
     if row['Spouse First'] and row['Spouse Last']:
         spouse = row.format_spouse_name()
+        left.append(f'  {spouse}')
         spouse_status = row['Spouse Status']
         spouse_type = row['Spouse Type']
-        spouse_status = f'{spouse_type}, {spouse_status}'
-    dues_amount = row['Dues Amount']
-    member_from = stjb.format_date(row['Member From']) or '?'
-    address = row['Address']
+        right.append(f'{spouse_type}, {spouse_status}')
+    return stjb.format_two_columns(left, right, 55)
+
+def format_member_details_footer(row):
+    left = []
+    left.append(row['Address'])
     city = row['City']
     state = row['State/Region']
     postal_code = row['Postal Code']
     plus4 = row['Plus 4']
     zip_code = postal_code + (f'-{plus4}' if plus4 else '')
     city_state_zip = f'{city}, {state} {zip_code}'
-    email = row['E-Mail Address']
-    phones = []
+    left.append(city_state_zip)
+    member_from = stjb.format_date(row['Member from']) or '?'
+    left.append('-----')
+    left.append(f'Member from: {member_from}')
+
+    right = []
     home_phone = row['Home Phone']
     if home_phone:
-        phones.append(f'{home_phone} (home)')
+        right.append(f'{home_phone} (home)')
     mobile_phone = row['Mobile Phone']
     if mobile_phone:
-        phones.append(f'{mobile_phone} (mobile)')
+        right.append(f'{mobile_phone} (mobile)')
     work_phone = row['Work Phone']
     if work_phone: 
-        phones.append(f'{work_phone} (work)')
-    phones_line = ', '.join(phones)
-    member_from = stjb.format_date(row['Member from']) or '?'
-
-    result = (
-        f'✼ {name : <55}{status}\n'
-        f'  {spouse : <55}{spouse_status}\n'
-        f'{address : <57}Monthly dues: ${dues_amount}\n'
-        f'{city_state_zip : <57}Member from {member_from}\n'
-        f'{phones_line}'
-    )
-    if email:
-        result = f'{result}\n{email}'
-    return result
+        right.append(f'{work_phone} (work)')
+    email_address = row['E-Mail Address']
+    if email_address:
+        addresses = re.split(',|;| ', email_address)
+        addresses = [addr for addr in addresses if addr != '']
+        right = right + addresses
+    return stjb.format_two_columns(left, right, 45)
 
 def find_member(member, picker=stjb.pick_by_index):
     selected = member + '%'
@@ -126,8 +128,9 @@ member = find_member(arg_member)
 if member:
     #print(list(memberRow))
     member.payments = find_payments(member)
-    print(format_member_details(member))
+    print(format_member_details_header(member))
     stjb.print_payments_table(member)
+    print(format_member_details_footer(member))
 else:
     print('Нет данных (not found)', file=sys.stderr)
 

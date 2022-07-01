@@ -204,3 +204,23 @@ def payment_info(rows, date):
         return (method, identifier, amount, payments_this_month, date)
     return None
 
+def pop(lst):
+    if len(lst) == 0:
+        return None
+    return lst.pop(0)
+
+def format_two_columns(left, right, width):
+    result = None
+    left = list(left)
+    right = list(right)
+    while True:
+        s_left = pop(left)
+        s_right = pop(right)
+        if s_left is None and s_right is None:
+            break
+        s_left = s_left or ''
+        s_right = s_right or ''
+        line = f'{s_left : <{width}}{s_right}'
+        result = f'{result}\n{line}' if result else line
+    return result or ''
+
