@@ -1,13 +1,16 @@
-TOP := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+TOP := ..
 PAYMENTS=poop_sheet
 PROSPHORAS=prosphoras
 VERSION=9999-12-31
-DISTR_DIR=output
+DISTR_DIR=$(TOP)/output
 DISTR_PAYMENTS=$(DISTR_DIR)/$(PAYMENTS)-$(VERSION).pdf
 DISTR_PROSPHORAS=$(DISTR_DIR)/$(PROSPHORAS)-$(VERSION).pdf
-DATABASE=../StJohnDC.db
+DATABASE=$(TOP)/../StJohnDC.db
+DATABASE_DIR=$(TOP)/database
+APP_DIR=$(TOP)/app
+TEMPLATES_DIR=$(APP_DIR)/templates
 
-MERGE=src/merge.py
+MERGE=$(APP_DIR)/merge.py
 #LATEX=pdflatex -output-directory=$(PAYMENTS_DIR)
 #LATEX=pdflatex -halt-on-error
 LATEX=xelatex -halt-on-error
@@ -23,7 +26,6 @@ ifeq ($(UNAME), Darwin)
 endif
 
 .PHONY: all clean distr payments import
-.PRECIOUS: %.csv %.tex
 
 all: distr
 
@@ -53,18 +55,18 @@ $(DISTR_PROSPHORAS): $(PROSPHORAS).pdf
           aux_hash=`$(HASH) $(*F).aux 2>/dev/null` ;\
 		done
 
-%.tex: src/%.tex %.csv 
-	$(MERGE) $^ > $@
+$(PAYMENTS).tex: $(PAYMENTS).csv 
+	$(MERGE) $@ $< > $@
 
 $(PAYMENTS).csv: $(DATABASE)
-	sqlite3 $< -csv -header 'select * from Payments_Sheet where Date = "$(VERSION)";' > $@
+	sqlite3 $< -csv -header 'select * from Payments_Sheet where Date like "$(VERSION)";' > $@
 
 $(PROSPHORAS).csv: $(DATABASE)
 	sqlite3 $< -csv -header 'select * from ProsphorasCurrent_V order by Name;' > $@
 
 import: import_MemberList import_FamilyList $(DATABASE)
 
-import_%: src/%.csv $(DATABASE)
+import_%: $(DATABASE_DIR)/%.csv $(DATABASE)
 	sqlite3 -echo $(DATABASE) 'DROP TABLE IF EXISTS ParishSoft_$*;'
 	sqlite3 -echo -csv $(DATABASE) '.import $< ParishSoft_$*'
 

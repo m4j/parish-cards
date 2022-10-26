@@ -15,7 +15,9 @@ jinja_env = jinja2.Environment(
     trim_blocks=True,
     autoescape=False,
     #loader=jinja2.FileSystemLoader(os.path.dirname(os.path.abspath(__file__))))
-    loader=jinja2.FileSystemLoader(os.getcwd()))
+    #loader=jinja2.FileSystemLoader(os.getcwd()))
+    loader=jinja2.PackageLoader(__name__, 'templates')
+)
 
 class LaTexReader:
 
