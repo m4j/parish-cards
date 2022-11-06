@@ -1,4 +1,4 @@
-TOP := ..
+TOP := .
 PAYMENTS=poop_sheet
 PROSPHORAS=prosphoras
 VERSION=9999-12-31

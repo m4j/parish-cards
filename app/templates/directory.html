@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+
+    {{ wtf.quick_form(form) }}
+
+    <div style="margin-top: 20px;"/>
+
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
+        </div>
+    {% endfor %}
+    
+    <div class="list-group">
+        {% for member in members %}
+        <a href="{{ url_for(member_url, guid=member['GUID']) }}" class="list-group-item">{{ member.format_name() }}</a>
+        {% endfor %}
+    </div>
+{% endblock %}
