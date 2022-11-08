@@ -22,11 +22,53 @@ SQL_PAYMENT_METHODS = 'SELECT * FROM Payments_Methods'
 class AbstractMember(ABC):
 
     sql_members_by_name = None
+    sql_member_by_guid = None
+    sql_payments_by_member = None
 
     def __init__(self, row):
         self.row = row
         self.payments = []
         self.payment_methods = {}
+
+    @classmethod
+    def find_all_by_name(cls, conn, name):
+        selected = name + '%'
+        cursor = conn.cursor()
+        cursor.execute(cls.sql_members_by_name, {'name': selected})
+        rows = cursor.fetchall()
+        members = list(map(cls, rows))
+        return members
+
+    @classmethod
+    def find_by_guid(cls, conn, guid):
+        cursor = conn.cursor()
+        cursor.execute(cls.sql_member_by_guid, {'guid': guid})
+        row = cursor.fetchone()
+        return None if row is None else cls(row)
+
+    def find_payments(self, conn):
+        cursor = conn.cursor()
+        query_parameters = {
+            'fname': self.fname,
+            'lname': self.lname
+        }
+        cursor.execute(self.sql_payments_by_member, query_parameters)
+        return cursor.fetchall()
+
+    def load_payments(self, conn):
+        self.payments = self.find_payments(conn)
+        self.payment_methods = load_payment_methods(conn)
+        return self
+
+    @property
+    @abstractmethod
+    def fname(self):
+        pass
+
+    @property
+    @abstractmethod
+    def lname(self):
+        pass
 
     @abstractmethod
     def format_name(self):
@@ -149,15 +191,6 @@ class AbstractMember(ABC):
             return None
         methodrow = self.payment_methods[method] or {}
         return methodrow['Display Short'] or method
-
-    @classmethod
-    def find_members_by_name(cls, conn, name):
-        selected = name + '%'
-        cursor = conn.cursor()
-        cursor.execute(cls.sql_members_by_name, {'name': selected})
-        rows = cursor.fetchall()
-        members = list(map(cls, rows))
-        return members
 
 def print_error_incorrect():
     print('--------------------')

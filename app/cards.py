@@ -2,6 +2,7 @@ from flask import Flask, render_template, abort, session, redirect, url_for, fla
 from flask_bootstrap import Bootstrap
 from . import stjb
 from . import member as m
+from . import prosphora as p
 import os
 
 from flask_wtf import FlaskForm
@@ -29,9 +30,9 @@ def index():
 def books():
     return directory(
             redirect_url=url_for('books'),
-            entity=m.Member,
+            entity=p.Member,
             template='books.html',
-            member_url='.member')
+            member_url='.book')
 
 def directory(redirect_url, member_url, entity, template):
     form = SearchForm()
@@ -44,7 +45,7 @@ def directory(redirect_url, member_url, entity, template):
     if name:
         session['name'] = None
         connection = stjb.connect(database)
-        members = entity.find_members_by_name(connection, name)
+        members = entity.find_all_by_name(connection, name)
         connection.close()
         if len(members) == 0:
             flash('Nothing found, please try again')
@@ -57,9 +58,22 @@ def directory(redirect_url, member_url, entity, template):
 @app.route('/member/<guid>')
 def member(guid):
     connection = stjb.connect(database)
-    entity = m.load_member_by_guid(connection, guid)
-    connection.close()
+    entity = m.Member.find_by_guid(connection, guid)
     if not entity:
+        connection.close()
         abort(404)
+    entity.load_payments(connection)
+    connection.close()
+    return render_template('member.html', member=entity)
+
+@app.route('/book/<guid>')
+def book(guid):
+    connection = stjb.connect(database)
+    entity = p.Member.find_by_guid(connection, guid)
+    if not entity:
+        connection.close()
+        abort(404)
+    entity.load_payments(connection)
+    connection.close()
     return render_template('member.html', member=entity)
 

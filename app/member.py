@@ -4,13 +4,6 @@ import re
 import os
 import sys
 
-SQL_MEMBER_BY_GUID = "select * from Members_V where GUID = :guid"
-
-SQL_PAYMENTS_BY_MEMBER = """select * from Payments_Dues
-            where [Member Last] like :lname AND
-                  [Member First] like :fname
-             order by [Paid From], [Paid Through]"""
-
 class Member(stjb.AbstractMember):
 
     sql_members_by_name = """select * from Members_V C
@@ -24,6 +17,13 @@ class Member(stjb.AbstractMember):
                   C.[RU Member First] like :name OR
                   C.[RU Member Patronymic] like :name
              order by [Member Last], [Member First]"""
+
+    sql_member_by_guid = "select * from Members_V where GUID = :guid"
+
+    sql_payments_by_member = """select * from Payments_Dues
+                where [Member Last] like :lname AND
+                      [Member First] like :fname
+                 order by [Paid From], [Paid Through]"""
 
     def _format_name(self, member):
         ru_name = self.row[f'RU {member} Patronymic']
@@ -107,35 +107,11 @@ class Member(stjb.AbstractMember):
             right = right + addresses
         return stjb.format_two_columns(left, right, 45)
 
-def find_members(conn, member, picker=stjb.pick_by_index):
-    members = find_members_by_name(conn, member)
-    formatted = list(map(Member.format_name, members))
-    index = picker(formatted)
-    return None if index is None else members[index]
+    @property
+    def fname(self):
+        return self['Member First']
 
-def find_member_by_guid(conn, guid):
-    cursor = conn.cursor()
-    cursor.execute(SQL_MEMBER_BY_GUID, {'guid': guid})
-    row = cursor.fetchone()
-    return None if row is None else Member(row)
-
-def find_payments(conn, member):
-    cursor = conn.cursor()
-    query_parameters = {
-        'fname': member['Member First'],
-        'lname': member['Member Last'],
-    }
-    cursor.execute(SQL_PAYMENTS_BY_MEMBER, query_parameters)
-    return cursor.fetchall()
-
-def load_member_by_guid(conn, guid):
-    member = find_member_by_guid(conn, guid)
-    if not member:
-        return None
-    return load_member(conn, member)
-
-def load_member(conn, member):
-    member.payments = find_payments(conn, member)
-    member.payment_methods = stjb.load_payment_methods(conn)
-    return member
+    @property
+    def lname(self):
+        return self['Member Last']
 
