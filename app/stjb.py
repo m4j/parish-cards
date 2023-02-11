@@ -32,7 +32,7 @@ class AbstractMember(ABC):
 
     @classmethod
     def find_all_by_name(cls, conn, name):
-        selected = name + '%'
+        selected = f'%{name}%'
         cursor = conn.cursor()
         cursor.execute(cls.sql_members_by_name, {'name': selected})
         rows = cursor.fetchall()
