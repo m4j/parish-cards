@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block styles %}
+    {{ super() }}
+    <link href="/static/css/member_app.css" rel="stylesheet">
+{% endblock %}
+
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+
+<div class="page-header">
+    <h3>Parish Membership Application</h3>
+</div>
+
+<form action="" method="post" class="form" role="form">
+    {{ form.hidden_tag() }}
+    {{ wtf.form_errors(form, hiddens="only") }}
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Member Information</h3>
+                </div>
+                <div class="panel-body">
+                    {{ wtf.form_field(form.ru_name) }}
+                    {{ wtf.form_field(form.en_name) }}
+                    {{ wtf.form_field(form.saints_day) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Spouse’s Information (if applicable)</h3>
+                </div>
+                <div class="panel-body">
+                    {{ wtf.form_field(form.spouse_ru_name) }}
+                    {{ wtf.form_field(form.spouse_en_name) }}
+                    {{ wtf.form_field(form.spouse_saints_day) }}
+                    {{ wtf.form_field(form.spouse_religion_denomination) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Address</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.street) }}
+                    <div class="row">
+                        <div class="col-md-5">
+                            {{ wtf.form_field(form.city) }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ wtf.form_field(form.state) }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ wtf.form_field(form.zip_code) }}
+                        </div>
+                    </div>
+                    {{ wtf.form_field(form.cell_phone) }}
+                    {{ wtf.form_field(form.email) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.home_phone) }}
+                    {{ wtf.form_field(form.spouse_cell_phone) }}
+                    {{ wtf.form_field(form.spouse_email) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Children (Under 21)</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.child1.name) }}
+                    {{ wtf.form_field(form.child2.name) }}
+                    {{ wtf.form_field(form.child3.name) }}
+                    {{ wtf.form_field(form.child4.name) }}
+                    {{ wtf.form_field(form.child5.name) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.child1.saints_day) }}
+                    {{ wtf.form_field(form.child2.saints_day) }}
+                    {{ wtf.form_field(form.child3.saints_day) }}
+                    {{ wtf.form_field(form.child4.saints_day) }}
+                    {{ wtf.form_field(form.child5.saints_day) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.child1.age) }}
+                    {{ wtf.form_field(form.child2.age) }}
+                    {{ wtf.form_field(form.child3.age) }}
+                    {{ wtf.form_field(form.child4.age) }}
+                    {{ wtf.form_field(form.child5.age) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">I am interested in participating in or learning more about the following:</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.interests1) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.interests2) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.interests3) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ wtf.form_field(form.submit) }}
+</form>
+
+<div style="margin-top: 20px;"/>
+
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
+    </div>
+    {% endfor %}
+
+    {% endblock %}

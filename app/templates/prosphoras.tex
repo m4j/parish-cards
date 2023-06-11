@@ -76,16 +76,16 @@
     \BLOCK{set comment = row["Comment"]}
     \BLOCK{if liturgy.strip().lower() == "english"}
 
-        \BLOCK{set enSurname = row["EN Surname"]}
-        \BLOCK{set enName = row["EN Name"]}
+        \BLOCK{set enSurname = row["EN\_Surname"]}
+        \BLOCK{set enName = row["EN\_Name"]}
         \BLOCK{if enSurname.strip()}
             \BLOCK{set enSurname = enSurname.upper()}
         \BLOCK{else}
             \BLOCK{set enSurname = enName.upper()}
             \BLOCK{set enName = ""}
         \BLOCK{endif}
-        \BLOCK{set ruSurname = row["RU Surname"]}
-        \BLOCK{set ruName = row["RU Name"]}
+        \BLOCK{set ruSurname = row["RU\_Surname"]}
+        \BLOCK{set ruName = row["RU\_Name"]}
         \BLOCK{if ruSurname.strip()}
             \BLOCK{set ruSurname = ruSurname.upper()}
         \BLOCK{else}
@@ -115,16 +115,16 @@
     \BLOCK{set comment = row["Comment"]}
     \BLOCK{if liturgy.strip().lower() != "english"}
 
-        \BLOCK{set enSurname = row["EN Surname"]}
-        \BLOCK{set enName = row["EN Name"]}
+        \BLOCK{set enSurname = row["EN\_Surname"]}
+        \BLOCK{set enName = row["EN\_Name"]}
         \BLOCK{if enSurname.strip()}
             \BLOCK{set enSurname = enSurname.upper()}
         \BLOCK{else}
             \BLOCK{set enSurname = enName.upper()}
             \BLOCK{set enName = ""}
         \BLOCK{endif}
-        \BLOCK{set ruSurname = row["RU Surname"]}
-        \BLOCK{set ruName = row["RU Name"]}
+        \BLOCK{set ruSurname = row["RU\_Surname"]}
+        \BLOCK{set ruName = row["RU\_Name"]}
         \BLOCK{if ruSurname.strip()}
             \BLOCK{set ruSurname = ruSurname.upper()}
         \BLOCK{else}
@@ -156,16 +156,16 @@
     \BLOCK{set comment = row["Comment"]}
     \BLOCK{if comment.strip().lower() == "+12 feasts" or liturgy.strip().lower() == "every"}
 
-        \BLOCK{set enSurname = row["EN Surname"]}
-        \BLOCK{set enName = row["EN Name"]}
+        \BLOCK{set enSurname = row["EN\_Surname"]}
+        \BLOCK{set enName = row["EN\_Name"]}
         \BLOCK{if enSurname.strip()}
             \BLOCK{set enSurname = enSurname.upper()}
         \BLOCK{else}
             \BLOCK{set enSurname = enName.upper()}
             \BLOCK{set enName = ""}
         \BLOCK{endif}
-        \BLOCK{set ruSurname = row["RU Surname"]}
-        \BLOCK{set ruName = row["RU Name"]}
+        \BLOCK{set ruSurname = row["RU\_Surname"]}
+        \BLOCK{set ruName = row["RU\_Name"]}
         \BLOCK{if ruSurname.strip()}
             \BLOCK{set ruSurname = ruSurname.upper()}
         \BLOCK{else}
@@ -193,16 +193,16 @@
 
 \BLOCK{for row in data}
     \BLOCK{set quantity = row["Quantity"]}
-    \BLOCK{set enSurname = row["EN Surname"]}
-    \BLOCK{set enName = row["EN Name"]}
+    \BLOCK{set enSurname = row["EN\_Surname"]}
+    \BLOCK{set enName = row["EN\_Name"]}
     \BLOCK{if enSurname.strip()}
         \BLOCK{set enSurname = enSurname.upper()}
     \BLOCK{else}
         \BLOCK{set enSurname = enName.upper()}
         \BLOCK{set enName = ""}
     \BLOCK{endif}
-    \BLOCK{set ruSurname = row["RU Surname"]}
-    \BLOCK{set ruName = row["RU Name"]}
+    \BLOCK{set ruSurname = row["RU\_Surname"]}
+    \BLOCK{set ruName = row["RU\_Name"]}
     \BLOCK{if ruSurname.strip()}
         \BLOCK{set ruSurname = ruSurname.upper()}
     \BLOCK{else}

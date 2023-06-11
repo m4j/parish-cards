@@ -3,6 +3,7 @@ from flask_bootstrap import Bootstrap
 from . import stjb
 from . import member as m
 from . import prosphora as p
+from . import member_app
 import os
 
 from flask_wtf import FlaskForm
@@ -15,7 +16,7 @@ bootstrap = Bootstrap(app)
 database = os.environ['STJB_DATABASE']
 
 class SearchForm(FlaskForm):
-    name = StringField('Type name, like “irina”, or “Иван”. Partial name works too, like “mar” or “joh”', validators=[DataRequired()])
+    name = StringField('Type name, like “irina”, or “Иван”. Partial name works too, like “mar” or “joh”', validators=[DataRequired()], render_kw={'autofocus': True})
     submit = SubmitField('Search')
 
 @app.route('/', methods=['GET', 'POST'])
@@ -33,6 +34,20 @@ def books():
             entity=p.Member,
             template='books.html',
             member_url='.book')
+
+@app.route('/member/add', methods=['GET', 'POST'])
+def member_add():
+    form = member_app.NewMemberForm()
+    members = []
+    if form.validate_on_submit():
+        result = member_app.process(form)
+        guid = result[0]
+        errors = result[1]
+        if errors:
+            flash(errors)
+        if guid:
+            return redirect(url_for('member', guid=guid))
+    return render_template( 'member_add.html', form=form)
 
 def directory(redirect_url, member_url, entity, template):
     form = SearchForm()

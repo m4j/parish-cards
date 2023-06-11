@@ -33,7 +33,10 @@ distr: $(DISTR_DIR) payments
 
 payments: $(DISTR_DIR) $(DISTR_PAYMENTS)
 
-prosphoras: $(DISTR_DIR) $(DISTR_PROSPHORAS)
+prosphoras: prosphoranotes.tex $(DISTR_DIR) $(DISTR_PROSPHORAS)
+
+prosphoranotes.tex: $(TEMPLATES_DIR)/prosphoranotes.tex
+	cp $< $@
 
 $(DISTR_DIR):
 	mkdir -p $@
@@ -54,6 +57,9 @@ $(DISTR_PROSPHORAS): $(PROSPHORAS).pdf
 		  $(LATEX) $< ;\
           aux_hash=`$(HASH) $(*F).aux 2>/dev/null` ;\
 		done
+
+$(PROSPHORAS).tex: $(PROSPHORAS).csv 
+	$(MERGE) $@ $< > $@
 
 $(PAYMENTS).tex: $(PAYMENTS).csv 
 	$(MERGE) $@ $< > $@

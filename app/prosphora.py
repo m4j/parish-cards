@@ -8,28 +8,28 @@ import sys
 class Member(stjb.AbstractMember):
 
     sql_members_by_name = """select * from Prosphoras_V
-                where [EN Surname] like :name OR
-                      [EN Name] like :name OR
-                      [EN Family] like :name OR
-                      [RU Surname] like :name OR
-                      [RU Name] like :name OR
-                      [RU Name Patronymic] like :name OR
-                      [RU Family] like :name
-                 order by [EN Surname], [EN Name]"""
+                where EN_Surname like :name OR
+                      EN_Name like :name OR
+                      EN_Family like :name OR
+                      RU_Surname like :name OR
+                      RU_Name like :name OR
+                      RU_Name_Patronymic like :name OR
+                      RU_Family like :name
+                 order by EN_Surname, EN_Name"""
 
     sql_member_by_guid = "select * from Prosphoras_V where GUID = :guid"
 
     sql_payments_by_member = """select * from Payments_Prosphoras
                 where Surname = :lname AND (Name IS NULL OR Name = :fname)
-                 order by [Paid From], [Paid Through]"""
+                 order by Paid_From, Paid_Through"""
 
     @property
     def fname(self):
-        return self['EN Name']
+        return self['EN_Name']
 
     @property
     def lname(self):
-        return self['EN Surname']
+        return self['EN_Surname']
 
     def _format_name(self, surname, name, patronymic = None):
         names = []
@@ -45,8 +45,8 @@ class Member(stjb.AbstractMember):
         return fullname
 
     def format_name(self):
-        ru_fullname = self._format_name(self.row['RU Surname'], self.row['RU Name'], self.row['RU Name Patronymic'])
-        en_fullname = self._format_name(self.row['EN Surname'], self.row['EN Name'], None)
+        ru_fullname = self._format_name(self.row['RU_Surname'], self.row['RU_Name'], self.row['RU_Name_Patronymic'])
+        en_fullname = self._format_name(self.row['EN_Surname'], self.row['EN_Name'], None)
         return f'{en_fullname} ({ru_fullname})'
 
     @property

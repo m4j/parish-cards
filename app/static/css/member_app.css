@@ -1,0 +1,10 @@
+#interests1, #interests2, #interests3 {
+    height: auto;
+    border: none;
+    box-shadow: none;
+    padding: revert;
+}
+
+#interests1 li, #interests2 li, #interests3 li {
+    list-style: none;
+}

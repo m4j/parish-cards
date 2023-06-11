@@ -92,7 +92,7 @@ class AbstractMember(ABC):
     def format_payments_table(self):
         buffer = ''
         payments = self.payments
-        first_from = payments[0]['Paid From'] if len(payments) > 0 else '2019-01'
+        first_from = payments[0]['Paid_From'] if len(payments) > 0 else '2019-01'
         first_from = min(first_from, '2019-01')
         last_through = '2024-12'
         first_year = int(first_from.split('-')[0])
@@ -162,8 +162,8 @@ class AbstractMember(ABC):
         right.append('archived, see paper cards')
 
         for method in self.payment_methods.values():
-            left.append(method['Display Short'] or method['Method'])
-            right.append(method['Display Long'])
+            left.append(method['Display_Short'] or method['Method'])
+            right.append(method['Display_Long'])
 
         return (
                 '\n────────────────────────────────────────────────────────────\n'
@@ -171,14 +171,14 @@ class AbstractMember(ABC):
                 )
 
     def payment_info(self, rows, date):
-        found_rows = [row for row in rows if row['Paid From'] <= date <= row['Paid Through']]
+        found_rows = [row for row in rows if row['Paid_From'] <= date <= row['Paid_Through']]
         if len(found_rows) > 0:
             found = found_rows[0]
             method = self.convert_payment_method(found['Method'])
             identifier = found['Identifier']
             amount = found['Amount']
             date = found['Date']
-            number_of_payments = number_of_payments_between(found['Paid From'], found['Paid Through'])
+            number_of_payments = number_of_payments_between(found['Paid_From'], found['Paid_Through'])
             payments_this_month = None
             if number_of_payments is not None and amount is not None:
                 amount = decimal.Decimal(amount)
@@ -190,7 +190,7 @@ class AbstractMember(ABC):
         if not method:
             return None
         methodrow = self.payment_methods[method] or {}
-        return methodrow['Display Short'] or method
+        return methodrow['Display_Short'] or method
 
 def print_error_incorrect():
     print('--------------------')
