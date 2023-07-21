@@ -28,6 +28,7 @@
                     {{ wtf.form_field(form.ru_name) }}
                     {{ wtf.form_field(form.en_name) }}
                     {{ wtf.form_field(form.saints_day) }}
+                    {{ wtf.form_field(form.gender) }}
                 </div>
             </div>
         </div>
@@ -124,6 +125,20 @@
             </div>
         </div>
     </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Signatures:</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.signature_date) }}
+                    {{ wtf.form_field(form.spouse_signature_date) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     {{ wtf.form_field(form.submit) }}
 </form>

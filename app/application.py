@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import Form, StringField, SubmitField, SelectMultipleField, EmailField, IntegerField
+from wtforms import Form, StringField, SubmitField, SelectMultipleField, EmailField, IntegerField, BooleanField, SelectField
 from wtforms.validators import DataRequired
 from wtforms.widgets import ListWidget, CheckboxInput
 
@@ -18,13 +18,14 @@ class ChildForm(Form):
     saints_day = StringField('Saint’s Day')
     age = IntegerField('Age')
 
-class NewMemberForm(FlaskForm):
-    ru_name = StringField('Name in Russian (including patronymic, if applicable)', validators=[DataRequired()], render_kw={'autofocus': True})
-    en_name = StringField('Name in English', validators=[DataRequired()])
+class ApplicationForm(FlaskForm):
+    ru_name = StringField('Last, first name in Russian (including patronymic, if applicable)', validators=[DataRequired()], render_kw={'autofocus': True, 'placeholder': 'Смирнов Иван Петрович'})
+    en_name = StringField('Last, first name in English', validators=[DataRequired()], render_kw={'placeholder': 'Smirnov Ivan'})
     saints_day = StringField('Saint’s Day')
+    gender = SelectField('Gender', choices=[('M', 'Male'), ('F', 'Female')])
     
-    spouse_ru_name = StringField('Name in Russian (including patronymic, if applicable)')
-    spouse_en_name = StringField('Name in English')
+    spouse_ru_name = StringField('Last, first name in Russian (including patronymic, if applicable)', render_kw={'placeholder': 'Смирнова Мария Ивановна'})
+    spouse_en_name = StringField('Last, first name in English', render_kw={'placeholder': 'Smirnova Maria'})
     spouse_saints_day = StringField('Saint’s Day')
     spouse_religion_denomination = StringField('Religion/Denomination')
 
@@ -52,6 +53,9 @@ class NewMemberForm(FlaskForm):
 
     interests3 = MultiCheckboxField('',
             choices=[ 'Church Cleanup', 'Prosphora Baking', 'As Needed'])
+
+    signature_date = StringField('Member Signature (date only)', validators=[DataRequired()])
+    spouse_signature_date = StringField('Spouse Signature (date only)')
 
     submit = SubmitField('Submit')
 

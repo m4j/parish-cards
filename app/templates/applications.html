@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+    <div class="page-header">
+        <h2>Applications for Membership<h2>
+    </div>
+
+    <div class="list-group">
+        {% for app in apps %}
+        <a href="{{ url_for('application', guid=app.guid) }}" class="list-group-item">
+            {{ app.format_en_names() }}, {{ app.format_ru_names() }}, {{ app.signature_date }}
+        </a>
+        {% endfor %}
+    </div>
+{% endblock %}
