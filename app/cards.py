@@ -6,6 +6,7 @@ from . import prosphora as p
 from .application import ApplicationForm
 from .database import db, Application
 import os
+import uuid
 from urllib.parse import urlparse
 
 from flask_wtf import FlaskForm
@@ -45,20 +46,29 @@ def books():
 @app.route("/applications")
 def applications():
     apps = db.session.execute(db.select(Application).order_by(Application.signature_date)).scalars()
-    return render_template("applications.html", apps=apps)
+    return render_template('applications.html', apps=apps)
 
 @app.route('/application/add', methods=['GET', 'POST'])
 def application_add():
     form = ApplicationForm()
-    members = []
     if form.validate_on_submit():
-        result = application_form.process(form)
-        guid = result[0]
-        errors = result[1]
-        if errors:
-            flash(errors)
-        if guid:
-            return redirect(url_for('member', guid=guid))
+        app = Application(guid=uuid.uuid4())
+        form.saveApplication(app)
+        db.session.add(app)
+        db.session.commit()
+        return redirect(url_for('applications'))
+    return render_template( 'application.html', form=form)
+
+@app.route('/application/<guid>', methods=['GET', 'POST'])
+def application_edit(guid):
+    app = db.get_or_404(Application, uuid.UUID(guid))
+    form = ApplicationForm()
+    if form.validate_on_submit():
+        form.saveApplication(app)
+        db.session.commit()
+        flash('The application has been updated')
+        return redirect(url_for('applications'))
+    form.loadApplication(app)
     return render_template( 'application.html', form=form)
 
 def directory(redirect_url, member_url, entity, template):

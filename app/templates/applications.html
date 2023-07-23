@@ -6,10 +6,24 @@
         <h2>Applications for Membership<h2>
     </div>
 
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
+    </div>
+    {% endfor %}
+
     <div class="list-group">
         {% for app in apps %}
-        <a href="{{ url_for('application', guid=app.guid) }}" class="list-group-item">
-            {{ app.format_en_names() }}, {{ app.format_ru_names() }}, {{ app.signature_date }}
+        <a href="{{ url_for('application_edit', guid=app.guid) }}" class="list-group-item">
+        <div class="row">
+            <div class="col-md-5">
+                <b>{{ app.format_ru_names() }}</b><br> {{ app.format_en_names() }}
+            </div>
+            <div class="col-md-5">
+                {{ app.signature_date }}
+            </div>
+        </div>
         </a>
         {% endfor %}
     </div>
