@@ -3,8 +3,8 @@ from flask_bootstrap import Bootstrap
 from . import stjb
 from . import member as m
 from . import prosphora as p
-from .application import ApplicationForm
-from .database import db, Application
+from .application import ApplicationForm, ApplicantsRegistrationForm
+from .database import db, Application, Person, Card, Marriage, find_member, find_person, find_marriage
 import os
 import uuid
 from urllib.parse import urlparse
@@ -53,7 +53,7 @@ def application_add():
     form = ApplicationForm()
     if form.validate_on_submit():
         app = Application(guid=uuid.uuid4())
-        form.saveApplication(app)
+        form.save_application(app)
         db.session.add(app)
         db.session.commit()
         return redirect(url_for('applications'))
@@ -64,12 +64,65 @@ def application_edit(guid):
     app = db.get_or_404(Application, uuid.UUID(guid))
     form = ApplicationForm()
     if form.validate_on_submit():
-        form.saveApplication(app)
+        form.save_application(app)
         db.session.commit()
-        flash('The application has been updated')
-        return redirect(url_for('applications'))
-    form.loadApplication(app)
+        if form.save.data:
+            flash('The application has been updated')
+            return redirect(url_for('applications'))
+        if form.register.data:
+            flash('Please verify new member names and monthly dues, and then press Register')
+            return redirect(url_for('application_register', guid=guid))
+    form.load_application(app)
     return render_template( 'application.html', form=form)
+
+def validate_and_consider_redirecting(guid, applicant):
+    if applicant.do_register == 'as_member':
+        member = find_member(applicant.en_name_first, applicant.en_name_last)
+        if member:
+            flash(f'{member.person.full_name_address()} is already a parish member')
+            return redirect(url_for('application_register', guid=guid))
+    person = find_person(applicant.en_name_first, applicant.en_name_last)
+    if person:
+        flash(f'Non member {person.full_name_address()} found')
+        marriage = find_marriage(applicant.en_name_first, applicant.en_name_last)
+        if marriage:
+            flash(f'Marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} found')
+        return redirect(url_for('application_register', guid=guid))
+    return None
+
+@app.route('/application/register/<guid>', methods=['GET', 'POST'])
+def application_register(guid):
+    app = db.get_or_404(Application, uuid.UUID(guid))
+    form = ApplicantsRegistrationForm()
+    if form.validate_on_submit():
+        applicant = form.applicant()
+        redirecting = validate_and_consider_redirecting(guid, applicant)
+        if redirecting:
+            return redirecting
+        spouse = form.spouse()
+        if spouse:
+            redirecting = validate_and_consider_redirecting(guid, spouse)
+            if redirecting:
+                return redirecting
+        person = Person(app, applicant)
+        member = Card(app, person, applicant, form.as_of_date.data)
+        db.session.add(person)
+        db.session.add(member)
+        if spouse:
+            spouse_person = Person.create_spouse(app, spouse)
+            db.session.add(spouse_person)
+            husband = person if person.gender == 'M' else spouse_person
+            wife = spouse_person if person.gender == 'M' else person
+            marriage = Marriage(husband, wife)
+            db.session.add(marriage)
+            if spouse.do_register == 'as_member':
+                spouse_member = Card(app, spouse_person, spouse, form.as_of_date.data)
+                db.session.add(spouse_member)
+        db.session.commit()
+        flash('The application has been registered')
+        return redirect(url_for('member', guid=member.guid))
+    form.load_application(app)
+    return render_template( 'register_members.html', form=form)
 
 def directory(redirect_url, member_url, entity, template):
     form = SearchForm()

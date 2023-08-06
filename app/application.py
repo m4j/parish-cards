@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import Form, StringField, SubmitField, SelectMultipleField, EmailField, IntegerField, BooleanField, SelectField
+from wtforms import Form, StringField, SubmitField, SelectMultipleField, EmailField, IntegerField, RadioField, SelectField, FieldList, FormField
 from wtforms.validators import DataRequired, Optional
 from wtforms.widgets import ListWidget, CheckboxInput
+from types import SimpleNamespace
 
 CHOICES1 = [ 'Altar Service', 'Brotherhood', 'Sisterhood']
 CHOICES2 = [ 'Cemetery Care', 'Choir', 'Annual Bazaar']
@@ -68,7 +69,7 @@ class ApplicationForm(FlaskForm):
     save = SubmitField('Save')
     register = SubmitField('Register')
 
-    def loadApplication(self, app):
+    def load_application(self, app):
         self.ru_name.data = app.ru_name
         self.en_name.data = app.en_name
         self.saints_day.data = app.saints_day
@@ -117,7 +118,7 @@ class ApplicationForm(FlaskForm):
         self.interests2.data = list(filter(lambda each: each in CHOICES2, interestsList))
         self.interests3.data = list(filter(lambda each: each in CHOICES3, interestsList))
 
-    def saveApplication(self, app):
+    def save_application(self, app):
         app.ru_name = self.ru_name.data
         app.en_name = self.en_name.data
         app.saints_day = self.saints_day.data
@@ -162,3 +163,72 @@ class ApplicationForm(FlaskForm):
         app.signature_date = self.signature_date.data
         app.spouse_signature_date = self.spouse_signature_date.data
 
+class ApplicantSubForm(Form):
+    names = StringField()
+    ru_name_last = StringField('Last name in Russian', validators=[DataRequired()])
+    ru_name_first = StringField('First name in Russian', validators=[DataRequired()])
+    ru_name_patronymic = StringField('Patronymic name in Russian')
+    en_name_last = StringField('Last name in English', validators=[DataRequired()])
+    en_name_first = StringField('First name in English', validators=[DataRequired()])
+    dues_amount = IntegerField('Monthly dues', default=35, validators=[DataRequired()])
+    do_register = RadioField(
+            choices=[
+                ('as_member', 'Register as new parish member'),
+                ('as_non_member', 'Only save personal information')],
+            default='as_member')
+
+class ApplicantsRegistrationForm(FlaskForm):
+    applicants = FieldList(FormField(ApplicantSubForm))
+    as_of_date = StringField('As of date', validators=[DataRequired()])
+    register = SubmitField('Register')
+
+    def load_application(self, app):
+        applicant_data = self.__names_data(app.ru_name, app.en_name)
+        self.applicants.append_entry(applicant_data)
+        if app.spouse_en_name:
+            applicant_data = self.__names_data(app.spouse_ru_name, app.spouse_en_name)
+            if not app.spouse_signature_date:
+                applicant_data = applicant_data | { 'do_register': 'as_non_member' }
+            self.applicants.append_entry(applicant_data)
+
+    def applicant(self):
+        data = self.applicants.data[0]
+        return SimpleNamespace(**data)
+
+    def spouse(self):
+        if len(self.applicants.data) < 2:
+            return None
+        data = self.applicants.data[1]
+        return SimpleNamespace(**data)
+
+    def __names_data(self, ru_name, en_name):
+        names_data = { 'names': f'{en_name} ({ru_name})' }
+        names_data = names_data | self.__ru_name_data(ru_name)
+        names_data = names_data | self.__en_name_data(en_name)
+        return names_data
+
+    def __ru_name_data(self, name):
+        names = [name for name in name.split(' ') if len(name) > 0]
+        if len(names) == 3:
+            return {
+                    'ru_name_last': names[0],
+                    'ru_name_first': names[1],
+                    'ru_name_patronymic': names[2],
+                    }
+        if len(names) == 2:
+            return {
+                    'ru_name_last': names[0],
+                    'ru_name_first': names[1],
+                    }
+        return {}
+
+    def __en_name_data(self, name):
+        names = [name for name in name.split(' ') if len(name) > 0]
+        if len(names) >= 2:
+            last = names.pop(0)
+            first = ' '.join(names)
+            return {
+                    'en_name_last': last,
+                    'en_name_first': first,
+                    }
+        return {}

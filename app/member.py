@@ -39,7 +39,7 @@ class Member(stjb.AbstractMember):
 
     @property
     def member_from(self):
-        return self.row['Member_From'] or stjb.DISTANT_PAST
+        return self.row['Membership_From'] or stjb.DISTANT_PAST
 
     def historical_payments(self):
         historical_paid_thru = self.row['Dues_Paid_Through'] or stjb.DISTANT_PAST
@@ -86,7 +86,7 @@ class Member(stjb.AbstractMember):
         zip_code = postal_code + (f'-{plus4}' if plus4 else '')
         city_state_zip = f'{city}, {state} {zip_code}'
         left.append(city_state_zip)
-        member_from = stjb.format_date(self['Member_from']) or '?'
+        member_from = stjb.format_date(self['Membership_From']) or '?'
         left.append('')
         left.append(f'Member from: {member_from}')
 

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+
+<div class="page-header">
+    <h3>Register New Parish Member(s)<h3>
+</div>
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+</div>
+{% endfor %}
+
+<form action="" method="post" class="form" role="form">
+    {{ form.hidden_tag() }}
+    {{ wtf.form_errors(form, hiddens="only") }}
+
+    {% for applicant in form.applicants %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ applicant.names.data }}</h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ wtf.form_field(applicant.ru_name_last) }}
+                        {{ wtf.form_field(applicant.en_name_last) }}
+                        {{ wtf.form_field(applicant.dues_amount) }}
+                        {{ wtf.form_field(applicant.do_register) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ wtf.form_field(applicant.ru_name_first) }}
+                        {{ wtf.form_field(applicant.en_name_first) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ wtf.form_field(applicant.ru_name_patronymic) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="form-inline">
+                <div class="form-group">
+                    {{ form.register(class="btn btn-primary") }}
+                </div>
+                <div class="form-group required">
+                    {{ form.as_of_date.label }} {{ form.as_of_date(class="form-control") }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</form>
+
+{% endblock %}
