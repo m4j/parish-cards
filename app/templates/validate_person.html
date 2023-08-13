@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+
+<div class="page-header">
+    <h3>Records of {{ applicant_person.full_name() }} Found<h3>
+</div>
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+</div>
+{% endfor %}
+
+<div class="alert alert-info">
+    <p><strong>Heads up!</strong> We have records of the applicant.
+    Please check and decide if update is required.</p>
+</div>
+
+<form action="" method="post" class="form" role="form">
+    {{ form.hidden_tag() }}
+    {{ wtf.form_errors(form, hiddens="only") }}
+
+    {% for form_applicant in form.applicants %}
+        {% if form_applicant.en_name_first.data == applicant.en_name_first and
+            form_applicant.en_name_last.data == applicant.en_name_last %}
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Application</th>
+                                <th>Our Records</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ applicant_person.first }}</td>
+                                <td>{{ existing_person.first }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ applicant_person.last }}</td>
+                                <td>{{ existing_person.last }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ applicant_person.email }}</td>
+                                <td>{{ existing_person.email }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p><strong>Please decide how to proceed:</strong></p>
+                    {{ wtf.form_field(form_applicant.update_existing_decision) }}
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+    
+    <div class="form-inline">
+        <div class="form-group">
+            {{ form.register(value="Continue", class="btn btn-primary") }}
+        </div>
+    </div>
+    
+</form>
+
+{% endblock %}

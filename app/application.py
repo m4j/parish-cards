@@ -174,13 +174,23 @@ class ApplicantSubForm(Form):
     do_register = RadioField(
             choices=[
                 ('as_member', 'Register as new parish member'),
-                ('as_non_member', 'Only save personal information')],
+                ('as_non_member', 'Only store personal information')],
             default='as_member')
+    update_existing_decision = RadioField(
+            choices=[
+                ('stop', 'Stop, do nothing'),
+                ('update', 'Update our records from application'),
+                ('use_as_is', 'Do not update our records, use as is')],
+            default='stop')
 
 class ApplicantsRegistrationForm(FlaskForm):
     applicants = FieldList(FormField(ApplicantSubForm))
     as_of_date = StringField('As of date', validators=[DataRequired()])
     register = SubmitField('Register')
+
+    def consider_loading_application(self, app):
+        if len(self.applicants.data) == 0:
+            self.load_application(app)
 
     def load_application(self, app):
         applicant_data = self.__names_data(app.ru_name, app.en_name)

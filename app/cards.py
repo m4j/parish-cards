@@ -1,4 +1,4 @@
-from flask import Flask, render_template, abort, session, redirect, url_for, flash
+from flask import Flask, render_template, abort, session, redirect, url_for, flash, request
 from flask_bootstrap import Bootstrap
 from . import stjb
 from . import member as m
@@ -12,6 +12,8 @@ from urllib.parse import urlparse
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+
+from werkzeug.datastructures import MultiDict
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or '606d2fc4-31cb-4ce1-a35b-346ec660994d'
@@ -56,6 +58,10 @@ def application_add():
         form.save_application(app)
         db.session.add(app)
         db.session.commit()
+        if form.register.data:
+            flash('Please verify new member names and monthly dues, and then press Register')
+            return redirect(url_for('application_register', guid=app.guid))
+        flash('The application has been saved')
         return redirect(url_for('applications'))
     return render_template( 'application.html', form=form)
 
@@ -86,8 +92,20 @@ def validate_and_consider_redirecting(guid, applicant):
         flash(f'Non member {person.full_name_address()} found')
         marriage = find_marriage(applicant.en_name_first, applicant.en_name_last)
         if marriage:
-            flash(f'Marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} found')
+            flash(f'Marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} has been found')
         return redirect(url_for('application_register', guid=guid))
+    return None
+
+def consider_validating_personal_info(app, form, applicant):
+    if applicant.do_register == 'as_member':
+        member = find_member(applicant.en_name_first, applicant.en_name_last)
+        if member:
+            flash(f'{member.person.full_name_address()} is already a parish member')
+            return redirect(url_for('application_register', guid=guid))
+    found_person = find_person(applicant.en_name_first, applicant.en_name_last)
+    if found_person and applicant.update_existing_decision == 'stop':
+        person = Person(app, applicant)
+        return render_template('validate_person.html', form=form, applicant=applicant, applicant_person=person, existing_person=found_person)
     return None
 
 @app.route('/application/register/<guid>', methods=['GET', 'POST'])
@@ -96,9 +114,9 @@ def application_register(guid):
     form = ApplicantsRegistrationForm()
     if form.validate_on_submit():
         applicant = form.applicant()
-        redirecting = validate_and_consider_redirecting(guid, applicant)
-        if redirecting:
-            return redirecting
+        validation_response = consider_validating_personal_info(app, form, applicant)
+        if validation_response:
+            return validation_response
         spouse = form.spouse()
         if spouse:
             redirecting = validate_and_consider_redirecting(guid, spouse)
@@ -121,7 +139,7 @@ def application_register(guid):
         db.session.commit()
         flash('The application has been registered')
         return redirect(url_for('member', guid=member.guid))
-    form.load_application(app)
+    form.consider_loading_application(app)
     return render_template( 'register_members.html', form=form)
 
 def directory(redirect_url, member_url, entity, template):
