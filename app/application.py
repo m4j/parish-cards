@@ -3,6 +3,7 @@ from wtforms import Form, StringField, SubmitField, SelectMultipleField, EmailFi
 from wtforms.validators import DataRequired, Optional
 from wtforms.widgets import ListWidget, CheckboxInput
 from types import SimpleNamespace
+from werkzeug.datastructures import MultiDict
 
 CHOICES1 = [ 'Altar Service', 'Brotherhood', 'Sisterhood']
 CHOICES2 = [ 'Cemetery Care', 'Choir', 'Annual Bazaar']
@@ -176,17 +177,19 @@ class ApplicantSubForm(Form):
                 ('as_member', 'Register as new parish member'),
                 ('as_non_member', 'Only store personal information')],
             default='as_member')
-    update_existing_decision = RadioField(
-            choices=[
-                ('stop', 'Stop, do nothing'),
-                ('update', 'Update our records from application'),
-                ('use_as_is', 'Do not update our records, use as is')],
-            default='stop')
 
 class ApplicantsRegistrationForm(FlaskForm):
     applicants = FieldList(FormField(ApplicantSubForm))
     as_of_date = StringField('As of date', validators=[DataRequired()])
     register = SubmitField('Register')
+
+    @classmethod
+    def make_with_form_data(cls, form_data, applicants_data):
+        form = cls(MultiDict(form_data))
+        if applicants_data:
+            for idx, data in enumerate(applicants_data):
+                form.applicants.data[idx].update(data)
+        return form
 
     def consider_loading_application(self, app):
         if len(self.applicants.data) == 0:
@@ -242,3 +245,19 @@ class ApplicantsRegistrationForm(FlaskForm):
                     'en_name_first': first,
                     }
         return {}
+
+class UpdateDecisionSubForm(Form):
+    update_decision = RadioField(
+            choices=[
+                ('update', 'Use information from the application (and update our records)'),
+                ('use_as_is', 'Use our records and disregard information from the application')
+            ],
+            validators=[DataRequired()]
+        )
+
+class UpdateDecisionsForm(FlaskForm):
+    decisions = FieldList(FormField(UpdateDecisionSubForm))
+    register = SubmitField('Continue')
+
+    def append_decision(self):
+        self.decisions.append_entry()

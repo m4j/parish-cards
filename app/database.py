@@ -85,7 +85,7 @@ class Person(db.Model):
         self.plus_4 = get_plus4(app.zip_code)
 
     @classmethod
-    def create_spouse(cls, app, applicant):
+    def make_spouse(cls, app, applicant):
         spouse = cls(app, applicant)
         spouse.email = app.spouse_email
         spouse.mobile_phone = app.spouse_cell_phone
