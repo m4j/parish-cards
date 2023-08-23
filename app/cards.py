@@ -4,7 +4,7 @@ from . import stjb
 from . import member as m
 from . import prosphora as p
 from .application import ApplicationForm, ApplicantsRegistrationForm, UpdateDecisionsForm
-from .database import db, Application, Person, Card, Marriage, find_member, find_person, find_marriage
+from .database import db, Application, Person, Card, Marriage, find_member, find_person, find_active_marriage, find_active_marriage_of_husband, find_active_marriage_of_wife
 import os
 import uuid
 from urllib.parse import urlparse
@@ -79,22 +79,7 @@ def application_edit(guid):
     form.load_application(app)
     return render_template( 'application.html', form=form)
 
-def validate_and_consider_redirecting(guid, applicant):
-    if applicant.do_register == 'as_member':
-        member = find_member(applicant.en_name_first, applicant.en_name_last)
-        if member:
-            flash(f'{member.person.full_name_address()} is already a parish member')
-            return redirect(url_for('application_register', guid=guid))
-    person = find_person(applicant.en_name_first, applicant.en_name_last)
-    if person:
-        flash(f'Non member {person.full_name_address()} found')
-        marriage = find_marriage(applicant.en_name_first, applicant.en_name_last)
-        if marriage:
-            flash(f'Marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} has been found')
-        return redirect(url_for('application_register', guid=guid))
-    return None
-
-def redirect_if_member(guid, applicant):
+def redirect_on_existing_member(guid, applicant):
     if applicant.do_register == 'as_member':
         member = find_member(applicant.en_name_first, applicant.en_name_last)
         if member:
@@ -102,90 +87,120 @@ def redirect_if_member(guid, applicant):
             return redirect(url_for('application_register', guid=guid))
     return None
 
-@stjb_app.route('/application/update_person/<guid>', methods=['GET', 'POST'])
-def application_update_person(guid):
-    if not does_session_contain_form_data(guid):
-        flash('Unable to find application data in session')
+def redirect_on_another_active_marriage(guid, person, spouse):
+    breakpoint()
+    husband = person if person.gender == 'M' else spouse
+    wife = spouse if person.gender == 'M' else person
+    # check husband
+    marriage = find_active_marriage_of_husband(husband.en_name_first, husband.en_name_last)
+    if marriage is not None and (marriage.wife.first != wife.en_name_first or marriage.wife.last != wife.en_name_last):
+        flash(f'Active marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} has been found')
         return redirect(url_for('application_register', guid=guid))
-    registration_form = form_with_session(session[guid])
+    # check wife
+    marriage = find_active_marriage_of_wife(wife.en_name_first, wife.en_name_last)
+    if marriage is not None and (marriage.husband.first != husband.en_name_first or marriage.husband.last != husband.en_name_last):
+        flash(f'Active marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} has been found')
+        return redirect(url_for('application_register', guid=guid))
+    return None
+
+def finalize_registration_and_redirect(app, applicant, applicant_spouse, decisions_data, as_of_date):
+    decisions = iter(decisions_data)
+    person = Person(app, applicant)
+    db_person = find_person(applicant.en_name_first, applicant.en_name_last)
+    if db_person:
+        if next(decisions) == 'update':
+            db_person.update_from(person)
+        person = db_person
+    else:
+        db.session.add(person)
+    member = Card(app, person, applicant, as_of_date)
+    db.session.add(member)
+    if applicant_spouse:
+        spouse = Person.make_spouse(app, applicant_spouse)
+        db_spouse = find_person(applicant_spouse.en_name_first, applicant_spouse.en_name_last)
+        if db_spouse:
+            if next(decisions) == 'update':
+                db_spouse.update_from(spouse)
+            spouse = db_spouse
+        else:
+            db.session.add(spouse)
+        husband = person if person.gender == 'M' else spouse
+        wife = spouse if person.gender == 'M' else person
+        if not find_active_marriage(husband.first, husband.last, wife.first, wife.last):
+            marriage = Marriage(husband, wife)
+            db.session.add(marriage)
+        if applicant_spouse.do_register == 'as_member':
+            spouse_member = Card(app, spouse, applicant_spouse, as_of_date)
+            db.session.add(spouse_member)
+    db.session.commit()
+    return redirect(url_for('member', guid=member.guid))
+
+@stjb_app.route('/application/records_update/<guid>', methods=['GET', 'POST'])
+def application_records_update(guid):
+    if guid not in session:
+        flash('Something went wrong, unable to find application data in the session.')
+        return redirect(url_for('application_register', guid=guid))
+    app = db.get_or_404(Application, uuid.UUID(guid))
+    registration_form = ApplicantsRegistrationForm.make_with_form_data(session[guid])
+    applicant = registration_form.applicant()
+    spouse = registration_form.spouse()
     form = UpdateDecisionsForm()
     if form.validate_on_submit():
-        pass
-    app = db.get_or_404(Application, uuid.UUID(guid))
+        session.pop(guid)
+        return finalize_registration_and_redirect(app, applicant, spouse, form.decisions.data, registration_form.as_of_date.data)
     applicants = []
-    applicant = registration_form.applicant()
     db_person = find_person(applicant.en_name_first, applicant.en_name_last)
     if db_person:
         app_person = Person(app, applicant)
-        # check if they differ
         applicants.append((applicant, app_person, db_person))
         form.append_decision()
-    spouse = registration_form.spouse()
     if spouse:
         db_spouse = find_person(spouse.en_name_first, spouse.en_name_last)
         if db_spouse:
             app_spouse = Person.make_spouse(app, spouse)
-            # check if they differ
             applicants.append((spouse, app_spouse, db_spouse))
             form.append_decision()
-    return render_template('update_person.html', form=form, applicants=applicants)
+    return render_template('records_update.html', form=form, applicants=applicants)
 
 @stjb_app.route('/application/register/<guid>', methods=['GET', 'POST'])
 def application_register(guid):
     app = db.get_or_404(Application, uuid.UUID(guid))
     form = ApplicantsRegistrationForm()
     if form.validate_on_submit():
+        session[guid] = request.form
         applicant = form.applicant()
-        redirecting = redirect_if_member(app, applicant)
+        applicant.gender = app.gender
+        redirecting = redirect_on_existing_member(app.guid, applicant)
         if redirecting:
             return redirecting
         applicant_p = find_person(applicant.en_name_first, applicant.en_name_last)
         # check if they differ
-        should_redirect_to_person_update = applicant_p is not None
+        should_redirect_to_records_update = applicant_p is not None
         spouse = form.spouse()
         if spouse:
-            redirecting = redirect_if_member(app, spouse)
+            redirecting = redirect_on_existing_member(app.guid, spouse)
             if redirecting:
                 return redirecting
-            spouse_p = find_person(spouse.en_name_first, spouse.en_name_last)
+            redirecting = redirect_on_another_active_marriage(guid, applicant, spouse)
+            if redirecting:
+                return redirecting
             # check if they differ
-            should_redirect_to_person_update |= spouse_p is not None
-        if should_redirect_to_person_update:
-            session[guid] = { 'form_data' : request.form }
-            return redirect(url_for('application_update_person', guid=guid))
-        person = Person(app, applicant)
-        member = Card(app, person, applicant, form.as_of_date.data)
-        db.session.add(person)
-        db.session.add(member)
-        if spouse:
-            spouse_person = Person.make_spouse(app, spouse)
-            db.session.add(spouse_person)
-            husband = person if person.gender == 'M' else spouse_person
-            wife = spouse_person if person.gender == 'M' else person
-            marriage = Marriage(husband, wife)
-            db.session.add(marriage)
-            if spouse.do_register == 'as_member':
-                spouse_member = Card(app, spouse_person, spouse, form.as_of_date.data)
-                db.session.add(spouse_member)
-        db.session.commit()
-        return redirect(url_for('member', guid=member.guid))
-    if does_session_contain_form_data(guid):
-        form = form_with_session(session[guid])
+            spouse_p = find_person(spouse.en_name_first, spouse.en_name_last)
+            should_redirect_to_records_update |= spouse_p is not None
+        if should_redirect_to_records_update:
+            return redirect(url_for('application_records_update', guid=guid))
+        session.pop(guid)
+        return finalize_registration_and_redirect(
+                app, applicant, spouse,
+                [],
+                form.as_of_date.data)
+    if guid in session:
+        form = ApplicantsRegistrationForm.make_with_form_data(session[guid])
         form.validate()
         session.pop(guid)
     else:
         form.consider_loading_application(app)
     return render_template( 'register_members.html', form=form)
-
-def does_session_contain_form_data(guid):
-    if guid not in session:
-        return False
-    return 'form_data' in session[guid]
-
-def form_with_session(app_session):
-    form_data = app_session['form_data']
-    applicants_data = app_session['applicants_data'] if 'applicants_data' in app_session else None
-    return ApplicantsRegistrationForm.make_with_form_data(form_data, applicants_data)
 
 def directory(redirect_url, member_url, entity, template):
     form = SearchForm()

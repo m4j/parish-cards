@@ -84,6 +84,19 @@ class Person(db.Model):
         self.postal_code = get_postal_code(app.zip_code)
         self.plus_4 = get_plus4(app.zip_code)
 
+    def update_from(self, other):
+        self.last         = other.last        
+        self.first        = other.first 
+        self.email        = other.email 
+        self.home_phone   = other.home_phone 
+        self.mobile_phone = other.mobile_phone
+        self.gender       = other.gender 
+        self.address      = other.address 
+        self.city         = other.city 
+        self.state_region = other.state_region
+        self.postal_code  = other.postal_code 
+        self.plus_4       = other.plus_4 
+
     @classmethod
     def make_spouse(cls, app, applicant):
         spouse = cls(app, applicant)
@@ -93,7 +106,7 @@ class Person(db.Model):
         return spouse
 
     def full_name(self):
-        return f'{self.last} {self.first}'
+        return f'{self.last}, {self.first}'
 
     def full_name_address(self):
         return f'{self.full_name()} ({self.address}, {self.city} {self.state_region} {self.postal_code})'
@@ -106,9 +119,10 @@ class Marriage(db.Model):
     wife_first     = db.Column(db.String)
     status         = db.Column(db.String)
 
-    def __init__(self, husband, wife):
+    def __init__(self, husband, wife, status='Active'):
         self.husband = husband
         self.wife = wife
+        self.status = status
 
     __table_args__ = (
         db.PrimaryKeyConstraint(
@@ -207,5 +221,36 @@ def find_marriage(first_name, last_name):
                     db.and_(Marriage.husband_first == first_name, Marriage.husband_last == last_name),
                     db.and_(Marriage.wife_first == first_name, Marriage.wife_last == last_name)
                 )
-            )
-           ).scalar()
+            )).scalar()
+
+def find_active_marriage(h_first, h_last, w_first, w_last):
+    return db.session.execute(
+            db.select(Marriage).where(
+                db.and_(
+                    Marriage.husband_first == h_first,
+                    Marriage.husband_last == h_last,
+                    Marriage.wife_first == w_first,
+                    Marriage.wife_last == w_last,
+                    Marriage.status == 'Active'
+                )
+            )).scalar()
+
+def find_active_marriage_of_husband(first_name, last_name):
+    return db.session.execute(
+            db.select(Marriage).where(
+                db.and_(
+                    Marriage.husband_first == first_name,
+                    Marriage.husband_last == last_name,
+                    Marriage.status == 'Active'
+                )
+            )).scalar()
+
+def find_active_marriage_of_wife(first_name, last_name):
+    return db.session.execute(
+            db.select(Marriage).where(
+                db.and_(
+                    Marriage.wife_first == first_name,
+                    Marriage.wife_last == last_name,
+                    Marriage.status == 'Active'
+                )
+            )).scalar()

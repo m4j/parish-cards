@@ -2,6 +2,11 @@
 
 {% block title %}St John the Baptist ROC{% endblock %}
 
+{% block styles %}
+    {{ super() }}
+    <link href="/static/css/base.css" rel="stylesheet">
+{% endblock %}
+
 {% block navbar %}
 <nav class="navbar navbar-default">
   <div class="container-fluid">

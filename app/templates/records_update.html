@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+</div>
+{% endfor %}
+
+<div class="alert alert-info">
+    <p><strong>Heads up!</strong> We found existing records on applicant(s).
+    Please review and decide if update is required.</p>
+</div>
+
+<form action="" method="post" class="form" role="form">
+    {{ form.hidden_tag() }}
+    {{ wtf.form_errors(form, hiddens="only") }}
+
+    {% for decision in form.decisions %}
+    {% set applicant, person, db_person = applicants[loop.index0] %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">{{ applicant.en_name_last }} {{ applicant.en_name_first }}</h3>
+        </div>
+        <div class="panel-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Application</th>
+                        <th>Our Records</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th class="right">First Name</th>
+                        <td class={% if person.first == db_person.first %} "success" {% else %} "warning" {% endif %}>{{ person.first }}</td>
+                        <td class={% if person.first == db_person.first %} "success" {% else %} "warning" {% endif %}>{{ db_person.first }}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">Last Name</th>
+                        <td class={% if person.last == db_person.last  %} "success" {% else %} "warning" {% endif %} >{{ person.last }}</td>
+                        <td class={% if person.last == db_person.last  %} "success" {% else %} "warning" {% endif %} >{{ db_person.last }}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">e-mail</th>
+                        <td class={% if person.email == db_person.email  %} "success" {% else %} "warning" {% endif %} >{{ person.email }}</td>
+                        <td class={% if person.email == db_person.email  %} "success" {% else %} "warning" {% endif %} >{{ db_person.email }}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">Home Phone</th>
+                        <td class={% if person.home_phone == db_person.home_phone  %} "success" {% else %} "warning" {% endif %} >{{ person.home_phone   }}</td>
+                        <td class={% if person.home_phone == db_person.home_phone  %} "success" {% else %} "warning" {% endif %} >{{ db_person.home_phone }}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">Mobile Phone</th>
+                        <td class={% if person.mobile_phone == db_person.mobile_phone %} "success" {% else %} "warning" {% endif %} >{{ person.mobile_phone }}</td>
+                        <td class={% if person.mobile_phone == db_person.mobile_phone %} "success" {% else %} "warning" {% endif %} >{{ db_person.mobile_phone}}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">Gender</th>
+                        <td class={% if person.gender == db_person.gender  %} "success" {% else %} "warning" {% endif %} >{{ person.gender       }}</td>
+                        <td class={% if person.gender == db_person.gender  %} "success" {% else %} "warning" {% endif %} >{{ db_person.gender }}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">Address</th>
+                        <td class={% if person.address == db_person.address  %} "success" {% else %} "warning" {% endif %} >{{ person.address      }}</td>
+                        <td class={% if person.address == db_person.address  %} "success" {% else %} "warning" {% endif %} >{{ db_person.address }}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">City</th>
+                        <td class={% if person.city == db_person.city  %} "success" {% else %} "warning" {% endif %} >{{ person.city         }}</td>
+                        <td class={% if person.city == db_person.city  %} "success" {% else %} "warning" {% endif %} >{{ db_person.city }}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">State</th>
+                        <td class={% if person.state_region == db_person.state_region %} "success" {% else %} "warning" {% endif %} >{{ person.state_region }}</td>
+                        <td class={% if person.state_region == db_person.state_region %} "success" {% else %} "warning" {% endif %} >{{ db_person.state_region}}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">Zip</th>
+                        <td class={% if person.postal_code == db_person.postal_code  %} "success" {% else %} "warning" {% endif %} >{{ person.postal_code  }}</td>
+                        <td class={% if person.postal_code == db_person.postal_code  %} "success" {% else %} "warning" {% endif %} >{{ db_person.postal_code }}</td>
+                    </tr>
+                    <tr>
+                        <th class="right">Zip+4</th>
+                        <td class={% if person.plus_4 == db_person.plus_4  %} "success" {% else %} "warning" {% endif %} >{{ person.plus_4       }}</td>
+                        <td class={% if person.plus_4 == db_person.plus_4  %} "success" {% else %} "warning" {% endif %} >{{ db_person.plus_4 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Please decide how to proceed:</strong></p>
+            {{ wtf.form_field(decision.update_decision) }}
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="form-inline">
+        <div class="form-group">
+            {{ form.register(class="btn btn-primary") }}
+        </div>
+    </div>
+
+</form>
+
+{% endblock %}

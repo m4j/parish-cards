@@ -184,11 +184,8 @@ class ApplicantsRegistrationForm(FlaskForm):
     register = SubmitField('Register')
 
     @classmethod
-    def make_with_form_data(cls, form_data, applicants_data):
+    def make_with_form_data(cls, form_data):
         form = cls(MultiDict(form_data))
-        if applicants_data:
-            for idx, data in enumerate(applicants_data):
-                form.applicants.data[idx].update(data)
         return form
 
     def consider_loading_application(self, app):
