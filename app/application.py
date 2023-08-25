@@ -4,6 +4,7 @@ from wtforms.validators import DataRequired, Optional
 from wtforms.widgets import ListWidget, CheckboxInput
 from types import SimpleNamespace
 from werkzeug.datastructures import MultiDict
+from .validators import ISOYearMonthValidator
 
 CHOICES1 = [ 'Altar Service', 'Brotherhood', 'Sisterhood']
 CHOICES2 = [ 'Cemetery Care', 'Choir', 'Annual Bazaar']
@@ -180,7 +181,7 @@ class ApplicantSubForm(Form):
 
 class ApplicantsRegistrationForm(FlaskForm):
     applicants = FieldList(FormField(ApplicantSubForm))
-    as_of_date = StringField('As of date', validators=[DataRequired()])
+    as_of_date = StringField('As of date', validators=[DataRequired(), ISOYearMonthValidator()])
     register = SubmitField('Register')
 
     @classmethod

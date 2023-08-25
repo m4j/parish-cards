@@ -15,7 +15,7 @@
 
     <div class="list-group">
         {% for app in apps %}
-        <a href="{{ url_for('application_edit', guid=app.guid) }}" class="list-group-item">
+        <a href="{{ url_for('application_edit', guid=app.guid) }}" class="list-group-item {% if app.is_registered() %}list-group-item-success{%else%}list-group-item-info{%endif%}">
         <div class="row">
             <div class="col-md-5">
                 <b>{{ app.format_ru_names() }}</b><br> {{ app.format_en_names() }}

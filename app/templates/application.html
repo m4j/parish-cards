@@ -173,7 +173,9 @@
 
 
     {{ wtf.form_field(form.save) }}
+{% if not app.is_registered() %}
     {{ form.register(class="btn btn-primary") }}
+{% endif %}
 </form>
 
 <div style="margin-top: 20px;"/>

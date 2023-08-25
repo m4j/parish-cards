@@ -45,7 +45,7 @@ def books():
 
 @stjb_app.route("/applications")
 def applications():
-    apps = db.session.execute(db.select(Application).order_by(Application.signature_date)).scalars()
+    apps = db.session.scalars(db.select(Application).order_by(Application.signature_date.desc()))
     return render_template('applications.html', apps=apps)
 
 @stjb_app.route('/application/add', methods=['GET', 'POST'])
@@ -73,11 +73,14 @@ def application_edit(guid):
         if form.save.data:
             flash('The application has been updated')
             return redirect(url_for('applications'))
+        if app.is_registered():
+            flash('The application has been processed already.')
+            return redirect(url_for('application_edit', guid=guid))
         if form.register.data:
             flash('Please verify new member names and monthly dues, and then press Register')
             return redirect(url_for('application_register', guid=guid))
     form.load_application(app)
-    return render_template( 'application.html', form=form)
+    return render_template( 'application.html', app=app, form=form)
 
 def redirect_on_existing_member(guid, applicant):
     if applicant.do_register == 'as_member':
@@ -88,7 +91,6 @@ def redirect_on_existing_member(guid, applicant):
     return None
 
 def redirect_on_another_active_marriage(guid, person, spouse):
-    breakpoint()
     husband = person if person.gender == 'M' else spouse
     wife = spouse if person.gender == 'M' else person
     # check husband

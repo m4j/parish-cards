@@ -208,6 +208,9 @@ class Application(db.Model):
     def format_ru_names(self):
         return self.__format_names(self.ru_name, 'и', self.spouse_ru_name)
 
+    def is_registered(self):
+        return len(self.cards) > 0
+
 def find_member(first_name, last_name):
     return db.session.execute(db.select(Card).filter_by(member_first=first_name, member_last=last_name)).scalar()
 
