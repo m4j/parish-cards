@@ -7,6 +7,13 @@
     <h3>Register New Parish Member(s)<h3>
 </div>
 
+{% for field, errors in form.errors.items() %}
+<div class="alert alert-danger">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ ', '.join(errors) }}
+</div>
+{% endfor %}
+
 {% for message in get_flashed_messages() %}
 <div class="alert alert-warning">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -45,21 +52,10 @@
     
     <div class="panel panel-default">
         <div class="panel-body">
-            <div class="form-inline">
-                <div class="form-group">
-                    {{ form.register(class="btn btn-primary") }}
-                </div>
-                <div class="form-group required">
-                    {{ form.as_of_date.label }} 
-                    {% if form.as_of_date.errors %}
-                    {{ form.as_of_date(class="form-control is_invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in form.phone.errors %}
-                        <span>{{ error }}</span>
-                    </div>
-                    {% else %}
-                    {{ form.as_of_date(class="form-control") }}
-                    {% endif %}
+            <div class="row">
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.as_of_date) }}
+                    {{ wtf.form_field(form.register, class="btn btn-primary") }}
                 </div>
             </div>
         </div>

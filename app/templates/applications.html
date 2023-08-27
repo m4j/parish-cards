@@ -6,6 +6,13 @@
         <h2>Applications for Membership<h2>
     </div>
 
+    {% for field, errors in form.errors.items() %}
+    <div class="alert alert-danger">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ ', '.join(errors) }}
+    </div>
+    {% endfor %}
+
     {% for message in get_flashed_messages() %}
     <div class="alert alert-warning">
         <button type="button" class="close" data-dismiss="alert">&times;</button>

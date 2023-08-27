@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired, Optional
 from wtforms.widgets import ListWidget, CheckboxInput
 from types import SimpleNamespace
 from werkzeug.datastructures import MultiDict
-from .validators import ISOYearMonthValidator
+from .validators import ISOYearMonthValidator, ISOYearMonthDayValidator
 
 CHOICES1 = [ 'Altar Service', 'Brotherhood', 'Sisterhood']
 CHOICES2 = [ 'Cemetery Care', 'Choir', 'Annual Bazaar']
@@ -65,8 +65,8 @@ class ApplicationForm(FlaskForm):
     interests2 = MultiCheckboxField('', choices=CHOICES2)
     interests3 = MultiCheckboxField('', choices=CHOICES3)
 
-    signature_date = StringField('Member Signature (date only)', validators=[DataRequired()])
-    spouse_signature_date = StringField('Spouse Signature (date only)', validators=[Optional()])
+    signature_date = StringField('Member Signature (date only)', validators=[DataRequired(), ISOYearMonthDayValidator() ])
+    spouse_signature_date = StringField('Spouse Signature (date only)', validators=[Optional(), ISOYearMonthDayValidator()])
 
     save = SubmitField('Save')
     register = SubmitField('Register')

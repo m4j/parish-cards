@@ -13,6 +13,20 @@
     <h3>Parish Membership Application</h3>
 </div>
 
+{% for field, errors in form.errors.items() %}
+<div class="alert alert-danger">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ ', '.join(errors) }}
+</div>
+{% endfor %}
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+</div>
+{% endfor %}
+
 <form action="" method="post" class="form" role="form">
     {{ form.hidden_tag() }}
     {{ wtf.form_errors(form, hiddens="only") }}
