@@ -1,5 +1,5 @@
-from app.cards import app
+from app.cards import cardsapp
 
 if __name__ == "__main__":
-    app.run()
+    cardsapp.run()
 

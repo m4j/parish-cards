@@ -13,21 +13,21 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
-stjb_app = Flask(__name__)
-stjb_app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or '606d2fc4-31cb-4ce1-a35b-346ec660994d'
-bootstrap = Bootstrap(stjb_app)
+cardsapp = Flask(__name__)
+cardsapp.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or '606d2fc4-31cb-4ce1-a35b-346ec660994d'
+bootstrap = Bootstrap(cardsapp)
 
-db_uri = os.environ['STJB_DATABASE_URI']
+db_uri = os.environ['CARDS_DATABASE_URI']
 # for legacy sqlite3 connection
 db_path = urlparse(db_uri).path
-stjb_app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
-db.init_app(stjb_app)
+cardsapp.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+db.init_app(cardsapp)
 
 class SearchForm(FlaskForm):
     name = StringField('Type name, like “irina”, or “Иван”. Partial name works too, like “mar” or “joh”', validators=[DataRequired()], render_kw={'autofocus': True})
     submit = SubmitField('Search')
 
-@stjb_app.route('/', methods=['GET', 'POST'])
+@cardsapp.route('/', methods=['GET', 'POST'])
 def index():
     return directory(
             redirect_url=url_for('index'),
@@ -35,7 +35,7 @@ def index():
             template='index.html',
             member_url='.member')
 
-@stjb_app.route('/books', methods=['GET', 'POST'])
+@cardsapp.route('/books', methods=['GET', 'POST'])
 def books():
     return directory(
             redirect_url=url_for('books'),
@@ -43,12 +43,12 @@ def books():
             template='books.html',
             member_url='.book')
 
-@stjb_app.route("/applications")
+@cardsapp.route("/applications")
 def applications():
     apps = db.session.scalars(db.select(Application).order_by(Application.signature_date.desc()))
     return render_template('applications.html', apps=apps)
 
-@stjb_app.route('/application/add', methods=['GET', 'POST'])
+@cardsapp.route('/application/add', methods=['GET', 'POST'])
 def application_add():
     form = ApplicationForm()
     if form.validate_on_submit():
@@ -63,7 +63,7 @@ def application_add():
         return redirect(url_for('applications'))
     return render_template( 'application.html', form=form)
 
-@stjb_app.route('/application/<guid>', methods=['GET', 'POST'])
+@cardsapp.route('/application/<guid>', methods=['GET', 'POST'])
 def application_edit(guid):
     app = db.get_or_404(Application, uuid.UUID(guid))
     form = ApplicationForm()
@@ -137,7 +137,7 @@ def finalize_registration_and_redirect(app, applicant, applicant_spouse, decisio
     db.session.commit()
     return redirect(url_for('member', guid=member.guid))
 
-@stjb_app.route('/application/records_update/<guid>', methods=['GET', 'POST'])
+@cardsapp.route('/application/records_update/<guid>', methods=['GET', 'POST'])
 def application_records_update(guid):
     if guid not in session:
         flash('Something went wrong, unable to find application data in the session.')
@@ -164,7 +164,7 @@ def application_records_update(guid):
             form.append_decision()
     return render_template('records_update.html', form=form, applicants=applicants)
 
-@stjb_app.route('/application/register/<guid>', methods=['GET', 'POST'])
+@cardsapp.route('/application/register/<guid>', methods=['GET', 'POST'])
 def application_register(guid):
     app = db.get_or_404(Application, uuid.UUID(guid))
     form = ApplicantsRegistrationForm()
@@ -225,7 +225,7 @@ def directory(redirect_url, member_url, entity, template):
             members=members,
             member_url=member_url)
 
-@stjb_app.route('/member/<guid>')
+@cardsapp.route('/member/<guid>')
 def member(guid):
     connection = stjb.connect(db_path)
     entity = m.Member.find_by_guid(connection, guid)
@@ -236,7 +236,7 @@ def member(guid):
     connection.close()
     return render_template('member.html', member=entity)
 
-@stjb_app.route('/book/<guid>')
+@cardsapp.route('/book/<guid>')
 def book(guid):
     connection = stjb.connect(db_path)
     entity = p.Member.find_by_guid(connection, guid)
@@ -247,6 +247,6 @@ def book(guid):
     connection.close()
     return render_template('member.html', member=entity)
 
-@stjb_app.errorhandler(404)
+@cardsapp.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
