@@ -187,7 +187,7 @@
 
 
     {{ wtf.form_field(form.save) }}
-{% if not app.is_registered() %}
+{% if app is not defined or not app.is_registered() %}
     {{ form.register(class="btn btn-primary") }}
 {% endif %}
 </form>
