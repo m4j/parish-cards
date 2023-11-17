@@ -89,6 +89,16 @@ class AbstractMember(ABC):
     def format_card(self):
         pass
 
+    def paid_through_month(self):
+        all_payments = self.historical_payments() + self.payments
+        l = len(all_payments)
+        if l == 0:
+            return None
+        last = all_payments[l-1]
+        last_paid_through = last['Paid_Through']
+        month = last_paid_through.split('-')[1]
+        return MONTHS_DICT[month]
+
     def format_payments_table(self):
         buffer = ''
         payments = self.payments
@@ -99,8 +109,9 @@ class AbstractMember(ABC):
         last_year = int(last_through.split('-')[0])
         buffer += format_header(range(first_year, last_year + 1)) + '\n'
         year_totals = list(map(lambda y: 0, range(first_year, last_year + 1)))
+        paid_through_m = self.paid_through_month()
         for i, month in enumerate(MONTHS):
-            row1 = f' {month}  '
+            row1 = f' {month} *' if month == paid_through_m else f' {month}  '
             row2 = '      '
             month_number = MONTH_NUMBERS[i]
             for j, year in enumerate(range(first_year, last_year + 1)):
