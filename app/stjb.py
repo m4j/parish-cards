@@ -9,6 +9,8 @@ def connect(database):
     return conn
 
 DISTANT_PAST = '1970-01'
+FIRST_FROM = '2020-01'
+LAST_THRU = '2025-12'
 TABLE_CELL_WIDTH = 11
 MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 MONTH_NUMBERS = ['01','02','03','04','05','06','07','08','09','10','11','12']
@@ -102,9 +104,9 @@ class AbstractMember(ABC):
     def format_payments_table(self):
         buffer = ''
         payments = self.payments
-        first_from = payments[0]['Paid_From'] if len(payments) > 0 else '2019-01'
-        first_from = min(first_from, '2019-01')
-        last_through = '2024-12'
+        first_from = payments[0]['Paid_From'] if len(payments) > 0 else FIRST_FROM
+        first_from = min(first_from, FIRST_FROM)
+        last_through = LAST_THRU
         first_year = int(first_from.split('-')[0])
         last_year = int(last_through.split('-')[0])
         buffer += format_header(range(first_year, last_year + 1)) + '\n'
