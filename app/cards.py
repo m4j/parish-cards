@@ -16,6 +16,8 @@ from wtforms.validators import DataRequired
 cardsapp = Flask(__name__)
 cardsapp.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or '606d2fc4-31cb-4ce1-a35b-346ec660994d'
 bootstrap = Bootstrap(cardsapp)
+if os.environ.get('BOOTSTRAP_SERVE_LOCAL') in ['YES', 'TRUE', '1']:
+    cardsapp.config['BOOTSTRAP_SERVE_LOCAL'] = True
 
 db_uri = os.environ['CARDS_DATABASE_URI']
 # for legacy sqlite3 connection
@@ -219,6 +221,8 @@ def directory(redirect_url, member_url, entity, template):
         connection.close()
         if len(members) == 0:
             flash('Nothing found, please try again')
+        if len(members) == 1:
+            return redirect(url_for(member_url, guid=members[0]['GUID']))
     return render_template(
             template,
             form=form,
