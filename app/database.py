@@ -1,7 +1,14 @@
+from sqlalchemy.ext.hybrid import Comparator, hybrid_property
+from sqlalchemy import func
 from flask_sqlalchemy import SQLAlchemy
+
 import uuid
 
 db = SQLAlchemy()
+
+class CaseInsensitiveComparator(Comparator):
+    def __eq__(self, other):
+        return func.lower(self.__clause_element__()) == func.lower(other)
 
 class Card(db.Model):
     __tablename__ = 'cards'
@@ -26,6 +33,24 @@ class Card(db.Model):
     application           = db.relationship('Application', back_populates='cards')
     person                = db.relationship('Person', back_populates='card')
 
+    @hybrid_property
+    def i_member_last(self):
+        return self.member_last.lower()
+
+    @i_member_last.inplace.comparator
+    @classmethod
+    def _i_member_last_comparator(cls) -> CaseInsensitiveComparator:
+        return CaseInsensitiveComparator(cls.member_last)
+
+    @hybrid_property
+    def i_member_first(self):
+        return self.member_first.lower()
+
+    @i_member_first.inplace.comparator
+    @classmethod
+    def _i_member_first_comparator(cls) -> CaseInsensitiveComparator:
+        return CaseInsensitiveComparator(cls.member_first)
+
     def __init__(self, app, person, applicant, as_of_date):
         self.guid = str(uuid.uuid4())
         self.application = app
@@ -45,11 +70,11 @@ class Card(db.Model):
 
 def get_postal_code(zip_code):
     return zip_code.split('-')[0].strip()
-    
+
 def get_plus4(zip_code):
     split = zip_code.split('-')
     return split[1].strip() if len(split) > 1 else None
-    
+
 class Person(db.Model):
     __tablename__ = 'person'
     guid    = db.Column(db.String, primary_key=True)
@@ -84,18 +109,36 @@ class Person(db.Model):
         self.postal_code = get_postal_code(app.zip_code)
         self.plus_4 = get_plus4(app.zip_code)
 
+    @hybrid_property
+    def i_last(self):
+        return self.last.lower()
+
+    @i_last.inplace.comparator
+    @classmethod
+    def _i_last_comparator(cls):
+        return CaseInsensitiveComparator(cls.last)
+
+    @hybrid_property
+    def i_first(self):
+        return self.first.lower()
+
+    @i_first.inplace.comparator
+    @classmethod
+    def _i_first_comparator(cls):
+        return CaseInsensitiveComparator(cls.first)
+
     def update_from(self, other):
-        self.last         = other.last        
-        self.first        = other.first 
-        self.email        = other.email 
-        self.home_phone   = other.home_phone 
+        self.last         = other.last
+        self.first        = other.first
+        self.email        = other.email
+        self.home_phone   = other.home_phone
         self.mobile_phone = other.mobile_phone
-        self.gender       = other.gender 
-        self.address      = other.address 
-        self.city         = other.city 
+        self.gender       = other.gender
+        self.address      = other.address
+        self.city         = other.city
         self.state_region = other.state_region
-        self.postal_code  = other.postal_code 
-        self.plus_4       = other.plus_4 
+        self.postal_code  = other.postal_code
+        self.plus_4       = other.plus_4
 
     @classmethod
     def make_spouse(cls, app, applicant):
@@ -118,6 +161,42 @@ class Marriage(db.Model):
     wife_last      = db.Column(db.String)
     wife_first     = db.Column(db.String)
     status         = db.Column(db.String)
+
+    @hybrid_property
+    def i_husband_first(self):
+        return self.husband_first.lower()
+
+    @i_husband_first.inplace.comparator
+    @classmethod
+    def _i_husband_first_comparator(cls):
+        return CaseInsensitiveComparator(cls.husband_first)
+
+    @hybrid_property
+    def i_husband_last(self):
+        return self.husband_last.lower()
+
+    @i_husband_last.inplace.comparator
+    @classmethod
+    def _i_husband_last_comparator(cls):
+        return CaseInsensitiveComparator(cls.husband_last)
+
+    @hybrid_property
+    def i_wife_first(self):
+        return self.wife_first.lower()
+
+    @i_wife_first.inplace.comparator
+    @classmethod
+    def _i_wife_first_comparator(cls):
+        return CaseInsensitiveComparator(cls.wife_first)
+
+    @hybrid_property
+    def i_wife_last(self):
+        return self.wife_last.lower()
+
+    @i_wife_last.inplace.comparator
+    @classmethod
+    def _i_wife_last_comparator(cls):
+        return CaseInsensitiveComparator(cls.wife_last)
 
     def __init__(self, husband, wife, status='Active'):
         self.husband = husband
@@ -155,7 +234,7 @@ class Application(db.Model):
     en_name               = db.Column(db.String, nullable=False)
     saints_day            = db.Column(db.String)
     gender                = db.Column(db.String(1))
-    
+
     spouse_ru_name        = db.Column(db.String)
     spouse_en_name        = db.Column(db.String)
     spouse_saints_day     = db.Column(db.String)
@@ -195,7 +274,7 @@ class Application(db.Model):
 
     signature_date        = db.Column(db.String, nullable=False)
     spouse_signature_date = db.Column(db.String)
-    cards                 = db.relationship('Card', back_populates="application")
+    cards                 = db.relationship('Card', back_populates='application')
 
     def __format_names(self, name, glue, spouse_name):
         if spouse_name:
@@ -212,48 +291,50 @@ class Application(db.Model):
         return len(self.cards) > 0
 
 def find_member(first_name, last_name):
-    return db.session.execute(db.select(Card).filter_by(member_first=first_name, member_last=last_name)).scalar()
+    return db.session.execute(
+            db.select(Card).filter(
+                Card.i_member_first==first_name, Card.i_member_last==last_name
+                )).scalar()
 
 def find_person(first_name, last_name):
-    return db.session.execute(db.select(Person).filter_by(first=first_name, last=last_name)).scalar()
+    return db.session.execute(
+            db.select(Person).filter(
+                Person.i_first==first_name, Person.i_last==last_name
+                )).scalar()
 
 def find_marriage(first_name, last_name):
     return db.session.execute(
-            db.select(Marriage).where(
+            db.select(Marriage).filter(
                 db.or_(
-                    db.and_(Marriage.husband_first == first_name, Marriage.husband_last == last_name),
-                    db.and_(Marriage.wife_first == first_name, Marriage.wife_last == last_name)
-                )
-            )).scalar()
+                    db.and_(Marriage.i_husband_first == first_name, Marriage.i_husband_last == last_name),
+                    db.and_(Marriage.i_wife_first == first_name, Marriage.i_wife_last == last_name)
+                    ))).scalar()
 
 def find_active_marriage(h_first, h_last, w_first, w_last):
     return db.session.execute(
-            db.select(Marriage).where(
+            db.select(Marriage).filter(
                 db.and_(
-                    Marriage.husband_first == h_first,
-                    Marriage.husband_last == h_last,
-                    Marriage.wife_first == w_first,
-                    Marriage.wife_last == w_last,
+                    Marriage.i_husband_first == h_first,
+                    Marriage.i_husband_last == h_last,
+                    Marriage.i_wife_first == w_first,
+                    Marriage.i_wife_last == w_last,
                     Marriage.status == 'Active'
-                )
-            )).scalar()
+                    ))).scalar()
 
 def find_active_marriage_of_husband(first_name, last_name):
     return db.session.execute(
-            db.select(Marriage).where(
+            db.select(Marriage).filter(
                 db.and_(
-                    Marriage.husband_first == first_name,
-                    Marriage.husband_last == last_name,
+                    Marriage.i_husband_first == first_name,
+                    Marriage.i_husband_last == last_name,
                     Marriage.status == 'Active'
-                )
-            )).scalar()
+                    ))).scalar()
 
 def find_active_marriage_of_wife(first_name, last_name):
     return db.session.execute(
-            db.select(Marriage).where(
+            db.select(Marriage).filter(
                 db.and_(
-                    Marriage.wife_first == first_name,
-                    Marriage.wife_last == last_name,
+                    Marriage.i_wife_first == first_name,
+                    Marriage.i_wife_last == last_name,
                     Marriage.status == 'Active'
-                )
-            )).scalar()
+                    ))).scalar()

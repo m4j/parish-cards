@@ -14,8 +14,8 @@
 </div>
 {% endfor %}
 
-{% for message in get_flashed_messages() %}
-<div class="alert alert-warning">
+{% for category, message in get_flashed_messages(with_categories=true) %}
+<div class="alert alert-{{ category }}">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     {{ message }}
 </div>
@@ -28,7 +28,7 @@
     {% for applicant in form.applicants %}
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">{{ applicant.names.data }}</h3>
+                <h3 class="panel-title">{{ applicant.en_name_last.data }}, {{applicant.en_name_first.data }}</h3>
             </div>
             <div class="panel-body">
                 <div class="row">

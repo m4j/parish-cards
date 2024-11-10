@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import Form, StringField, SubmitField, SelectMultipleField, EmailField, IntegerField, RadioField, SelectField, FieldList, FormField
+from wtforms import Form, StringField, SubmitField, SelectMultipleField, EmailField, IntegerField, RadioField, SelectField, FieldList, FormField, HiddenField
 from wtforms.validators import DataRequired, Optional
 from wtforms.widgets import ListWidget, CheckboxInput
 from types import SimpleNamespace
@@ -25,7 +25,7 @@ class ApplicationForm(FlaskForm):
     en_name = StringField('Last, first name in English', validators=[DataRequired()], render_kw={'placeholder': 'Smirnov Ivan'})
     saints_day = StringField('Saint’s Day', validators=[Optional()])
     gender = SelectField('Gender', choices=[('M', 'Male'), ('F', 'Female')])
-    
+
     spouse_ru_name = StringField('Last, first name in Russian (including patronymic, if applicable)', render_kw={'placeholder': 'Смирнова Мария Ивановна'}, validators=[Optional()])
     spouse_en_name = StringField('Last, first name in English', render_kw={'placeholder': 'Smirnova Maria'}, validators=[Optional()])
     spouse_saints_day = StringField('Saint’s Day', validators=[Optional()])
@@ -247,8 +247,8 @@ class ApplicantsRegistrationForm(FlaskForm):
 class UpdateDecisionSubForm(Form):
     update_decision = RadioField(
             choices=[
-                ('update', 'Use information from the application (and update our records)'),
-                ('use_as_is', 'Use our records and disregard information from the application')
+                ('update', 'Prefer <em>Application</em> (update <em>Our Records</em>)'),
+                ('use_as_is', 'Prefer <em>Our Records</em> (disregard <em>Application</em>)')
             ],
             validators=[DataRequired()]
         )

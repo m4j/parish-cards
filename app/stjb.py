@@ -150,7 +150,7 @@ class AbstractMember(ABC):
                 else:
                     method = info[0]
                     identifier = info[1] or ''
-                    amount = info[2] 
+                    amount = info[2]
                     payments_this_month = info[3]
                     previous = self.payment_info(all_payments, date_of_previous_month(year, int(month_number)))
                     if info == previous:
@@ -170,7 +170,7 @@ class AbstractMember(ABC):
 
         left.append(NON_MEMBER_CELL)
         right.append('not a member')
-        
+
         left.append(ARCHIVE_CELL)
         right.append('archived, see paper cards')
 

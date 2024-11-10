@@ -1,4 +1,4 @@
-from flask import Flask, render_template, abort, session, redirect, url_for, flash, request
+from flask import Flask, render_template, abort, session, redirect, url_for, flash, request, Markup
 from flask_bootstrap import Bootstrap
 from . import stjb
 from . import member as m
@@ -59,7 +59,7 @@ def application_add():
         db.session.add(app)
         db.session.commit()
         if form.register.data:
-            flash('Please verify new member names and monthly dues, and then press Register')
+            flash('Please verify new member names and monthly dues, and then press Register', 'info')
             return redirect(url_for('application_register', guid=app.guid))
         flash('The application has been saved')
         return redirect(url_for('applications'))
@@ -79,7 +79,7 @@ def application_edit(guid):
             flash('The application has been processed already.')
             return redirect(url_for('application_edit', guid=guid))
         if form.register.data:
-            flash('Please verify new member names and monthly dues, and then press Register')
+            flash('Please verify new member names and monthly dues, and then press Register', 'info')
             return redirect(url_for('application_register', guid=guid))
     form.load_application(app)
     return render_template( 'application.html', app=app, form=form)
@@ -88,28 +88,42 @@ def redirect_on_existing_member(guid, applicant):
     if applicant.do_register == 'as_member':
         member = find_member(applicant.en_name_first, applicant.en_name_last)
         if member:
-            flash(f'{member.person.full_name_address()} is already a parish member')
+            flash(Markup(f'<b>{member.person.full_name_address()}</b> is already a member of the parish.'), 'danger')
             return redirect(url_for('application_register', guid=guid))
     return None
 
-def redirect_on_another_active_marriage(guid, person, spouse):
-    husband = person if person.gender == 'M' else spouse
-    wife = spouse if person.gender == 'M' else person
+def redirect_on_existing_member_reversed_names(guid, applicant):
+    if applicant.do_register == 'as_member':
+        member = find_member(applicant.en_name_last, applicant.en_name_first)
+        if member:
+            flash(Markup(f'<b>{member.person.full_name_address()}</b> is already a member of the parish.'), 'danger')
+            flash(Markup(f'Please verify first and last names of <b>{applicant.en_name_last}, {applicant.en_name_first}</b>  and do either: <ul><li>If names were not accidentally <em>reversed</em> in the application — correct here and press <b>Register</b> again</li><li>Press <b>Register</b> again without correcting names — they will be registered as entered</li></ul>'), 'danger')
+            return redirect(url_for('application_register', guid=guid))
+    return None
+
+def redirect_on_another_active_marriage(guid, applicant_form, spouse_form):
+    husband_form = applicant_form if applicant_form.gender == 'M' else spouse_form
+    wife_form = spouse_form if applicant_form.gender == 'M' else applicant_form
     # check husband
-    marriage = find_active_marriage_of_husband(husband.en_name_first, husband.en_name_last)
-    if marriage is not None and (marriage.wife.first != wife.en_name_first or marriage.wife.last != wife.en_name_last):
-        flash(f'Active marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} has been found')
+    marriage = find_active_marriage_of_husband(husband_form.en_name_first, husband_form.en_name_last)
+    if marriage is not None and (
+            marriage.wife.first.casefold() != wife_form.en_name_first.casefold() or
+            marriage.wife.last.casefold() != wife_form.en_name_last.casefold()):
+        flash(f'Active marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} has been found', 'danger')
         return redirect(url_for('application_register', guid=guid))
     # check wife
-    marriage = find_active_marriage_of_wife(wife.en_name_first, wife.en_name_last)
-    if marriage is not None and (marriage.husband.first != husband.en_name_first or marriage.husband.last != husband.en_name_last):
-        flash(f'Active marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} has been found')
+    marriage = find_active_marriage_of_wife(wife_form.en_name_first, wife_form.en_name_last)
+    if marriage is not None and (
+            marriage.husband.first.casefold() != husband_form.en_name_first.casefold() or
+            marriage.husband.last.casefold() != husband_form.en_name_last.casefold()):
+        flash(f'Active marriage between {marriage.husband.full_name()} and {marriage.wife.full_name()} has been found', 'danger')
         return redirect(url_for('application_register', guid=guid))
     return None
 
 def finalize_registration_and_redirect(app, applicant, applicant_spouse, decisions_data, as_of_date):
     decisions = iter(decisions_data)
     person = Person(app, applicant)
+    member = None
     db_person = find_person(applicant.en_name_first, applicant.en_name_last)
     if db_person:
         if next(decisions) == 'update':
@@ -117,8 +131,9 @@ def finalize_registration_and_redirect(app, applicant, applicant_spouse, decisio
         person = db_person
     else:
         db.session.add(person)
-    member = Card(app, person, applicant, as_of_date)
-    db.session.add(member)
+    if applicant.do_register == 'as_member':
+        member = Card(app, person, applicant, as_of_date)
+        db.session.add(member)
     if applicant_spouse:
         spouse = Person.make_spouse(app, applicant_spouse)
         db_spouse = find_person(applicant_spouse.en_name_first, applicant_spouse.en_name_last)
@@ -137,7 +152,9 @@ def finalize_registration_and_redirect(app, applicant, applicant_spouse, decisio
             spouse_member = Card(app, spouse, applicant_spouse, as_of_date)
             db.session.add(spouse_member)
     db.session.commit()
-    return redirect(url_for('member', guid=member.guid))
+    if member:
+        return redirect(url_for('member', guid=member.guid))
+    return redirect(url_for('applications'))
 
 @cardsapp.route('/application/records_update/<guid>', methods=['GET', 'POST'])
 def application_records_update(guid):
@@ -168,15 +185,23 @@ def application_records_update(guid):
 
 @cardsapp.route('/application/register/<guid>', methods=['GET', 'POST'])
 def application_register(guid):
+    #breakpoint()
     app = db.get_or_404(Application, uuid.UUID(guid))
     form = ApplicantsRegistrationForm()
     if form.validate_on_submit():
+        applicant_warning_rev_key = f'{guid}_applicant_warning_rev'
+        spouse_warning_rev_key = f'{guid}_spouse_warning_rev'
         session[guid] = request.form
         applicant = form.applicant()
         applicant.gender = app.gender
         redirecting = redirect_on_existing_member(app.guid, applicant)
         if redirecting:
             return redirecting
+        if not session.get(applicant_warning_rev_key):
+            redirecting = redirect_on_existing_member_reversed_names(app.guid, applicant)
+            if redirecting:
+                session[applicant_warning_rev_key] = True
+                return redirecting
         applicant_p = find_person(applicant.en_name_first, applicant.en_name_last)
         # check if they differ
         should_redirect_to_records_update = applicant_p is not None
@@ -185,12 +210,19 @@ def application_register(guid):
             redirecting = redirect_on_existing_member(app.guid, spouse)
             if redirecting:
                 return redirecting
+            if not session.get(spouse_warning_rev_key):
+                redirecting = redirect_on_existing_member_reversed_names(app.guid, spouse)
+                if redirecting:
+                    session[spouse_warning_rev_key] = True
+                    return redirecting
             redirecting = redirect_on_another_active_marriage(guid, applicant, spouse)
             if redirecting:
                 return redirecting
             # check if they differ
             spouse_p = find_person(spouse.en_name_first, spouse.en_name_last)
             should_redirect_to_records_update |= spouse_p is not None
+        session.pop(applicant_warning_rev_key, False)
+        session.pop(spouse_warning_rev_key, False)
         if should_redirect_to_records_update:
             return redirect(url_for('application_records_update', guid=guid))
         session.pop(guid)
