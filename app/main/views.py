@@ -1,56 +1,43 @@
 from flask import Flask, render_template, abort, session, redirect, url_for, flash, request, Markup
-from flask_bootstrap import Bootstrap
-from . import stjb
-from . import member as m
-from . import prosphora as p
+from .. import db, db_path
+from .. import stjb
+from .. import member as m
+from .. import prosphora as p
+from . import main
 from .application import ApplicationForm, ApplicantsRegistrationForm, UpdateDecisionsForm
-from .database import db, Application, Person, Card, Marriage, find_member, find_person, find_active_marriage, find_active_marriage_of_husband, find_active_marriage_of_wife
-import os
+from .database import Application, Person, Card, Marriage, find_member, find_person, find_active_marriage, find_active_marriage_of_husband, find_active_marriage_of_wife
 import uuid
-from urllib.parse import urlparse
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
-cardsapp = Flask(__name__)
-cardsapp.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or '606d2fc4-31cb-4ce1-a35b-346ec660994d'
-bootstrap = Bootstrap(cardsapp)
-if os.environ.get('BOOTSTRAP_SERVE_LOCAL') in ['YES', 'TRUE', '1']:
-    cardsapp.config['BOOTSTRAP_SERVE_LOCAL'] = True
-
-db_uri = os.environ['CARDS_DATABASE_URI']
-# for legacy sqlite3 connection
-db_path = urlparse(db_uri).path
-cardsapp.config["SQLALCHEMY_DATABASE_URI"] = db_uri
-db.init_app(cardsapp)
-
 class SearchForm(FlaskForm):
     name = StringField('Type name, like “irina”, or “Иван”. Partial name works too, like “mar” or “joh”', validators=[DataRequired()], render_kw={'autofocus': True})
     submit = SubmitField('Search')
 
-@cardsapp.route('/', methods=['GET', 'POST'])
+@main.route('/', methods=['GET', 'POST'])
 def index():
     return directory(
-            redirect_url=url_for('index'),
+            redirect_url=url_for('.index'),
             entity=m.Member,
             template='index.html',
             member_url='.member')
 
-@cardsapp.route('/books', methods=['GET', 'POST'])
+@main.route('/books', methods=['GET', 'POST'])
 def books():
     return directory(
-            redirect_url=url_for('books'),
+            redirect_url=url_for('.books'),
             entity=p.Member,
             template='books.html',
             member_url='.book')
 
-@cardsapp.route("/applications")
+@main.route("/applications")
 def applications():
     apps = db.session.scalars(db.select(Application).order_by(Application.signature_date.desc()))
     return render_template('applications.html', apps=apps)
 
-@cardsapp.route('/application/add', methods=['GET', 'POST'])
+@main.route('/application/add', methods=['GET', 'POST'])
 def application_add():
     form = ApplicationForm()
     if form.validate_on_submit():
@@ -65,7 +52,7 @@ def application_add():
         return redirect(url_for('applications'))
     return render_template( 'application.html', form=form)
 
-@cardsapp.route('/application/<guid>', methods=['GET', 'POST'])
+@main.route('/application/<guid>', methods=['GET', 'POST'])
 def application_edit(guid):
     app = db.get_or_404(Application, uuid.UUID(guid))
     form = ApplicationForm()
@@ -156,7 +143,7 @@ def finalize_registration_and_redirect(app, applicant, applicant_spouse, decisio
         return redirect(url_for('member', guid=member.guid))
     return redirect(url_for('applications'))
 
-@cardsapp.route('/application/records_update/<guid>', methods=['GET', 'POST'])
+@main.route('/application/records_update/<guid>', methods=['GET', 'POST'])
 def application_records_update(guid):
     if guid not in session:
         flash('Something went wrong, unable to find application data in the session.')
@@ -183,7 +170,7 @@ def application_records_update(guid):
             form.append_decision()
     return render_template('records_update.html', form=form, applicants=applicants)
 
-@cardsapp.route('/application/register/<guid>', methods=['GET', 'POST'])
+@main.route('/application/register/<guid>', methods=['GET', 'POST'])
 def application_register(guid):
     #breakpoint()
     app = db.get_or_404(Application, uuid.UUID(guid))
@@ -261,7 +248,7 @@ def directory(redirect_url, member_url, entity, template):
             members=members,
             member_url=member_url)
 
-@cardsapp.route('/member/<guid>')
+@main.route('/member/<guid>')
 def member(guid):
     connection = stjb.connect(db_path)
     entity = m.Member.find_by_guid(connection, guid)
@@ -272,7 +259,7 @@ def member(guid):
     connection.close()
     return render_template('member.html', member=entity)
 
-@cardsapp.route('/book/<guid>')
+@main.route('/book/<guid>')
 def book(guid):
     connection = stjb.connect(db_path)
     entity = p.Member.find_by_guid(connection, guid)
@@ -283,6 +270,3 @@ def book(guid):
     connection.close()
     return render_template('member.html', member=entity)
 
-@cardsapp.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404

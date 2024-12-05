@@ -7,7 +7,7 @@ DISTR_PAYMENTS=$(DISTR_DIR)/$(PAYMENTS)-$(VERSION).pdf
 DISTR_PROSPHORAS=$(DISTR_DIR)/$(PROSPHORAS)-$(VERSION).pdf
 DATABASE=$(TOP)/../StJohnDC.db
 DATABASE_DIR=$(TOP)/database
-APP_DIR=$(TOP)/app
+APP_DIR=$(TOP)/parish
 TEMPLATES_DIR=$(APP_DIR)/templates
 
 MERGE=$(APP_DIR)/merge.py
@@ -29,7 +29,7 @@ endif
 
 all: distr
 
-distr: $(DISTR_DIR) payments 
+distr: $(DISTR_DIR) payments
 
 payments: $(DISTR_DIR) $(DISTR_PAYMENTS)
 
@@ -58,10 +58,10 @@ $(DISTR_PROSPHORAS): $(PROSPHORAS).pdf
           aux_hash=`$(HASH) $(*F).aux 2>/dev/null` ;\
 		done
 
-$(PROSPHORAS).tex: $(PROSPHORAS).csv 
+$(PROSPHORAS).tex: $(PROSPHORAS).csv
 	$(MERGE) $@ $< > $@
 
-$(PAYMENTS).tex: $(PAYMENTS).csv 
+$(PAYMENTS).tex: $(PAYMENTS).csv
 	$(MERGE) $@ $< > $@
 
 $(PAYMENTS).csv: $(DATABASE)

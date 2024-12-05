@@ -1,10 +1,8 @@
 from sqlalchemy.ext.hybrid import Comparator, hybrid_property
 from sqlalchemy import func
-from flask_sqlalchemy import SQLAlchemy
+from .. import db
 
 import uuid
-
-db = SQLAlchemy()
 
 class CaseInsensitiveComparator(Comparator):
     def __eq__(self, other):
@@ -94,6 +92,11 @@ class Person(db.Model):
     date_of_death  = db.Column(db.String)
     note           = db.Column(db.String)
     card           = db.relationship('Card', uselist=False, back_populates='person')
+    marriage       = db.relationship(
+        'Marriage',
+        uselist=False,
+        primaryjoin = 'and_(Marriage.status == "Active", or_(and_(foreign(Person.last) == Marriage.husband_last, foreign(Person.first) == Marriage.husband_first), and_(foreign(Person.last) == Marriage.wife_last, foreign(Person.first) == Marriage.wife_first)))'
+    )
 
     def __init__(self, app, applicant):
         self.guid = str(uuid.uuid4())
@@ -153,6 +156,13 @@ class Person(db.Model):
 
     def full_name_address(self):
         return f'{self.full_name()} ({self.address}, {self.city} {self.state_region} {self.postal_code})'
+
+    @property
+    def spouse(self):
+        m = self.marriage
+        if m is None:
+            return None
+        return m.wife if m.husband == self else m.husband
 
 class Marriage(db.Model):
     __tablename__ = 'marriage'
@@ -220,11 +230,11 @@ class Marriage(db.Model):
 
     husband = db.relationship(
         'Person',
-        primaryjoin = 'and_(Person.last == foreign(Marriage.husband_last), Person.first == foreign(Marriage.husband_first))'
+        foreign_keys = [husband_last, husband_first]
     )
     wife = db.relationship(
         'Person',
-        primaryjoin = 'and_(Person.last == foreign(Marriage.wife_last), Person.first == foreign(Marriage.wife_first))'
+        foreign_keys = [wife_last, wife_first]
     )
 
 class Application(db.Model):

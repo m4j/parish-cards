@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired, Optional
 from wtforms.widgets import ListWidget, CheckboxInput
 from types import SimpleNamespace
 from werkzeug.datastructures import MultiDict
-from .validators import ISOYearMonthValidator, ISOYearMonthDayValidator
+from ..validators import ISOYearMonthValidator, ISOYearMonthDayValidator
 
 CHOICES1 = [ 'Altar Service', 'Brotherhood', 'Sisterhood']
 CHOICES2 = [ 'Cemetery Care', 'Choir', 'Annual Bazaar']
@@ -76,7 +76,7 @@ class ApplicationForm(FlaskForm):
         self.en_name.data = app.en_name
         self.saints_day.data = app.saints_day
         self.gender.data = app.gender
-        
+
         self.spouse_ru_name.data = app.spouse_ru_name
         self.spouse_en_name.data = app.spouse_en_name
         self.spouse_saints_day.data = app.spouse_saints_day
@@ -125,7 +125,7 @@ class ApplicationForm(FlaskForm):
         app.en_name = self.en_name.data
         app.saints_day = self.saints_day.data
         app.gender = self.gender.data
-        
+
         app.spouse_ru_name = self.spouse_ru_name.data
         app.spouse_en_name = self.spouse_en_name.data
         app.spouse_saints_day = self.spouse_saints_day.data
