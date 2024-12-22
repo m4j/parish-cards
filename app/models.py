@@ -1,6 +1,6 @@
 from sqlalchemy.ext.hybrid import Comparator, hybrid_property
 from sqlalchemy import func
-from .. import db
+from . import db
 
 import uuid
 
@@ -23,7 +23,7 @@ class Card(db.Model):
     membership_from       = db.Column(db.String)
     membership_through    = db.Column(db.String)
     membership_termination_reason = db.Column(db.String)
-    dues_amount           = db.Column(db.Numeric, default=35)
+    dues_amount           = db.Column(db.Integer)
     dues_paid_through     = db.Column(db.String)
     notes                 = db.Column(db.String)
     guid                  = db.Column(db.String, unique=True)
@@ -299,6 +299,36 @@ class Application(db.Model):
 
     def is_registered(self):
         return len(self.cards) > 0
+
+class PaymentMethod(db.Model):
+    __tablename__ = 'payments_methods'
+    method        = db.Column(db.String, primary_key=True)
+    section       = db.Column(db.Integer)
+    section_name  = db.Column(db.String)
+    display_short = db.Column(db.String)
+    display_long  = db.Column(db.String)
+
+class Payment(db.Model):
+    __tablename__ = 'payments_register'
+    record_date   = db.Column(db.String)
+    record_id     = db.Column(db.String)
+    payor         = db.Column(db.String)
+    date          = db.Column(db.String)
+    method        = db.Column(db.String, db.ForeignKey('payments_methods.method'))
+    identifier    = db.Column(db.String)
+    amount        = db.Column(db.Integer)
+    comment       = db.Column(db.String)
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint(
+            'payor',
+            'date',
+            'method',
+            'identifier'
+        ),
+    )
+
+    payment_method        = db.relationship(PaymentMethod, uselist=False)
 
 def find_member(first_name, last_name):
     return db.session.execute(

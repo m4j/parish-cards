@@ -181,7 +181,7 @@ class ApplicantSubForm(Form):
 
 class ApplicantsRegistrationForm(FlaskForm):
     applicants = FieldList(FormField(ApplicantSubForm))
-    as_of_date = StringField('As of date', validators=[DataRequired(), ISOYearMonthValidator()])
+    as_of_date = StringField('As of date (YYYY-MM)', validators=[DataRequired(), ISOYearMonthValidator()])
     register = SubmitField('Register')
 
     @classmethod
@@ -219,7 +219,10 @@ class ApplicantsRegistrationForm(FlaskForm):
         return names_data
 
     def __ru_name_data(self, name):
-        names = [name for name in name.split(' ') if len(name) > 0]
+        san = name.translate(name.maketrans(',;', '  '))
+        names = [name for name in san.split(' ') if len(san) > 0]
+        names = [x.strip() for x in names]
+        names = [x for x in names if x]
         if len(names) == 3:
             return {
                     'ru_name_last': names[0],
@@ -234,7 +237,10 @@ class ApplicantsRegistrationForm(FlaskForm):
         return {}
 
     def __en_name_data(self, name):
-        names = [name for name in name.split(' ') if len(name) > 0]
+        san = name.translate(name.maketrans(',;', '  '))
+        names = [name for name in san.split(' ') if len(san) > 0]
+        names = [x.strip() for x in names]
+        names = [x for x in names if x]
         if len(names) >= 2:
             last = names.pop(0)
             first = ' '.join(names)
