@@ -302,7 +302,7 @@ class Application(db.Model):
         return len(self.cards) > 0
 
 class PaymentMethod(db.Model):
-    __tablename__ = 'Payment_Methods'
+    __tablename__ = 'payment_method'
     method        = db.Column(db.String, primary_key=True)
     section       = db.Column(db.Integer)
     section_name  = db.Column(db.String)
@@ -310,11 +310,11 @@ class PaymentMethod(db.Model):
     display_long  = db.Column(db.String)
 
 class Payment(db.Model):
-    __tablename__ = 'Payment_Register'
+    __tablename__ = 'payment'
     record_sheet_id = db.Column(db.String, default='9999-12-31')
     payor         = db.Column(db.String)
     date          = db.Column(db.String)
-    method        = db.Column(db.String, db.ForeignKey('Payment_Methods.method'))
+    method        = db.Column(db.String, db.ForeignKey('payment_method.method'))
     identifier    = db.Column(db.String)
     amount        = db.Column(db.Integer)
     comment       = db.Column(db.String)
@@ -332,7 +332,7 @@ class Payment(db.Model):
     dues = db.relationship('DuesPayment', back_populates='payment')
 
 class DuesPayment(db.Model):
-    __tablename__ = 'payments_dues'
+    __tablename__ = 'payment_sub_dues'
     guid          = db.Column(db.Uuid(native_uuid=False), primary_key=True)
     payor         = db.Column(db.String)
     date          = db.Column(db.String)
@@ -348,7 +348,7 @@ class DuesPayment(db.Model):
     __table_args__ = (
         db.ForeignKeyConstraint(
             ['payor', 'date', 'method', 'identifier'],
-            ['Payment_Register.payor', 'Payment_Register.date', 'Payment_Register.method', 'Payment_Register.identifier']
+            ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier']
         ),
         db.ForeignKeyConstraint(
             ['member_last', 'member_first'],

@@ -15,7 +15,7 @@ LAST_THRU = '2025-12'
 MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 MONTH_NUMBERS = ['01','02','03','04','05','06','07','08','09','10','11','12']
 MONTHS_DICT = { number : MONTHS[int(number)-1] for number in MONTH_NUMBERS }
-SQL_PAYMENT_METHODS = 'SELECT * FROM Payments_Methods'
+SQL_PAYMENT_METHODS = 'SELECT * FROM payment_method'
 TABLE_CELL_WIDTH = 11
 NON_MEMBER_CELL = f'{"" :░<{TABLE_CELL_WIDTH}}'
 

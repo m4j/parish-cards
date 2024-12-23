@@ -19,7 +19,7 @@ class Member(stjb.AbstractMember):
 
     sql_member_by_guid = "select * from Prosphoras_V where GUID = :guid"
 
-    sql_payments_by_member = """select * from Payments_Prosphoras
+    sql_payments_by_member = """select * from payment_sub_prosphora
                 where Surname = :lname AND (Name IS NULL OR Name = :fname)
                  order by Paid_From, Paid_Through"""
 

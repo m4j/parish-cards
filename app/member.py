@@ -20,7 +20,7 @@ class Member(stjb.AbstractMember):
 
     sql_member_by_guid = "select * from Members_V where GUID = :guid"
 
-    sql_payments_by_member = """select * from Payments_Dues
+    sql_payments_by_member = """select * from payment_sub_dues
                 where Member_Last like :lname AND
                       Member_First like :fname
                  order by Paid_From, Paid_Through"""
