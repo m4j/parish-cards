@@ -65,7 +65,7 @@ $(PAYMENTS).tex: $(PAYMENTS).csv
 	$(MERGE) $@ $< > $@
 
 $(PAYMENTS).csv: $(DATABASE)
-	sqlite3 $< -csv -header 'select * from Payments_Sheet where Date like "$(VERSION)";' > $@
+	sqlite3 $< -csv -header 'select * from Payments_Sheet where record_sheet_id like "$(VERSION)";' > $@
 
 $(PROSPHORAS).csv: $(DATABASE)
 	sqlite3 $< -csv -header 'select * from ProsphorasCurrent_V order by Name;' > $@
