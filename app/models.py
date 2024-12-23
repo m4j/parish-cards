@@ -30,6 +30,7 @@ class Card(db.Model):
     application_guid      = db.Column(db.Uuid(native_uuid=False), db.ForeignKey('applications.guid'))
     application           = db.relationship('Application', back_populates='cards')
     person                = db.relationship('Person', back_populates='card')
+    dues_payments         = db.relationship('DuesPayment', back_populates='card')
 
     @hybrid_property
     def i_member_last(self):
@@ -301,7 +302,7 @@ class Application(db.Model):
         return len(self.cards) > 0
 
 class PaymentMethod(db.Model):
-    __tablename__ = 'payments_methods'
+    __tablename__ = 'Payment_Methods'
     method        = db.Column(db.String, primary_key=True)
     section       = db.Column(db.Integer)
     section_name  = db.Column(db.String)
@@ -309,12 +310,11 @@ class PaymentMethod(db.Model):
     display_long  = db.Column(db.String)
 
 class Payment(db.Model):
-    __tablename__ = 'payments_register'
-    record_date   = db.Column(db.String)
-    record_id     = db.Column(db.String)
+    __tablename__ = 'Payment_Register'
+    record_sheet_id = db.Column(db.String, default='9999-12-31')
     payor         = db.Column(db.String)
     date          = db.Column(db.String)
-    method        = db.Column(db.String, db.ForeignKey('payments_methods.method'))
+    method        = db.Column(db.String, db.ForeignKey('Payment_Methods.method'))
     identifier    = db.Column(db.String)
     amount        = db.Column(db.Integer)
     comment       = db.Column(db.String)
@@ -328,7 +328,39 @@ class Payment(db.Model):
         ),
     )
 
-    payment_method        = db.relationship(PaymentMethod, uselist=False)
+    payment_method = db.relationship(PaymentMethod, uselist=False)
+    dues = db.relationship('DuesPayment', back_populates='payment')
+
+class DuesPayment(db.Model):
+    __tablename__ = 'payments_dues'
+    guid          = db.Column(db.Uuid(native_uuid=False), primary_key=True)
+    payor         = db.Column(db.String)
+    date          = db.Column(db.String)
+    method        = db.Column(db.String)
+    identifier    = db.Column(db.String, nullable=True)
+    amount        = db.Column(db.Integer)
+    member_last   = db.Column(db.String)
+    member_first  = db.Column(db.String)
+    paid_from     = db.Column(db.String)
+    paid_through  = db.Column(db.String)
+    comment       = db.Column(db.String)
+
+    __table_args__ = (
+        db.ForeignKeyConstraint(
+            ['payor', 'date', 'method', 'identifier'],
+            ['Payment_Register.payor', 'Payment_Register.date', 'Payment_Register.method', 'Payment_Register.identifier']
+        ),
+        db.ForeignKeyConstraint(
+            ['member_last', 'member_first'],
+            ['cards.member_last', 'cards.member_first'],
+        ),
+    )
+
+    payment = db.relationship(Payment, back_populates='dues')
+    card    = db.relationship(Card, back_populates='dues_payments')
+
+    def __repr__(self):
+        return f'{self.date} {self.payor} {self.method} {self.identifier} {self.amount} {self.paid_from}--{self.paid_through}'
 
 def find_member(first_name, last_name):
     return db.session.execute(
