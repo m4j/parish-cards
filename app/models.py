@@ -30,7 +30,7 @@ class Card(db.Model):
     application_guid      = db.Column(db.Uuid(native_uuid=False), db.ForeignKey('applications.guid'))
     application           = db.relationship('Application', back_populates='cards')
     person                = db.relationship('Person', back_populates='card')
-    dues_payments         = db.relationship('DuesPayment', back_populates='card')
+    dues_payments         = db.relationship('PaymentSubDues', back_populates='card')
 
     @hybrid_property
     def i_member_last(self):
@@ -311,7 +311,7 @@ class PaymentMethod(db.Model):
 
 class Payment(db.Model):
     __tablename__ = 'payment'
-    record_sheet_id = db.Column(db.String, default='9999-12-31')
+    record_id     = db.Column(db.String, default='9999-12-31')
     payor         = db.Column(db.String)
     date          = db.Column(db.String)
     method        = db.Column(db.String, db.ForeignKey('payment_method.method'))
@@ -329,14 +329,14 @@ class Payment(db.Model):
     )
 
     payment_method = db.relationship(PaymentMethod, uselist=False)
-    dues = db.relationship('DuesPayment', back_populates='payment')
+    dues = db.relationship('PaymentSubDues', back_populates='payment')
 
-class DuesPayment(db.Model):
+class PaymentSubDues(db.Model):
     __tablename__ = 'payment_sub_dues'
     guid          = db.Column(db.Uuid(native_uuid=False), primary_key=True)
     payor         = db.Column(db.String)
     date          = db.Column(db.String)
-    method        = db.Column(db.String)
+    method        = db.Column(db.String, db.ForeignKey('payment_method.method'))
     identifier    = db.Column(db.String, nullable=True)
     amount        = db.Column(db.Integer)
     member_last   = db.Column(db.String)
