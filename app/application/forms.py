@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import Form, StringField, SubmitField, SelectMultipleField, EmailField, IntegerField, RadioField, SelectField, FieldList, FormField, HiddenField
+from wtforms import Form, StringField, SubmitField, SelectMultipleField, EmailField, IntegerField, RadioField, SelectField, FieldList, FormField
 from wtforms.validators import DataRequired, Optional
 from wtforms.widgets import ListWidget, CheckboxInput
 from types import SimpleNamespace
@@ -169,7 +169,7 @@ class ApplicantSubForm(Form):
     names = StringField()
     ru_name_last = StringField('Last name in Russian', validators=[DataRequired()])
     ru_name_first = StringField('First name in Russian', validators=[DataRequired()])
-    ru_name_patronymic = StringField('Patronymic name in Russian')
+    ru_name_patronymic = StringField('Patronymic name in Russian', validators=[Optional()])
     en_name_last = StringField('Last name in English', validators=[DataRequired()])
     en_name_first = StringField('First name in English', validators=[DataRequired()])
     dues_amount = IntegerField('Monthly dues', default=35, validators=[DataRequired()])
@@ -194,10 +194,10 @@ class ApplicantsRegistrationForm(FlaskForm):
             self.load_application(app)
 
     def load_application(self, app):
-        applicant_data = self.__names_data(app.ru_name, app.en_name)
+        applicant_data = self._name_components(app.ru_name, app.en_name)
         self.applicants.append_entry(applicant_data)
         if app.spouse_en_name:
-            applicant_data = self.__names_data(app.spouse_ru_name, app.spouse_en_name)
+            applicant_data = self._name_components(app.spouse_ru_name, app.spouse_en_name)
             if not app.spouse_signature_date:
                 applicant_data = applicant_data | { 'do_register': 'as_non_member' }
             self.applicants.append_entry(applicant_data)
@@ -212,13 +212,13 @@ class ApplicantsRegistrationForm(FlaskForm):
         data = self.applicants.data[1]
         return SimpleNamespace(**data)
 
-    def __names_data(self, ru_name, en_name):
-        names_data = { 'names': f'{en_name} ({ru_name})' }
-        names_data = names_data | self.__ru_name_data(ru_name)
-        names_data = names_data | self.__en_name_data(en_name)
-        return names_data
+    def _name_components(self, ru_name, en_name):
+        name_components = { 'names': f'{en_name} ({ru_name})' }
+        name_components = name_components | self._name_components_ru(ru_name)
+        name_components = name_components | self._name_components_en(en_name)
+        return name_components
 
-    def __ru_name_data(self, name):
+    def _name_components_ru(self, name):
         san = name.translate(name.maketrans(',;', '  '))
         names = [name for name in san.split(' ') if len(san) > 0]
         names = [x.strip() for x in names]
@@ -236,7 +236,7 @@ class ApplicantsRegistrationForm(FlaskForm):
                     }
         return {}
 
-    def __en_name_data(self, name):
+    def _name_components_en(self, name):
         san = name.translate(name.maketrans(',;', '  '))
         names = [name for name in san.split(' ') if len(san) > 0]
         names = [x.strip() for x in names]

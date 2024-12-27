@@ -24,7 +24,9 @@ def create_app(config_name):
 
     from .main import main as main_bp
     from .application import application as application_bp
+    from .payment import payment as payment_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(application_bp, url_prefix='/application')
+    app.register_blueprint(payment_bp, url_prefix='/payment')
 
     return app

@@ -67,6 +67,10 @@ class Card(db.Model):
         )
     )
 
+    def __repr__(self):
+        fullname = f'{self.member_last}, {self.member_first}{" †" if self.membership_termination_reason == "Deceased" else ""}'
+        return fullname
+
 def get_postal_code(zip_code):
     return zip_code.split('-')[0].strip()
 
@@ -287,16 +291,16 @@ class Application(db.Model):
     spouse_signature_date = db.Column(db.String)
     cards                 = db.relationship('Card', back_populates='application')
 
-    def __format_names(self, name, glue, spouse_name):
+    def _format_names(self, name, glue, spouse_name):
         if spouse_name:
             return f'{name} {glue} {spouse_name}'
         return name
 
     def format_en_names(self):
-        return self.__format_names(self.en_name, 'and', self.spouse_en_name)
+        return self._format_names(self.en_name, 'and', self.spouse_en_name)
 
     def format_ru_names(self):
-        return self.__format_names(self.ru_name, 'и', self.spouse_ru_name)
+        return self._format_names(self.ru_name, 'и', self.spouse_ru_name)
 
     def is_registered(self):
         return len(self.cards) > 0
@@ -357,7 +361,11 @@ class PaymentSubDues(db.Model):
     )
 
     payment = db.relationship(Payment, back_populates='dues')
-    card    = db.relationship(Card, back_populates='dues_payments')
+    card    = db.relationship(
+        Card,
+        back_populates='dues_payments',
+        order_by=[paid_from, paid_through]
+    )
 
     def __repr__(self):
         return f'{self.date} {self.payor} {self.method} {self.identifier} {self.amount} {self.paid_from}--{self.paid_through}'
@@ -410,3 +418,28 @@ def find_active_marriage_of_wife(first_name, last_name):
                     Marriage.i_wife_last == last_name,
                     Marriage.status == 'Active'
                     ))).scalar()
+
+def find_all_payments(fragment):
+    return find_dues_payments(fragment)
+
+def find_dues_payments(fragment):
+    search_term = f'%{fragment}%'
+    return db.session.scalars(
+        db.select(PaymentSubDues).filter(
+            db.or_(
+                PaymentSubDues.payor.ilike(search_term),
+                PaymentSubDues.date.ilike(search_term),
+                PaymentSubDues.method.ilike(search_term),
+                PaymentSubDues.identifier.ilike(search_term),
+                PaymentSubDues.amount.ilike(search_term),
+                PaymentSubDues.member_last.ilike(search_term),
+                PaymentSubDues.member_first.ilike(search_term),
+                PaymentSubDues.paid_from.ilike(search_term),
+                PaymentSubDues.paid_through.ilike(search_term),
+                PaymentSubDues.comment.ilike(search_term)
+            ))
+        .order_by(
+            PaymentSubDues.paid_from,
+            PaymentSubDues.paid_through,
+        )).all()
+
