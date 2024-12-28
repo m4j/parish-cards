@@ -420,9 +420,9 @@ def find_active_marriage_of_wife(first_name, last_name):
                     ))).scalar()
 
 def find_all_payments(fragment):
-    return find_dues_payments(fragment)
+    return find_sub_dues_payments(fragment)
 
-def find_dues_payments(fragment):
+def find_sub_dues_payments(fragment):
     search_term = f'%{fragment}%'
     return db.session.scalars(
         db.select(PaymentSubDues).filter(
@@ -442,4 +442,14 @@ def find_dues_payments(fragment):
             PaymentSubDues.paid_from,
             PaymentSubDues.paid_through,
         )).all()
+
+def find_date_within_any_paid_range(date, first, last):
+    return db.session.scalars(
+        db.select(PaymentSubDues).filter(
+            db.and_(
+                PaymentSubDues.member_last == last,
+                PaymentSubDues.member_first == first,
+                PaymentSubDues.paid_from <= date,
+                date <= PaymentSubDues.paid_through,
+            ))).first()
 

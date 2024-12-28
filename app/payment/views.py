@@ -1,4 +1,4 @@
-from flask import render_template, abort, session, redirect, url_for, flash, Markup
+from flask import render_template, abort, session, redirect, url_for, flash, Markup, request
 from .. import db
 from . import payment
 from ..main.forms import SearchForm
@@ -30,26 +30,33 @@ def index():
 @payment.route('/repeat_dues/<guid>', methods=['GET', 'POST'])
 def repeat_dues(guid):
     sub = db.get_or_404(PaymentSubDues, uuid.UUID(guid))
-    form = PaymentSubDuesForm()
-    if form.validate_on_submit():
-        breakpoint()
-        new_payment = Payment(
-            payor=form.payor.data,
-            date=form.date.data,
-            method=form.method.data,
-            identifier=form.identifier.data if form.identifier.data else None,
-            amount=form.amount.data)
-        db.session.add(new_payment)
+    form = PaymentSubDuesForm(sub.card)
+    if request.method == 'POST':
+        if form.validate():
+            new_payment = Payment(
+                payor=form.payor.data,
+                date=form.date.data,
+                method=form.method.data,
+                identifier=form.identifier.data if form.identifier.data else None,
+                amount=form.amount.data)
+            db.session.add(new_payment)
 
-        new_sub = PaymentSubDues(guid=uuid.uuid4())
-        form.save_to(new_sub)
-        new_sub.card = sub.card
-        new_sub.payment = new_payment
-        db.session.add(new_sub)
+            new_sub = PaymentSubDues(guid=uuid.uuid4())
+            form.save_to(new_sub)
+            new_sub.card = sub.card
+            new_sub.payment = new_payment
+            db.session.add(new_sub)
 
-        db.session.commit()
-        if form.submit.data:
-            flash(f'Added dues payment for {sub.card}')
-            return redirect(url_for('.index'))
-    form.load_from(sub)
+            db.session.commit()
+            if form.submit.data:
+                flash(f'Added dues payment for {sub.card}')
+                return redirect(url_for('.index'))
+        else:
+            session[guid] = request.form
+    if guid in session:
+        form = PaymentSubDuesForm(sub.card, session[guid])
+        form.validate()
+        session.pop(guid)
+    else:
+        form.load_from(sub)
     return render_template('payment/edit_payment_sub_dues.html', member=sub.card, sub=sub, form=form)
