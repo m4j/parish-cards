@@ -3,9 +3,38 @@
 
 {% block page_content %}
     <div class="page-header">
-        <h3>New Dues Payment for {{ member}}</h3>
+        <h3>Single Dues Payment for {{ member}}</h3>
     </div>
     
-    {{ wtf.quick_form(form) }}
+<form action="" method="post" class="form" role="form">
+    {{ form.hidden_tag() }}
+    {{ wtf.form_errors(form, hiddens="only") }}
+
+    <div class="row">
+        <div class="col-md-7">
+            {{ wtf.form_field(form.payor) }}
+            {{ wtf.form_field(form.date) }}
+            <div class="row">
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.method) }}
+                </div>
+                <div class="col-md-8">
+                    {{ wtf.form_field(form.identifier) }}
+                </div>
+            </div>
+            {{ wtf.form_field(form.amount) }}
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.paid_from) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.paid_through) }}
+                </div>
+            </div>
+            {{ wtf.form_field(form.comment) }}
+            {{ wtf.form_field(form.submit) }}
+        </div>
+    </div>
+</form>
 
 {% endblock %}

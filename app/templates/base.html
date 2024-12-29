@@ -29,6 +29,7 @@
       <ul class="nav navbar-nav">
         <li><a href="/">Members</a></li>
         <li><a href="{{ url_for('main.books') }}">Books</a></li>
+        <li><a href="{{ url_for('payment.index') }}">Payments</a></li>
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Applications<span class="caret"></span></a>
           <ul class="dropdown-menu">
@@ -36,7 +37,6 @@
             <li><a href="{{ url_for('application.application_add') }}">New Application</a></li>
           </ul>
         </li>
-        <li><a href="{{ url_for('payment.index') }}">Payments</a></li>
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->

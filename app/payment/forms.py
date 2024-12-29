@@ -6,13 +6,13 @@ from .. import db
 from ..models import PaymentMethod, find_date_within_any_paid_range
 
 class PaymentSubDuesForm(FlaskForm):
-    payor = StringField('Payor last, first name', validators=[DataRequired()], render_kw={'autofocus': True})
-    date = StringField('Payment date', validators=[DataRequired(), ISOYearMonthDayValidator()])
-    method = SelectField('Payment method', validators=[DataRequired()])
-    identifier = StringField('Check number, credit card authorization, etc...')
+    payor = StringField('Payor', validators=[DataRequired()], render_kw={'autofocus': True, 'placeholder': 'Last, first name(s)'})
+    date = StringField('Date', validators=[DataRequired(), ISOYearMonthDayValidator()])
+    method = SelectField('Method', validators=[DataRequired()])
+    identifier = StringField('Identifier/Auth.', render_kw={'placeholder': 'Check number, credit card auth., etc...'})
     amount = IntegerField('Amount', validators=[DataRequired()])
     paid_from = StringField('Dues period from', validators=[DataRequired(), ISOYearMonthValidator()])
-    paid_through = StringField('Dues period through', validators=[DataRequired(), ISOYearMonthValidator()])
+    paid_through = StringField('To', validators=[DataRequired(), ISOYearMonthValidator()])
     comment = TextAreaField('Comment', validators=[Optional()])
     submit = SubmitField('Submit')
 
@@ -41,20 +41,24 @@ class PaymentSubDuesForm(FlaskForm):
         if self.comment.data:
             payment_sub.comment = self.comment.data
 
+    def validate_amount(self, field):
+        if field.data <= 0:
+            raise ValidationError('Positive number please')
+
     def validate_identifier(self, field):
         if self.method.data != 'Cash' and field.data.strip() == '':
-            raise ValidationError('Non cash transactions must have an identifier')
+            raise ValidationError('Other than Cash transactions must have an identifier')
 
     def validate_paid_from(self, field):
         if field.data > self.paid_through.data:
             raise ValidationError('Invalid date range')
         if find_date_within_any_paid_range(field.data, self.card.member_first, self.card.member_last):
-            raise ValidationError(f'Date {field.data} was already paid for')
+            raise ValidationError(f'Already paid')
 
     def validate_paid_through(self, field):
         if self.paid_from.data > field.data:
             raise ValidationError('Invalid date range')
         if find_date_within_any_paid_range(field.data, self.card.member_first, self.card.member_last):
-            raise ValidationError(f'Date {field.data} was already paid for')
+            raise ValidationError(f'Already paid')
 
 

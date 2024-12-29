@@ -439,8 +439,8 @@ def find_sub_dues_payments(fragment):
                 PaymentSubDues.comment.ilike(search_term)
             ))
         .order_by(
-            PaymentSubDues.paid_from,
-            PaymentSubDues.paid_through,
+            PaymentSubDues.paid_from.desc(),
+            PaymentSubDues.paid_through.desc(),
         )).all()
 
 def find_date_within_any_paid_range(date, first, last):

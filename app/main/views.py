@@ -26,19 +26,16 @@ def _directory(redirect_url, member_url, entity, template):
     form = SearchForm()
     members = []
     if form.validate_on_submit():
-        session['name'] = form.name.data
-        form.name.data = ''
+        session['search_term'] = form.search_term.data
         return redirect(redirect_url)
-    name = session.get('name')
-    if name:
-        session['name'] = None
+    search_term = session.get('search_term')
+    if search_term:
+        form.search_term.data = search_term
         connection = stjb.connect(db_path)
-        members = entity.find_all_by_name(connection, name)
+        members = entity.find_all_by_name(connection, search_term)
         connection.close()
         if len(members) == 0:
             flash('Nothing found, please try again')
-        if len(members) == 1:
-            return redirect(url_for(member_url, guid=members[0]['GUID']))
     return render_template(
             template,
             form=form,
