@@ -443,7 +443,7 @@ def find_sub_dues_payments(fragment):
             PaymentSubDues.paid_through.desc(),
         )).all()
 
-def find_date_within_any_paid_range(date, first, last):
+def date_within_other_dues_range(date, first, last):
     return db.session.scalars(
         db.select(PaymentSubDues).filter(
             db.and_(
