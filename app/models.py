@@ -10,16 +10,16 @@ class CaseInsensitiveComparator(Comparator):
 
 class Card(db.Model):
     __tablename__ = 'cards'
-    member_last           = db.Column(db.String)
-    member_first          = db.Column(db.String)
-    member_first_other    = db.Column(db.String)
-    member_middle         = db.Column(db.String)
-    member_maiden         = db.Column(db.String)
-    ru_member_last        = db.Column(db.String)
-    ru_member_maiden      = db.Column(db.String)
-    ru_member_first       = db.Column(db.String)
-    ru_member_first_other = db.Column(db.String)
-    ru_member_patronymic  = db.Column(db.String)
+    last_name           = db.Column(db.String)
+    first_name          = db.Column(db.String)
+    other_name          = db.Column(db.String)
+    middle_name         = db.Column(db.String)
+    maiden_name         = db.Column(db.String)
+    ru_last_name        = db.Column(db.String)
+    ru_maiden_name      = db.Column(db.String)
+    ru_first_name       = db.Column(db.String)
+    ru_other_name       = db.Column(db.String)
+    ru_patronymic_name  = db.Column(db.String)
     membership_from       = db.Column(db.String)
     membership_through    = db.Column(db.String)
     membership_termination_reason = db.Column(db.String)
@@ -33,42 +33,42 @@ class Card(db.Model):
     dues_payments         = db.relationship('PaymentSubDues', back_populates='card')
 
     @hybrid_property
-    def i_member_last(self):
-        return self.member_last.lower()
+    def i_last_name(self):
+        return self.last_name.lower()
 
-    @i_member_last.inplace.comparator
+    @i_last_name.inplace.comparator
     @classmethod
-    def _i_member_last_comparator(cls) -> CaseInsensitiveComparator:
-        return CaseInsensitiveComparator(cls.member_last)
+    def _i_last_name_comparator(cls) -> CaseInsensitiveComparator:
+        return CaseInsensitiveComparator(cls.last_name)
 
     @hybrid_property
-    def i_member_first(self):
-        return self.member_first.lower()
+    def i_first_name(self):
+        return self.first_name.lower()
 
-    @i_member_first.inplace.comparator
+    @i_first_name.inplace.comparator
     @classmethod
-    def _i_member_first_comparator(cls) -> CaseInsensitiveComparator:
-        return CaseInsensitiveComparator(cls.member_first)
+    def _i_first_name_comparator(cls) -> CaseInsensitiveComparator:
+        return CaseInsensitiveComparator(cls.first_name)
 
     def __init__(self, app, person, applicant, as_of_date):
         self.guid = str(uuid.uuid4())
         self.application = app
         self.person = person
-        self.ru_member_last = applicant.ru_name_last
-        self.ru_member_first = applicant.ru_name_first
-        self.ru_member_patronymic = applicant.ru_name_patronymic
+        self.ru_last_name = applicant.ru_name_last
+        self.ru_first_name = applicant.ru_name_first
+        self.ru_patronymic_name = applicant.ru_name_patronymic
         self.membership_from = as_of_date
         self.dues_amount = applicant.dues_amount
 
     __table_args__ = (
-        db.PrimaryKeyConstraint('member_last', 'member_first'),
+        db.PrimaryKeyConstraint('last_name', 'first_name'),
         db.ForeignKeyConstraint(
-            ['member_last', 'member_first'], ['person.last', 'person.first']
+            ['last_name', 'first_name'], ['person.last', 'person.first']
         )
     )
 
     def __repr__(self):
-        fullname = f'{self.member_last}, {self.member_first}{" †" if self.membership_termination_reason == "Deceased" else ""}'
+        fullname = f'{self.last_name}, {self.first_name}{" †" if self.membership_termination_reason == "Deceased" else ""}'
         return fullname
 
 def get_postal_code(zip_code):
@@ -343,8 +343,8 @@ class PaymentSubDues(db.Model):
     method        = db.Column(db.String, db.ForeignKey('payment_method.method'))
     identifier    = db.Column(db.String, nullable=True)
     amount        = db.Column(db.Integer)
-    member_last   = db.Column(db.String)
-    member_first  = db.Column(db.String)
+    last_name   = db.Column(db.String)
+    first_name  = db.Column(db.String)
     paid_from     = db.Column(db.String)
     paid_through  = db.Column(db.String)
     comment       = db.Column(db.String)
@@ -355,8 +355,8 @@ class PaymentSubDues(db.Model):
             ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier']
         ),
         db.ForeignKeyConstraint(
-            ['member_last', 'member_first'],
-            ['cards.member_last', 'cards.member_first'],
+            ['last_name', 'first_name'],
+            ['cards.last_name', 'cards.first_name'],
         ),
     )
 
@@ -373,7 +373,7 @@ class PaymentSubDues(db.Model):
 def find_member(first_name, last_name):
     return db.session.execute(
             db.select(Card).filter(
-                Card.i_member_first==first_name, Card.i_member_last==last_name
+                Card.i_first_name==first_name, Card.i_last_name==last_name
                 )).scalar()
 
 def find_person(first_name, last_name):
@@ -432,8 +432,8 @@ def find_sub_dues_payments(fragment):
                 PaymentSubDues.method.ilike(search_term),
                 PaymentSubDues.identifier.ilike(search_term),
                 PaymentSubDues.amount.ilike(search_term),
-                PaymentSubDues.member_last.ilike(search_term),
-                PaymentSubDues.member_first.ilike(search_term),
+                PaymentSubDues.last_name.ilike(search_term),
+                PaymentSubDues.first_name.ilike(search_term),
                 PaymentSubDues.paid_from.ilike(search_term),
                 PaymentSubDues.paid_through.ilike(search_term),
                 PaymentSubDues.comment.ilike(search_term)
@@ -447,8 +447,8 @@ def date_within_other_dues_range(date, first, last):
     return db.session.scalars(
         db.select(PaymentSubDues).filter(
             db.and_(
-                PaymentSubDues.member_last == last,
-                PaymentSubDues.member_first == first,
+                PaymentSubDues.last_name == last,
+                PaymentSubDues.first_name == first,
                 PaymentSubDues.paid_from <= date,
                 date <= PaymentSubDues.paid_through,
             ))).first()

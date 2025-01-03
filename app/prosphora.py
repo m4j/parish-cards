@@ -7,34 +7,33 @@ import sys
 
 class Member(stjb.AbstractMember):
 
-    sql_members_by_name = """select * from Prosphoras_V
-                where EN_Surname like :name OR
-                      EN_Name like :name OR
-                      EN_Family like :name OR
-                      RU_Surname like :name OR
-                      RU_Name like :name OR
-                      RU_Name_Patronymic like :name OR
-                      RU_Family like :name
-                 order by EN_Surname, EN_Name"""
+    sql_members_by_name = """select * from prosphoras_v
+                where en_last_name like :name or
+                      en_name like :name or
+                      en_family_name like :name or
+                      ru_last_name like :name or
+                      ru_first_name like :name or
+                      ru_family_name like :name
+                 order by en_last_name, en_name"""
 
-    sql_member_by_guid = "select * from Prosphoras_V where GUID = :guid"
+    sql_member_by_guid = "select * from prosphoras_v where guid = :guid"
 
     sql_payments_by_member = """select * from payment_sub_prosphora
-                where Surname = :lname AND (Name IS NULL OR Name = :fname)
-                 order by Paid_From, Paid_Through"""
+                where last_name = :lname and (name is null or name = :fname)
+                 order by paid_from, paid_through"""
 
     @property
     def fname(self):
-        return self['EN_Name']
+        return self['en_name']
 
     @property
     def lname(self):
-        return self['EN_Surname']
+        return self['en_last_name']
 
-    def _format_name(self, surname, name, patronymic = None):
+    def _format_name(self, last_name, name, patronymic = None):
         names = []
-        if surname:
-            names.append(surname)
+        if last_name:
+            names.append(last_name)
         if name:
             names.append(name)
         if len(names) > 0:
@@ -45,8 +44,8 @@ class Member(stjb.AbstractMember):
         return fullname
 
     def format_name(self):
-        ru_fullname = self._format_name(self.row['RU_Surname'], self.row['RU_Name'], self.row['RU_Name_Patronymic'])
-        en_fullname = self._format_name(self.row['EN_Surname'], self.row['EN_Name'], None)
+        ru_fullname = self._format_name(self['ru_last_name'], self.row['ru_first_name'])
+        en_fullname = self._format_name(self['en_last_name'], self.row['en_name'])
         return f'{en_fullname} ({ru_fullname})'
 
     @property
@@ -63,9 +62,9 @@ class Member(stjb.AbstractMember):
 
     def format_details_header(self):
         name = self.format_name()
-        quantity = self['Quantity']
-        service = self['Liturgy'] or 'Slavonic'
-        comment = self['Comment'] or ''
+        quantity = self['quantity']
+        service = self['liturgy'] or 'Slavonic'
+        comment = self['comment'] or ''
         result = (
             f'✼ {name : <55}\n\n'
             f'  Liturgy: {service : <55}\n'

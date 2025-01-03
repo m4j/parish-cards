@@ -7,42 +7,56 @@ import sys
 class Member(stjb.AbstractMember):
 
     sql_members_by_name = """select * from Members_V C
-            where C.Member_Last like :name OR
-                  C.Member_First like :name OR
-                  C.Member_First_Other like :name OR
-                  C.Member_Middle like :name OR
-                  C.Member_Maiden like :name OR
-                  C.RU_Member_Last like :name OR
-                  C.RU_Member_Maiden like :name OR
-                  C.RU_Member_First like :name OR
-                  C.RU_Member_Patronymic like :name
-             order by Member_Last, Member_First"""
+            where C.last_name like :name OR
+                  C.first_name like :name OR
+                  C.other_name like :name OR
+                  C.middle_name like :name OR
+                  C.maiden_name like :name OR
+                  C.ru_last_name like :name OR
+                  C.ru_maiden_name like :name OR
+                  C.ru_first_name like :name OR
+                  C.ru_patronymic_name like :name
+             order by last_name, first_name"""
 
     sql_member_by_guid = "select * from Members_V where GUID = :guid"
 
     sql_payments_by_member = """select * from payment_sub_dues
-                where Member_Last like :lname AND
-                      Member_First like :fname
-                 order by Paid_From, Paid_Through"""
+                where last_name like :lname AND
+                      first_name like :fname
+                 order by paid_from, paid_through"""
 
-    def _format_name(self, member):
-        ru_name = self.row[f'RU_{member}_Patronymic']
+    def _format_name(self, first, last, ru_first, ru_patronymic, ru_last, status):
+        ru_name = ru_patronymic
         ru_name = '' if ru_name is None else (' ' + ru_name)
-        name = '%s, %s (%s, %s%s)' % (self.row[f'{member}_Last'], self.row[f'{member}_First'], self.row[f'RU_{member}_Last'], self.row[f'RU_{member}_First'], ru_name)
-        return f'{name} †' if self.row[f'{member}_Status'] == 'Deceased' else name
+        name = '%s, %s (%s, %s%s)' % (last, first, ru_last, ru_first, ru_name)
+        return f'{name} †' if status == 'Deceased' else name
 
     def format_name(self):
-        return self._format_name('Member')
+        return self._format_name(
+            first=self['first_name'],
+            last=self['last_name'],
+            ru_first=self['ru_first_name'],
+            ru_patronymic=self['ru_patronymic_name'],
+            ru_last=self['ru_last_name'],
+            status=self['member_status']
+        )
 
     def format_spouse_name(self):
-        return self._format_name('Spouse')
+        return self._format_name(
+            first=self['spouse_first_name'],
+            last=self['spouse_last_name'],
+            ru_first=self['ru_spouse_first_name'],
+            ru_patronymic=self['ru_spouse_patronymic_name'],
+            ru_last=self['ru_spouse_last_name'],
+            status=self['spouse_status']
+        )
 
     @property
     def member_from(self):
-        return self.row['Membership_From'] or stjb.DISTANT_PAST
+        return self['membership_from'] or stjb.DISTANT_PAST
 
     def historical_payments(self):
-        historical_paid_thru = self.row['Dues_Paid_Through'] or stjb.DISTANT_PAST
+        historical_paid_thru = self['dues_paid_through'] or stjb.DISTANT_PAST
         return [{
                 'Date' : None,
                 'Amount' : None,
@@ -63,16 +77,16 @@ class Member(stjb.AbstractMember):
     def format_details_header(self):
         left = []
         right = []
-        status = self['Member_Status']
-        dues_amount = self['Dues_Amount']
+        status = self['member_status']
+        dues_amount = self['dues_amount']
         name = self.format_name()
         left.append(f'✼ {name}')
         right.append(f'{status}, ${dues_amount}')
-        if self['Spouse_First'] and self['Spouse_Last']:
+        if self['spouse_first_name'] and self['spouse_last_name']:
             spouse = self.format_spouse_name()
             left.append(f'  {spouse}')
-            spouse_status = self['Spouse_Status']
-            spouse_type = self['Spouse_Type']
+            spouse_status = self['spouse_status']
+            spouse_type = self['spouse_type']
             right.append(f'{spouse_type}, {spouse_status}')
         return stjb.format_two_columns(left, right, 59)
 
@@ -106,9 +120,9 @@ class Member(stjb.AbstractMember):
 
     @property
     def fname(self):
-        return self['Member_First']
+        return self['first_name']
 
     @property
     def lname(self):
-        return self['Member_Last']
+        return self['last_name']
 

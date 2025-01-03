@@ -51,7 +51,7 @@ class PaymentSubDuesForm(PaymentMixin, PaymentRangeMixin, FlaskForm):
         self.card = card
 
     def validate_within_other_ranges(self, field):
-        if date_within_other_dues_range(field.data, self.card.member_first, self.card.member_last):
+        if date_within_other_dues_range(field.data, self.card.first_name, self.card.last_name):
             raise ValidationError(f'Date within another paid range')
 
     def load_from(self, payment_sub):
