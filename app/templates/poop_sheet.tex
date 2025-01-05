@@ -71,14 +71,15 @@
     & \multicolumn{1}{l}{cash -- \hspace{0.5in} checks --} & \multicolumn{2}{r|}{\small Свечной ящик/Candle stand} & &  & \tabularnewline
     \mline
 \BLOCK{for row in data}
-    \BLOCK{set payor = row["Payor"]}
-    \BLOCK{set method = row["Method"]}
-    \BLOCK{set identifier = row["Identifier"]}
-    \BLOCK{set section = row["Section"]}
-    \BLOCK{set sectionName = row["Section_Name"]}
-    \BLOCK{set numberOfItems = row["NumberOfItems"]}
-    \BLOCK{set amount = row["Amount"]}
-    \BLOCK{set total = row["Total"]}
+    \BLOCK{set payor = row["payor"]}
+    \BLOCK{set method = row["method"]}
+    \BLOCK{set identifier = row["identifier"]}
+    \BLOCK{set section = row["section"]}
+    \BLOCK{set sectionName = row["section\_name"]}
+    \BLOCK{set numberOfItems = row["number\_of\_items"]}
+    \BLOCK{set amount = row["amount"]}
+    \BLOCK{set total = row["total"]}
+    \BLOCK{set purpose = row["purpose"]}
     \BLOCK{set shouldDrawDelims = (method != previous.method or identifier != previous.identifier) and numberOfItems != "1"}
     \BLOCK{if shouldDrawDelims}
         \BLOCK{set previous.method = method}
@@ -112,7 +113,7 @@
     \BLOCK{else}
         & 
     \BLOCK{endif}
-    & \VAR{row["Purpose"]}
+    & \VAR{purpose}
     \BLOCK{if method == ""}
         & ~
     \BLOCK{else}

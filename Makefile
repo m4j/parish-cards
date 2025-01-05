@@ -65,10 +65,10 @@ $(PAYMENTS).tex: $(PAYMENTS).csv
 	$(MERGE) $@ $< > $@
 
 $(PAYMENTS).csv: $(DATABASE)
-	sqlite3 $< -csv -header 'select * from Payments_Sheet where record_id like "$(VERSION)";' > $@
+	sqlite3 $< -csv -header 'select * from payment_sheet_v where record_id like "$(VERSION)";' > $@
 
 $(PROSPHORAS).csv: $(DATABASE)
-	sqlite3 $< -csv -header 'select * from ProsphorasCurrent_V order by Name;' > $@
+	sqlite3 $< -csv -header 'select * from prosphora_current_v order by name;' > $@
 
 import: import_MemberList import_FamilyList $(DATABASE)
 

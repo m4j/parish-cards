@@ -7,24 +7,24 @@ import sys
 
 class Member(stjb.AbstractMember):
 
-    sql_members_by_name = """select * from prosphoras_v
+    sql_members_by_name = """select * from prosphora_v
                 where en_last_name like :name or
-                      en_name like :name or
+                      en_first_name like :name or
                       en_family_name like :name or
                       ru_last_name like :name or
                       ru_first_name like :name or
                       ru_family_name like :name
-                 order by en_last_name, en_name"""
+                 order by en_last_name, en_first_name"""
 
-    sql_member_by_guid = "select * from prosphoras_v where guid = :guid"
+    sql_member_by_guid = "select * from prosphora_v where guid = :guid"
 
     sql_payments_by_member = """select * from payment_sub_prosphora
-                where last_name = :lname and (name is null or name = :fname)
+                where last_name = :lname and (first_name is null or first_name = :fname)
                  order by paid_from, paid_through"""
 
     @property
     def fname(self):
-        return self['en_name']
+        return self['en_first_name']
 
     @property
     def lname(self):
@@ -45,7 +45,7 @@ class Member(stjb.AbstractMember):
 
     def format_name(self):
         ru_fullname = self._format_name(self['ru_last_name'], self.row['ru_first_name'])
-        en_fullname = self._format_name(self['en_last_name'], self.row['en_name'])
+        en_fullname = self._format_name(self['en_last_name'], self.row['en_first_name'])
         return f'{en_fullname} ({ru_fullname})'
 
     @property

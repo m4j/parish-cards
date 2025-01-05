@@ -57,7 +57,7 @@ def redirect_on_existing_member_reversed_names(guid, applicant):
         member = find_member(applicant.en_name_last, applicant.en_name_first)
         if member:
             flash(Markup(f'<b>{member.person.full_name_address()}</b> is already a member of the parish.'), 'danger')
-            flash(Markup(f'Please verify first and last names of <b>{applicant.en_name_last}, {applicant.en_name_first}</b>  and do either: <ul><li>If names were not accidentally <em>reversed</em> in the application — correct here and press <b>Register</b> again</li><li>Press <b>Register</b> again without correcting names — they will be registered as entered</li></ul>'), 'danger')
+            flash(Markup(f'Please verify first and last names of <b>{applicant.en_name_last}, {applicant.en_name_first}</b>  and do either: <ul><li>Reversed names in the application? — correct here and press <b>Register</b> again</li><li>No change required, all looks good? — press <b>Register</b> again to proceed</li></ul>'), 'danger')
             return redirect(url_for('.application_register', guid=guid))
     return None
 

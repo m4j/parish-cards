@@ -71,21 +71,21 @@
 \begin{multicols}{2}
 
 \BLOCK{for row in data}
-    \BLOCK{set quantity = row["Quantity"]}
-    \BLOCK{set liturgy = row["Liturgy"]}
-    \BLOCK{set comment = row["Comment"]}
+    \BLOCK{set quantity = row["quantity"]}
+    \BLOCK{set liturgy = row["liturgy"]}
+    \BLOCK{set comment = row["comment"]}
     \BLOCK{if liturgy.strip().lower() == "english"}
 
-        \BLOCK{set enSurname = row["EN\_Surname"]}
-        \BLOCK{set enName = row["EN\_Name"]}
+        \BLOCK{set enSurname = row["en\_last\_name"]}
+        \BLOCK{set enName = row["en\_first\_name"]}
         \BLOCK{if enSurname.strip()}
             \BLOCK{set enSurname = enSurname.upper()}
         \BLOCK{else}
             \BLOCK{set enSurname = enName.upper()}
             \BLOCK{set enName = ""}
         \BLOCK{endif}
-        \BLOCK{set ruSurname = row["RU\_Surname"]}
-        \BLOCK{set ruName = row["RU\_Name"]}
+        \BLOCK{set ruSurname = row["ru\_last\_name"]}
+        \BLOCK{set ruName = row["ru\_first\_name"]}
         \BLOCK{if ruSurname.strip()}
             \BLOCK{set ruSurname = ruSurname.upper()}
         \BLOCK{else}
@@ -110,21 +110,21 @@
 \begin{multicols}{2}
 
 \BLOCK{for row in data}
-    \BLOCK{set quantity = row["Quantity"]}
-    \BLOCK{set liturgy = row["Liturgy"]}
-    \BLOCK{set comment = row["Comment"]}
+    \BLOCK{set quantity = row["quantity"]}
+    \BLOCK{set liturgy = row["liturgy"]}
+    \BLOCK{set comment = row["comment"]}
     \BLOCK{if liturgy.strip().lower() != "english"}
 
-        \BLOCK{set enSurname = row["EN\_Surname"]}
-        \BLOCK{set enName = row["EN\_Name"]}
+        \BLOCK{set enSurname = row["en\_last\_name"]}
+        \BLOCK{set enName = row["en\_first\_name"]}
         \BLOCK{if enSurname.strip()}
             \BLOCK{set enSurname = enSurname.upper()}
         \BLOCK{else}
             \BLOCK{set enSurname = enName.upper()}
             \BLOCK{set enName = ""}
         \BLOCK{endif}
-        \BLOCK{set ruSurname = row["RU\_Surname"]}
-        \BLOCK{set ruName = row["RU\_Name"]}
+        \BLOCK{set ruSurname = row["ru\_last\_name"]}
+        \BLOCK{set ruName = row["ru\_first\_name"]}
         \BLOCK{if ruSurname.strip()}
             \BLOCK{set ruSurname = ruSurname.upper()}
         \BLOCK{else}
@@ -151,21 +151,21 @@
 \begin{multicols}{2}
 
 \BLOCK{for row in data}
-    \BLOCK{set quantity = row["Quantity"]}
-    \BLOCK{set liturgy = row["Liturgy"]}
-    \BLOCK{set comment = row["Comment"]}
+    \BLOCK{set quantity = row["quantity"]}
+    \BLOCK{set liturgy = row["liturgy"]}
+    \BLOCK{set comment = row["comment"]}
     \BLOCK{if comment.strip().lower() == "+12 feasts" or liturgy.strip().lower() == "every"}
 
-        \BLOCK{set enSurname = row["EN\_Surname"]}
-        \BLOCK{set enName = row["EN\_Name"]}
+        \BLOCK{set enSurname = row["en\_last\_name"]}
+        \BLOCK{set enName = row["en\_first\_name"]}
         \BLOCK{if enSurname.strip()}
             \BLOCK{set enSurname = enSurname.upper()}
         \BLOCK{else}
             \BLOCK{set enSurname = enName.upper()}
             \BLOCK{set enName = ""}
         \BLOCK{endif}
-        \BLOCK{set ruSurname = row["RU\_Surname"]}
-        \BLOCK{set ruName = row["RU\_Name"]}
+        \BLOCK{set ruSurname = row["ru\_last\_name"]}
+        \BLOCK{set ruName = row["ru\_first\_name"]}
         \BLOCK{if ruSurname.strip()}
             \BLOCK{set ruSurname = ruSurname.upper()}
         \BLOCK{else}
@@ -192,17 +192,17 @@
 \begin{multicols}{2}
 
 \BLOCK{for row in data}
-    \BLOCK{set quantity = row["Quantity"]}
-    \BLOCK{set enSurname = row["EN\_Surname"]}
-    \BLOCK{set enName = row["EN\_Name"]}
+    \BLOCK{set quantity = row["quantity"]}
+    \BLOCK{set enSurname = row["en\_last\_name"]}
+    \BLOCK{set enName = row["en\_first\_name"]}
     \BLOCK{if enSurname.strip()}
         \BLOCK{set enSurname = enSurname.upper()}
     \BLOCK{else}
         \BLOCK{set enSurname = enName.upper()}
         \BLOCK{set enName = ""}
     \BLOCK{endif}
-    \BLOCK{set ruSurname = row["RU\_Surname"]}
-    \BLOCK{set ruName = row["RU\_Name"]}
+    \BLOCK{set ruSurname = row["ru\_last\_name"]}
+    \BLOCK{set ruName = row["ru\_first\_name"]}
     \BLOCK{if ruSurname.strip()}
         \BLOCK{set ruSurname = ruSurname.upper()}
     \BLOCK{else}

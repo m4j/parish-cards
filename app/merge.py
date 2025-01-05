@@ -20,7 +20,7 @@ with open(arg_data, encoding='utf-8', newline='') as csvfile:
     reader = list(csv.DictReader(latexReader))
     #for row in reader:
         #print(row)
-    reader = list(map(lambda r: markdown_to_latex(r, "Purpose"), reader))
+    reader = list(map(lambda r: markdown_to_latex(r, "purpose"), reader))
     template = jinja_env.get_template(arg_template)
     rendered_tex = template.render(data=reader)
     print(rendered_tex)

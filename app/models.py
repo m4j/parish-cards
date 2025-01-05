@@ -9,7 +9,7 @@ class CaseInsensitiveComparator(Comparator):
         return func.lower(self.__clause_element__()) == func.lower(other)
 
 class Card(db.Model):
-    __tablename__ = 'cards'
+    __tablename__ = 'card'
     last_name           = db.Column(db.String)
     first_name          = db.Column(db.String)
     other_name          = db.Column(db.String)
@@ -27,8 +27,8 @@ class Card(db.Model):
     dues_paid_through     = db.Column(db.String)
     notes                 = db.Column(db.String)
     guid                  = db.Column(db.String, unique=True)
-    application_guid      = db.Column(db.Uuid(native_uuid=False), db.ForeignKey('applications.guid'))
-    application           = db.relationship('Application', back_populates='cards')
+    application_guid      = db.Column(db.Uuid(native_uuid=False), db.ForeignKey('application.guid'))
+    application           = db.relationship('Application', back_populates='card')
     person                = db.relationship('Person', back_populates='card')
     dues_payments         = db.relationship('PaymentSubDues', back_populates='card')
 
@@ -243,7 +243,7 @@ class Marriage(db.Model):
     )
 
 class Application(db.Model):
-    __tablename__ = 'applications'
+    __tablename__ = 'application'
     guid                  = db.Column(db.Uuid(native_uuid=False), primary_key=True)
     ru_name               = db.Column(db.String, nullable=False)
     en_name               = db.Column(db.String, nullable=False)
@@ -289,7 +289,7 @@ class Application(db.Model):
 
     signature_date        = db.Column(db.String, nullable=False)
     spouse_signature_date = db.Column(db.String)
-    cards                 = db.relationship('Card', back_populates='application')
+    card                 = db.relationship('Card', back_populates='application')
 
     def _format_names(self, name, glue, spouse_name):
         if spouse_name:
@@ -303,7 +303,7 @@ class Application(db.Model):
         return self._format_names(self.ru_name, 'и', self.spouse_ru_name)
 
     def is_registered(self):
-        return len(self.cards) > 0
+        return len(self.card) > 0
 
 class PaymentMethod(db.Model):
     __tablename__ = 'payment_method'
@@ -356,7 +356,7 @@ class PaymentSubDues(db.Model):
         ),
         db.ForeignKeyConstraint(
             ['last_name', 'first_name'],
-            ['cards.last_name', 'cards.first_name'],
+            ['card.last_name', 'card.first_name'],
         ),
     )
 

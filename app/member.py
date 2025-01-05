@@ -6,19 +6,19 @@ import sys
 
 class Member(stjb.AbstractMember):
 
-    sql_members_by_name = """select * from Members_V C
-            where C.last_name like :name OR
-                  C.first_name like :name OR
-                  C.other_name like :name OR
-                  C.middle_name like :name OR
-                  C.maiden_name like :name OR
-                  C.ru_last_name like :name OR
-                  C.ru_maiden_name like :name OR
-                  C.ru_first_name like :name OR
-                  C.ru_patronymic_name like :name
+    sql_members_by_name = """select * from member_v c
+            where c.last_name like :name or
+                  c.first_name like :name or
+                  c.other_name like :name or
+                  c.middle_name like :name or
+                  c.maiden_name like :name or
+                  c.ru_last_name like :name or
+                  c.ru_maiden_name like :name or
+                  c.ru_first_name like :name or
+                  c.ru_patronymic_name like :name
              order by last_name, first_name"""
 
-    sql_member_by_guid = "select * from Members_V where GUID = :guid"
+    sql_member_by_guid = "select * from member_v where guid = :guid"
 
     sql_payments_by_member = """select * from payment_sub_dues
                 where last_name like :lname AND
