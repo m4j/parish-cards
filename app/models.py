@@ -375,30 +375,40 @@ class Payment(PaymentCommonMixin, db.Model):
     dues      = db.relationship('PaymentSubDues', back_populates='payment')
     prosphora = db.relationship('PaymentSubProsphora', back_populates='payment')
 
-class PaymentSubDues(IdentityMixin, PaymentCommonMixin, db.Model):
-    __tablename__ = 'payment_sub_dues'
-    last_name     = db.Column(db.String)
-    first_name    = db.Column(db.String)
-    paid_from     = db.Column(db.String)
-    paid_through  = db.Column(db.String)
-
+class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
     __table_args__ = (
         db.PrimaryKeyConstraint('guid'),
         db.ForeignKeyConstraint(
             ['payor', 'date', 'method', 'identifier'],
             ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier']
         ),
-        db.ForeignKeyConstraint(
-            ['last_name', 'first_name'],
-            ['card.last_name', 'card.first_name'],
-        ),
     )
+
+class PaymentSubNameRangeMixin(PaymentSubMixin):
+    last_name     = db.Column(db.String)
+    first_name    = db.Column(db.String)
+    paid_from     = db.Column(db.String)
+    paid_through  = db.Column(db.String)
+
+class PaymentSubDues(PaymentSubNameRangeMixin, db.Model):
+    __tablename__ = 'payment_sub_dues'
+
+    @db.declared_attr.directive
+    def __table_args__(cls):
+        args = list(PaymentSubNameRangeMixin.__table_args__)
+        args.append(
+            db.ForeignKeyConstraint(
+                ['last_name', 'first_name'],
+                ['card.last_name', 'card.first_name']
+            )
+        )
+        return tuple(args)
 
     payment = db.relationship(Payment, back_populates='dues')
     card    = db.relationship(
         Card,
         back_populates='payments',
-        order_by=[paid_from, paid_through]
+        order_by=[PaymentSubNameRangeMixin.paid_from, PaymentSubNameRangeMixin.paid_through]
     )
 
     def __repr__(self):
