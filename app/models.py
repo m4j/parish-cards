@@ -4,11 +4,38 @@ from . import db
 
 import uuid
 
+class IdentityMixin:
+    guid = db.Column(db.Uuid(native_uuid=False), unique=True)
+
 class CaseInsensitiveComparator(Comparator):
     def __eq__(self, other):
         return func.lower(self.__clause_element__()) == func.lower(other)
 
-class Card(db.Model):
+class Prosphora(IdentityMixin, db.Model):
+    __tablename__ = 'prosphora'
+    last_name           = db.Column(db.String)
+    first_name          = db.Column(db.String)
+    family_name         = db.Column(db.String)
+    ru_last_name        = db.Column(db.String)
+    ru_first_name       = db.Column(db.String)
+    ru_family_name      = db.Column(db.String)
+    p_last_name         = db.Column(db.String)
+    p_first_name        = db.Column(db.String)
+    quantity            = db.Column(db.Integer, default=1)
+    paid_through        = db.Column(db.String)
+    liturgy             = db.Column(db.String)
+    notes               = db.Column(db.String)
+    payments            = db.relationship('PaymentSubProsphora', back_populates='prosphora')
+    person              = db.relationship('Person', back_populates='prosphora')
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint('last_name', 'first_name'),
+        db.ForeignKeyConstraint(
+            ['p_last_name', 'p_first_name'], ['person.last', 'person.first']
+        )
+    )
+
+class Card(IdentityMixin, db.Model):
     __tablename__ = 'card'
     last_name           = db.Column(db.String)
     first_name          = db.Column(db.String)
@@ -26,11 +53,10 @@ class Card(db.Model):
     dues_amount           = db.Column(db.Integer)
     dues_paid_through     = db.Column(db.String)
     notes                 = db.Column(db.String)
-    guid                  = db.Column(db.String, unique=True)
     application_guid      = db.Column(db.Uuid(native_uuid=False), db.ForeignKey('application.guid'))
     application           = db.relationship('Application', back_populates='card')
     person                = db.relationship('Person', back_populates='card')
-    dues_payments         = db.relationship('PaymentSubDues', back_populates='card')
+    payments              = db.relationship('PaymentSubDues', back_populates='card')
 
     @hybrid_property
     def i_last_name(self):
@@ -78,9 +104,8 @@ def get_plus4(zip_code):
     split = zip_code.split('-')
     return split[1].strip() if len(split) > 1 else None
 
-class Person(db.Model):
+class Person(IdentityMixin, db.Model):
     __tablename__ = 'person'
-    guid    = db.Column(db.String, primary_key=True)
     last    = db.Column(db.String)
     first   = db.Column(db.String)
     email   = db.Column(db.String)
@@ -97,10 +122,15 @@ class Person(db.Model):
     date_of_death  = db.Column(db.String)
     note           = db.Column(db.String)
     card           = db.relationship('Card', uselist=False, back_populates='person')
+    prosphora      = db.relationship('Prosphora', uselist=False, back_populates='person')
     marriage       = db.relationship(
         'Marriage',
         uselist=False,
         primaryjoin = 'and_(Marriage.status == "Active", or_(and_(foreign(Person.last) == Marriage.husband_last, foreign(Person.first) == Marriage.husband_first), and_(foreign(Person.last) == Marriage.wife_last, foreign(Person.first) == Marriage.wife_first)))'
+    )
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint('last', 'first'),
     )
 
     def __init__(self, app, applicant):
@@ -242,9 +272,8 @@ class Marriage(db.Model):
         foreign_keys = [wife_last, wife_first]
     )
 
-class Application(db.Model):
+class Application(IdentityMixin, db.Model):
     __tablename__ = 'application'
-    guid                  = db.Column(db.Uuid(native_uuid=False), primary_key=True)
     ru_name               = db.Column(db.String, nullable=False)
     en_name               = db.Column(db.String, nullable=False)
     saints_day            = db.Column(db.String)
@@ -289,7 +318,11 @@ class Application(db.Model):
 
     signature_date        = db.Column(db.String, nullable=False)
     spouse_signature_date = db.Column(db.String)
-    card                 = db.relationship('Card', back_populates='application')
+    card                  = db.relationship('Card', back_populates='application')
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint('guid'),
+    )
 
     def _format_names(self, name, glue, spouse_name):
         if spouse_name:
@@ -311,17 +344,24 @@ class PaymentMethod(db.Model):
     section       = db.Column(db.Integer)
     section_name  = db.Column(db.String)
     display_short = db.Column(db.String)
+    display_full  = db.Column(db.String)
     display_long  = db.Column(db.String)
 
-class Payment(db.Model):
-    __tablename__ = 'payment'
-    record_id     = db.Column(db.String, default='9999-12-31')
+class PaymentCommonMixin:
     payor         = db.Column(db.String)
     date          = db.Column(db.String)
     method        = db.Column(db.String, db.ForeignKey('payment_method.method'))
-    identifier    = db.Column(db.String)
+    identifier    = db.Column(db.String, nullable=True)
     amount        = db.Column(db.Integer)
     comment       = db.Column(db.String)
+
+    @db.declared_attr
+    def payment_method(self):
+        return db.relationship(PaymentMethod, uselist=False, viewonly=True)
+
+class Payment(PaymentCommonMixin, db.Model):
+    __tablename__ = 'payment'
+    record_id     = db.Column(db.String, default='9999-12-31')
 
     __table_args__ = (
         db.PrimaryKeyConstraint(
@@ -332,24 +372,18 @@ class Payment(db.Model):
         ),
     )
 
-    payment_method = db.relationship(PaymentMethod, uselist=False)
-    dues = db.relationship('PaymentSubDues', back_populates='payment')
+    dues      = db.relationship('PaymentSubDues', back_populates='payment')
+    prosphora = db.relationship('PaymentSubProsphora', back_populates='payment')
 
-class PaymentSubDues(db.Model):
+class PaymentSubDues(IdentityMixin, PaymentCommonMixin, db.Model):
     __tablename__ = 'payment_sub_dues'
-    guid          = db.Column(db.Uuid(native_uuid=False), primary_key=True)
-    payor         = db.Column(db.String)
-    date          = db.Column(db.String)
-    method        = db.Column(db.String, db.ForeignKey('payment_method.method'))
-    identifier    = db.Column(db.String, nullable=True)
-    amount        = db.Column(db.Integer)
-    last_name   = db.Column(db.String)
-    first_name  = db.Column(db.String)
+    last_name     = db.Column(db.String)
+    first_name    = db.Column(db.String)
     paid_from     = db.Column(db.String)
     paid_through  = db.Column(db.String)
-    comment       = db.Column(db.String)
 
     __table_args__ = (
+        db.PrimaryKeyConstraint('guid'),
         db.ForeignKeyConstraint(
             ['payor', 'date', 'method', 'identifier'],
             ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier']
@@ -363,12 +397,40 @@ class PaymentSubDues(db.Model):
     payment = db.relationship(Payment, back_populates='dues')
     card    = db.relationship(
         Card,
-        back_populates='dues_payments',
+        back_populates='payments',
         order_by=[paid_from, paid_through]
     )
 
     def __repr__(self):
         return f'{self.date} {self.payor} {self.method} {self.identifier} {self.amount} {self.paid_from}--{self.paid_through}'
+
+class PaymentSubProsphora(IdentityMixin, PaymentCommonMixin, db.Model):
+    __tablename__ = 'payment_sub_prosphora'
+    last_name     = db.Column(db.String)
+    first_name    = db.Column(db.String)
+    paid_from     = db.Column(db.String)
+    paid_through  = db.Column(db.String)
+    quantity      = db.Column(db.Integer)
+    with_twelve_feasts = db.Column(db.String(1), default='N')
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint('guid'),
+        db.ForeignKeyConstraint(
+            ['payor', 'date', 'method', 'identifier'],
+            ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier']
+        ),
+        db.ForeignKeyConstraint(
+            ['last_name', 'first_name'],
+            ['prosphora.last_name', 'prosphora.first_name'],
+        ),
+    )
+
+    payment   = db.relationship(Payment, back_populates='prosphora')
+    prosphora = db.relationship(
+        Prosphora,
+        back_populates='payments',
+        order_by=[paid_from, paid_through]
+    )
 
 def find_member(first_name, last_name):
     return db.session.execute(

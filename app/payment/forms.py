@@ -16,7 +16,7 @@ class PaymentMixin:
 
     def __init__(self, *args, **kwargs):
         super(PaymentMixin, self).__init__(*args, **kwargs)
-        self.method.choices = [(method.method, method.method) for method in db.session.scalars(db.select(PaymentMethod))]
+        self.method.choices = [(method.method, method.display_full) for method in db.session.scalars(db.select(PaymentMethod))]
 
     def validate_amount(self, field):
         if field.data <= 0:
