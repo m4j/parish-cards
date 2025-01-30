@@ -4,7 +4,7 @@
 {% block page_content %}
 
     <div class="page-header">
-        <h2>Member Dues Payments<h2>
+        <h2>{{ parameters.header }}<h2>
     </div>
 
     {{ wtf.quick_form(form) }}
@@ -36,9 +36,9 @@
                 <td>{{ payment.date }}</td>
                 <td>{{ payment.method }} {{ payment.identifier or '' }}</td>
                 <td class="right">{{ payment.amount }}</td>
-                <td><a href="{{ url_for('main.member', guid=payment.card.guid) }}">{{ payment.card }}</a></td>
+                <td><a href="{{ url_for(parameters.member_view, guid=payment.membership.guid) }}">{{ payment.membership }}</a></td>
                 <td>{{ payment.paid_from }} → {{ payment.paid_through }}</td>
-                <td><a href="{{ url_for('.repeat_dues', guid=payment.guid) }}"><span class="glyphicon glyphicon-repeat"></span></a></td>
+                <td><a href="{{ url_for(parameters.repeat_payment_view, guid=payment.guid) }}"><span class="glyphicon glyphicon-repeat"></span></a></td>
             </tr>
         </tbody>
         {% endfor %}

@@ -35,6 +35,11 @@ class Prosphora(IdentityMixin, db.Model):
         )
     )
 
+    def __repr__(self):
+        if self.first_name:
+            return f'{self.last_name}, {self.first_name}'
+        return self.last_name
+
 class Card(IdentityMixin, db.Model):
     __tablename__ = 'card'
     last_name           = db.Column(db.String)
@@ -376,71 +381,72 @@ class Payment(PaymentCommonMixin, db.Model):
     prosphora = db.relationship('PaymentSubProsphora', back_populates='payment')
 
 class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
-    __table_args__ = (
-        db.PrimaryKeyConstraint('guid'),
-        db.ForeignKeyConstraint(
-            ['payor', 'date', 'method', 'identifier'],
-            ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier']
-        ),
-    )
+    @db.declared_attr.directive
+    def __table_args__(cls):
+        return (
+            db.PrimaryKeyConstraint('guid'),
+            db.ForeignKeyConstraint(
+                ['payor', 'date', 'method', 'identifier'],
+                ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier']
+            ),
+        )
 
-class PaymentSubNameRangeMixin(PaymentSubMixin):
+class NameAndRangeMixin:
     last_name     = db.Column(db.String)
     first_name    = db.Column(db.String)
     paid_from     = db.Column(db.String)
     paid_through  = db.Column(db.String)
 
-class PaymentSubDues(PaymentSubNameRangeMixin, db.Model):
+class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
     __tablename__ = 'payment_sub_dues'
 
     @db.declared_attr.directive
     def __table_args__(cls):
-        args = list(PaymentSubNameRangeMixin.__table_args__)
-        args.append(
+        return PaymentSubMixin.__table_args__ + (
             db.ForeignKeyConstraint(
                 ['last_name', 'first_name'],
                 ['card.last_name', 'card.first_name']
-            )
+            ),
         )
-        return tuple(args)
 
     payment = db.relationship(Payment, back_populates='dues')
     card    = db.relationship(
         Card,
         back_populates='payments',
-        order_by=[PaymentSubNameRangeMixin.paid_from, PaymentSubNameRangeMixin.paid_through]
+        order_by=[NameAndRangeMixin.paid_from, NameAndRangeMixin.paid_through]
     )
+
+    @property
+    def membership(self):
+        return self.card
 
     def __repr__(self):
         return f'{self.date} {self.payor} {self.method} {self.identifier} {self.amount} {self.paid_from}--{self.paid_through}'
 
-class PaymentSubProsphora(IdentityMixin, PaymentCommonMixin, db.Model):
-    __tablename__ = 'payment_sub_prosphora'
-    last_name     = db.Column(db.String)
-    first_name    = db.Column(db.String)
-    paid_from     = db.Column(db.String)
-    paid_through  = db.Column(db.String)
-    quantity      = db.Column(db.Integer)
+class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
+    __tablename__      = 'payment_sub_prosphora'
+    quantity           = db.Column(db.Integer)
     with_twelve_feasts = db.Column(db.String(1), default='N')
 
-    __table_args__ = (
-        db.PrimaryKeyConstraint('guid'),
-        db.ForeignKeyConstraint(
-            ['payor', 'date', 'method', 'identifier'],
-            ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier']
-        ),
-        db.ForeignKeyConstraint(
-            ['last_name', 'first_name'],
-            ['prosphora.last_name', 'prosphora.first_name'],
-        ),
-    )
+    @db.declared_attr.directive
+    def __table_args__(cls):
+        return PaymentSubMixin.__table_args__ + (
+            db.ForeignKeyConstraint(
+                ['last_name', 'first_name'],
+                ['prosphora.last_name', 'prosphora.first_name'],
+            ),
+        )
 
     payment   = db.relationship(Payment, back_populates='prosphora')
     prosphora = db.relationship(
         Prosphora,
         back_populates='payments',
-        order_by=[paid_from, paid_through]
+        order_by=[NameAndRangeMixin.paid_from, NameAndRangeMixin.paid_through]
     )
+
+    @property
+    def membership(self):
+        return self.prosphora
 
 def find_member(first_name, last_name):
     return db.session.execute(
@@ -491,28 +497,31 @@ def find_active_marriage_of_wife(first_name, last_name):
                     Marriage.status == 'Active'
                     ))).scalar()
 
-def find_all_payments(fragment):
-    return find_sub_dues_payments(fragment)
-
 def find_sub_dues_payments(fragment):
+    return find_sub_payments(fragment, PaymentSubDues)
+
+def find_sub_prosphora_payments(fragment):
+    return find_sub_payments(fragment, PaymentSubProsphora)
+
+def find_sub_payments(fragment, sub_cls):
     search_term = f'%{fragment}%'
     return db.session.scalars(
-        db.select(PaymentSubDues).filter(
+        db.select(sub_cls).filter(
             db.or_(
-                PaymentSubDues.payor.ilike(search_term),
-                PaymentSubDues.date.ilike(search_term),
-                PaymentSubDues.method.ilike(search_term),
-                PaymentSubDues.identifier.ilike(search_term),
-                PaymentSubDues.amount.ilike(search_term),
-                PaymentSubDues.last_name.ilike(search_term),
-                PaymentSubDues.first_name.ilike(search_term),
-                PaymentSubDues.paid_from.ilike(search_term),
-                PaymentSubDues.paid_through.ilike(search_term),
-                PaymentSubDues.comment.ilike(search_term)
+                sub_cls.payor.ilike(search_term),
+                sub_cls.date.ilike(search_term),
+                sub_cls.method.ilike(search_term),
+                sub_cls.identifier.ilike(search_term),
+                sub_cls.amount.ilike(search_term),
+                sub_cls.last_name.ilike(search_term),
+                sub_cls.first_name.ilike(search_term),
+                sub_cls.paid_from.ilike(search_term),
+                sub_cls.paid_through.ilike(search_term),
+                sub_cls.comment.ilike(search_term)
             ))
         .order_by(
-            PaymentSubDues.paid_from.desc(),
-            PaymentSubDues.paid_through.desc(),
+            sub_cls.paid_from.desc(),
+            sub_cls.paid_through.desc(),
         )).all()
 
 def date_within_other_dues_range(date, first, last):
