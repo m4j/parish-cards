@@ -23,11 +23,13 @@
                 <div class="col-md-4">
                     {{ wtf.form_field(form.method) }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-4">
                     {{ wtf.form_field(form.identifier) }}
                 </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.amount) }}
+                </div>
             </div>
-            {{ wtf.form_field(form.amount) }}
 {% endblock %}
 {% block form_end %}
             {{ wtf.form_field(form.comment) }}

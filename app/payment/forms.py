@@ -24,7 +24,15 @@ class PaymentMixin:
 
     def validate_identifier(self, field):
         if self.method.data != 'Cash' and field.data.strip() == '':
-            raise ValidationError('Other than Cash transactions must have an identifier/authorization/approval code')
+            method = db.session.scalar(db.select(PaymentMethod).filter(PaymentMethod.method == self.method.data))
+            raise ValidationError(f'{method.validation_message} required')
+
+    def load_from(self, payment_sub):
+        self.payor.data = payment_sub.payor
+        self.date.data = payment_sub.date
+        self.method.data = payment_sub.method
+        self.amount.data = payment_sub.amount
+        self.comment.data = payment_sub.comment
 
 class PaymentRangeMixin:
 
@@ -44,6 +52,10 @@ class PaymentRangeMixin:
             raise ValidationError('Invalid date range')
         self.validate_within_other_ranges(field)
 
+    def load_from(self, payment_sub):
+        self.paid_from.data = payment_sub.paid_from
+        self.paid_through.data = payment_sub.paid_through
+
 class PaymentSubDuesForm(PaymentMixin, PaymentRangeMixin, FlaskForm):
 
     def __init__(self, card, *args, **kwargs):
@@ -55,13 +67,8 @@ class PaymentSubDuesForm(PaymentMixin, PaymentRangeMixin, FlaskForm):
             raise ValidationError(f'Date within another paid range')
 
     def load_from(self, payment_sub):
-        self.payor.data = payment_sub.payor
-        self.date.data = payment_sub.date
-        self.method.data = payment_sub.method
-        self.amount.data = payment_sub.amount
-        self.paid_from.data = payment_sub.paid_from
-        self.paid_through.data = payment_sub.paid_through
-        self.comment.data = payment_sub.comment
+        PaymentMixin.load_from(self, payment_sub)
+        PaymentRangeMixin.load_from(self, payment_sub)
 
     def save_to(self, payment_sub):
         payment_sub.payor = self.payor.data

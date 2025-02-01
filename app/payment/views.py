@@ -53,7 +53,7 @@ def prosphora():
 @payment.route('/dues/repeat/<guid>', methods=['GET', 'POST'])
 def repeat_dues(guid):
     sub = db.get_or_404(PaymentSubDues, uuid.UUID(guid))
-    form = PaymentSubDuesForm(sub.card)
+    form = PaymentSubDuesForm(sub.membership)
     if form.validate_on_submit():
         new_payment = Payment(
             payor=form.payor.data,
@@ -65,18 +65,18 @@ def repeat_dues(guid):
 
         new_sub = PaymentSubDues(guid=uuid.uuid4())
         form.save_to(new_sub)
-        new_sub.card = sub.card
+        new_sub.membership = sub.membership
         new_sub.payment = new_payment
         db.session.add(new_sub)
 
         db.session.commit()
         if form.submit.data:
-            flash(f'Added dues payment for {sub.card}')
-            return redirect(url_for('.index'))
+            flash(f'Added dues payment for {sub.membership}')
+            return redirect(url_for('.dues'))
     if not form.payor.data:
         form.load_from(sub)
     return render_template(
-        'payment/edit_payment_sub_dues.html',
-        member=sub.card,
+        'payment/edit_payment_dues.html',
+        member=sub.membership,
         sub=sub,
         form=form)

@@ -25,7 +25,7 @@ class Prosphora(IdentityMixin, db.Model):
     paid_through        = db.Column(db.String)
     liturgy             = db.Column(db.String)
     notes               = db.Column(db.String)
-    payments            = db.relationship('PaymentSubProsphora', back_populates='prosphora')
+    payments            = db.relationship('PaymentSubProsphora', back_populates='membership')
     person              = db.relationship('Person', back_populates='prosphora')
 
     __table_args__ = (
@@ -61,7 +61,7 @@ class Card(IdentityMixin, db.Model):
     application_guid      = db.Column(db.Uuid(native_uuid=False), db.ForeignKey('application.guid'))
     application           = db.relationship('Application', back_populates='card')
     person                = db.relationship('Person', back_populates='card')
-    payments              = db.relationship('PaymentSubDues', back_populates='card')
+    payments              = db.relationship('PaymentSubDues', back_populates='membership')
 
     @hybrid_property
     def i_last_name(self):
@@ -351,6 +351,7 @@ class PaymentMethod(db.Model):
     display_short = db.Column(db.String)
     display_full  = db.Column(db.String)
     display_long  = db.Column(db.String)
+    validation_message = db.Column(db.String)
 
 class PaymentCommonMixin:
     payor         = db.Column(db.String)
@@ -410,15 +411,11 @@ class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
         )
 
     payment = db.relationship(Payment, back_populates='dues')
-    card    = db.relationship(
+    membership = db.relationship(
         Card,
         back_populates='payments',
         order_by=[NameAndRangeMixin.paid_from, NameAndRangeMixin.paid_through]
     )
-
-    @property
-    def membership(self):
-        return self.card
 
     def __repr__(self):
         return f'{self.date} {self.payor} {self.method} {self.identifier} {self.amount} {self.paid_from}--{self.paid_through}'
@@ -438,15 +435,11 @@ class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
         )
 
     payment   = db.relationship(Payment, back_populates='prosphora')
-    prosphora = db.relationship(
+    membership = db.relationship(
         Prosphora,
         back_populates='payments',
         order_by=[NameAndRangeMixin.paid_from, NameAndRangeMixin.paid_through]
     )
-
-    @property
-    def membership(self):
-        return self.prosphora
 
 def find_member(first_name, last_name):
     return db.session.execute(
@@ -498,39 +491,45 @@ def find_active_marriage_of_wife(first_name, last_name):
                     ))).scalar()
 
 def find_sub_dues_payments(fragment):
-    return find_sub_payments(fragment, PaymentSubDues)
+    return _find_sub_payments(fragment, PaymentSubDues)
 
 def find_sub_prosphora_payments(fragment):
-    return find_sub_payments(fragment, PaymentSubProsphora)
+    return _find_sub_payments(fragment, PaymentSubProsphora)
 
-def find_sub_payments(fragment, sub_cls):
+def _find_sub_payments(fragment, model):
     search_term = f'%{fragment}%'
     return db.session.scalars(
-        db.select(sub_cls).filter(
+        db.select(model).filter(
             db.or_(
-                sub_cls.payor.ilike(search_term),
-                sub_cls.date.ilike(search_term),
-                sub_cls.method.ilike(search_term),
-                sub_cls.identifier.ilike(search_term),
-                sub_cls.amount.ilike(search_term),
-                sub_cls.last_name.ilike(search_term),
-                sub_cls.first_name.ilike(search_term),
-                sub_cls.paid_from.ilike(search_term),
-                sub_cls.paid_through.ilike(search_term),
-                sub_cls.comment.ilike(search_term)
+                model.payor.ilike(search_term),
+                model.date.ilike(search_term),
+                model.method.ilike(search_term),
+                model.identifier.ilike(search_term),
+                model.amount.ilike(search_term),
+                model.last_name.ilike(search_term),
+                model.first_name.ilike(search_term),
+                model.paid_from.ilike(search_term),
+                model.paid_through.ilike(search_term),
+                model.comment.ilike(search_term)
             ))
         .order_by(
-            sub_cls.paid_from.desc(),
-            sub_cls.paid_through.desc(),
+            model.paid_from.desc(),
+            model.paid_through.desc(),
         )).all()
 
-def date_within_other_dues_range(date, first, last):
-    return db.session.scalars(
-        db.select(PaymentSubDues).filter(
+def date_within_other_dues_range(date, first_name, last_name):
+    return _date_within_other_range(PaymentSubDues, date, first_name, last_name)
+
+def date_within_other_prosphora_range(date, first_name, last_name):
+    return _date_within_other_range(PaymentSubProsphora, date, first_name, last_name)
+
+def _date_within_other_range(model, date, first_name, last_name):
+    return db.session.execute(
+        db.select(model).filter(
             db.and_(
-                PaymentSubDues.last_name == last,
-                PaymentSubDues.first_name == first,
-                PaymentSubDues.paid_from <= date,
-                date <= PaymentSubDues.paid_through,
-            ))).first()
+                model.last_name == last_name,
+                model.first_name == first_name,
+                model.paid_from <= date,
+                date <= model.paid_through,
+            ))).scalar()
 
