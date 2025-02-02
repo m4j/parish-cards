@@ -2,8 +2,8 @@ from flask import render_template, abort, session, redirect, url_for, flash, Mar
 from .. import db
 from . import payment
 from ..main.forms import SearchForm
-from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues
-from .forms import PaymentSubDuesForm
+from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora
+from .forms import PaymentSubDuesForm, PaymentSubProsphoraForm
 import uuid
 from collections import namedtuple
 
@@ -18,7 +18,7 @@ _dues_template_values = TemplateValues(
 _prosphora_template_values = TemplateValues(
         header='Prosphora Payments',
         member_view='main.book',
-        repeat_payment_view='.repeat_dues'
+        repeat_payment_view='.repeat_prosphora'
 )
 
 def payments(find_sub_payments, parameters):
@@ -52,8 +52,27 @@ def prosphora():
 
 @payment.route('/dues/repeat/<guid>', methods=['GET', 'POST'])
 def repeat_dues(guid):
-    sub = db.get_or_404(PaymentSubDues, uuid.UUID(guid))
-    form = PaymentSubDuesForm(sub.membership)
+    return repeat_sub_payment(
+        guid=guid,
+        model=PaymentSubDues,
+        sub_form=PaymentSubDuesForm,
+        template='payment/edit_payment_dues.html',
+        after_submit_url=url_for('.dues')
+    )
+
+@payment.route('/prosphora/repeat/<guid>', methods=['GET', 'POST'])
+def repeat_prosphora(guid):
+    return repeat_sub_payment(
+        guid=guid,
+        model=PaymentSubProsphora,
+        sub_form=PaymentSubProsphoraForm,
+        template='payment/edit_payment_prosphora.html',
+        after_submit_url=url_for('.prosphora')
+    )
+
+def repeat_sub_payment(guid, model, sub_form, template, after_submit_url):
+    sub = db.get_or_404(model, uuid.UUID(guid))
+    form = sub_form(sub.membership)
     if form.validate_on_submit():
         new_payment = Payment(
             payor=form.payor.data,
@@ -63,7 +82,7 @@ def repeat_dues(guid):
             amount=form.amount.data)
         db.session.add(new_payment)
 
-        new_sub = PaymentSubDues(guid=uuid.uuid4())
+        new_sub = model(guid=uuid.uuid4())
         form.save_to(new_sub)
         new_sub.membership = sub.membership
         new_sub.payment = new_payment
@@ -71,12 +90,12 @@ def repeat_dues(guid):
 
         db.session.commit()
         if form.submit.data:
-            flash(f'Added dues payment for {sub.membership}')
-            return redirect(url_for('.dues'))
+            flash(f'Added payment for {sub.membership}')
+            return redirect(after_submit_url)
     if not form.payor.data:
         form.load_from(sub)
     return render_template(
-        'payment/edit_payment_dues.html',
+        template,
         member=sub.membership,
         sub=sub,
         form=form)

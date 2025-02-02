@@ -423,7 +423,7 @@ class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
 class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
     __tablename__      = 'payment_sub_prosphora'
     quantity           = db.Column(db.Integer)
-    with_twelve_feasts = db.Column(db.String(1), default='N')
+    with_twelve_feasts = db.Column(db.Boolean, default=False, nullable=False)
 
     @db.declared_attr.directive
     def __table_args__(cls):
@@ -517,13 +517,13 @@ def _find_sub_payments(fragment, model):
             model.paid_through.desc(),
         )).all()
 
-def date_within_other_dues_range(date, first_name, last_name):
-    return _date_within_other_range(PaymentSubDues, date, first_name, last_name)
+def dues_range_containing_date(date, first_name, last_name):
+    return _range_containing_date(PaymentSubDues, date, first_name, last_name)
 
-def date_within_other_prosphora_range(date, first_name, last_name):
-    return _date_within_other_range(PaymentSubProsphora, date, first_name, last_name)
+def prosphora_range_containing_date(date, first_name, last_name):
+    return _range_containing_date(PaymentSubProsphora, date, first_name, last_name)
 
-def _date_within_other_range(model, date, first_name, last_name):
+def _range_containing_date(model, date, first_name, last_name):
     return db.session.execute(
         db.select(model).filter(
             db.and_(
