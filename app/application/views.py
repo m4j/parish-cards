@@ -14,7 +14,7 @@ def applications():
 def application_add():
     form = ApplicationForm()
     if form.validate_on_submit():
-        app = Application(guid=uuid.uuid4())
+        app = Application()
         form.save_application(app)
         db.session.add(app)
         db.session.commit()
@@ -113,7 +113,7 @@ def finalize_registration_and_redirect(app, applicant, applicant_spouse, decisio
             db.session.add(spouse_member)
     db.session.commit()
     if member:
-        return redirect(url_for('main.member', guid=member.guid))
+        return redirect(url_for('main.member', guid=member.guid.hex))
     return redirect(url_for('.applications'))
 
 @application.route('/records_update/<guid>', methods=['GET', 'POST'])

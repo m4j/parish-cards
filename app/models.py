@@ -5,7 +5,7 @@ from . import db
 import uuid
 
 class IdentityMixin:
-    guid = db.Column(db.Uuid(native_uuid=False), unique=True)
+    guid = db.Column(db.Uuid(native_uuid=False), unique=True, default=uuid.uuid4)
 
 class CaseInsensitiveComparator(Comparator):
     def __eq__(self, other):
@@ -82,7 +82,6 @@ class Card(IdentityMixin, db.Model):
         return CaseInsensitiveComparator(cls.first_name)
 
     def __init__(self, app, person, applicant, as_of_date):
-        self.guid = str(uuid.uuid4())
         self.application = app
         self.person = person
         self.ru_last_name = applicant.ru_name_last
@@ -139,7 +138,6 @@ class Person(IdentityMixin, db.Model):
     )
 
     def __init__(self, app, applicant):
-        self.guid = str(uuid.uuid4())
         self.last = applicant.en_name_last
         self.first = applicant.en_name_first
         self.email = app.email

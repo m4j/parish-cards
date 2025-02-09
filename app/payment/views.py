@@ -82,7 +82,7 @@ def repeat_sub_payment(guid, model, sub_form, template, after_submit_url):
             amount=form.amount.data)
         db.session.add(new_payment)
 
-        new_sub = model(guid=uuid.uuid4())
+        new_sub = model()
         form.save_to(new_sub)
         new_sub.membership = sub.membership
         new_sub.payment = new_payment
