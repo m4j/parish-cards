@@ -54,3 +54,14 @@
   {% block page_content %}{% endblock%}
 </div>
 {% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+function clearSearch() {
+    var searchInput = document.querySelector('[name="search_term"]');
+    searchInput.value = '';
+    searchInput.form.submit();
+}
+</script>
+{% endblock %}

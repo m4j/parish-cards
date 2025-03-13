@@ -1,0 +1,25 @@
+{% import "bootstrap/wtf.html" as wtf %}
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="POST" class="form" role="form">
+            {{ form.hidden_tag() }}
+            {{ wtf.form_errors(form, hiddens="only") }}
+            <div class="form-group">
+                {{ form.search_term.label }}
+                <div class="input-group">
+                    {{ form.search_term(class="form-control", **{"data-original-value": form.search_term.data or ""}) }}
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" onclick="clearSearch();">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </button>
+                    </span>
+                </div>
+                {% if form.search_term.description %}
+                    <p class="help-block">{{ form.search_term.description }}</p>
+                {% endif %}
+            </div>
+            {{ wtf.form_field(form.submit_search) }}
+        </form>
+    </div>
+</div> 
