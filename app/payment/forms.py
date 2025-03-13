@@ -3,7 +3,7 @@ from wtforms import Form, StringField, SubmitField, IntegerField, SelectField, T
 from wtforms.validators import DataRequired, Optional, ValidationError
 from ..validators import ISOYearMonthValidator, ISOYearMonthDayValidator
 from .. import db
-from ..models import PaymentMethod, dues_range_containing_date, prosphora_range_containing_date
+from ..models import PaymentMethod, dues_range_containing_date, prosphora_range_containing_date, PaymentSubMiscCategory
 
 class PaymentMixin:
     payor = StringField('Payor', validators=[DataRequired()], render_kw={'autofocus': True, 'placeholder': 'Last, first name(s)'})
@@ -117,3 +117,21 @@ class PaymentSubProsphoraForm(PaymentMixin, PaymentRangeMixin, FlaskForm):
         PaymentRangeMixin.save_to(self, payment_sub)
         payment_sub.quantity = self.quantity.data
         payment_sub.with_twelve_feasts = self.with_twelve_feasts.data
+
+class PaymentSubMiscForm(PaymentMixin, FlaskForm):
+    category = SelectField('Category', validators=[DataRequired()])
+
+    def __init__(self, *args, **kwargs):
+        super(PaymentSubMiscForm, self).__init__(*args, **kwargs)
+        # Load payment method choices
+        self.method.choices = [(method.method, method.display_full) for method in db.session.scalars(db.select(PaymentMethod))]
+        # Load category choices - using only English category names
+        self.category.choices = [(cat.category, cat.category) for cat in db.session.scalars(db.select(PaymentSubMiscCategory))]
+
+    def load_from(self, payment_sub):
+        PaymentMixin.load_from(self, payment_sub)
+        self.category.data = payment_sub.category
+
+    def save_to(self, payment_sub):
+        PaymentMixin.save_to(self, payment_sub)
+        payment_sub.category = self.category.data

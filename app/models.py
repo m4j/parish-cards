@@ -378,6 +378,7 @@ class Payment(PaymentCommonMixin, db.Model):
 
     dues      = db.relationship('PaymentSubDues', back_populates='payment')
     prosphora = db.relationship('PaymentSubProsphora', back_populates='payment')
+    misc = db.relationship('PaymentSubMisc', back_populates='payment')
 
 class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
     @db.declared_attr.directive
@@ -438,6 +439,30 @@ class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
         back_populates='payments',
         order_by=[NameAndRangeMixin.paid_from, NameAndRangeMixin.paid_through]
     )
+
+class PaymentSubMisc(PaymentSubMixin, db.Model):
+    __tablename__ = 'payment_sub_misc'
+    
+    # Additional fields specific to misc payments
+    category = db.Column(db.String, db.ForeignKey('payment_sub_misc_category.category', onupdate='CASCADE'), nullable=False)
+
+    # Define relationships
+    payment = db.relationship(Payment, back_populates='misc')
+    category_info = db.relationship('PaymentSubMiscCategory', backref='payments')
+
+    @db.declared_attr.directive
+    def __table_args__(cls):
+        return PaymentSubMixin.__table_args__
+
+    def __repr__(self):
+        return f'{self.date} {self.payor} {self.method} {self.identifier} {self.amount} {self.category}'
+
+# Category model
+class PaymentSubMiscCategory(db.Model):
+    __tablename__ = 'payment_sub_misc_category'
+    
+    category = db.Column(db.String, primary_key=True)
+    ru_category = db.Column(db.String, unique=True)
 
 def find_member(first_name, last_name):
     return db.session.execute(

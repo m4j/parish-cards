@@ -1,0 +1,16 @@
+{% extends "payment/payment_base.html" %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h3>Miscellaneous Payment</h3>
+    </div>
+{% endblock %}
+
+{% block rows %}
+    {{ super() }}
+    <div class="row">
+        <div class="col-md-6">
+            {{ wtf.form_field(form.category) }}
+        </div>
+    </div>
+{% endblock %} 
