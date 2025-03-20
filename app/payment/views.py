@@ -2,8 +2,8 @@ from flask import render_template, abort, session, redirect, url_for, flash, Mar
 from .. import db
 from . import payment
 from ..main.forms import SearchForm
-from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora
-from .forms import PaymentSubDuesForm, PaymentSubProsphoraForm
+from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora, find_payments_with_multiple_subs
+from .forms import PaymentSubDuesForm, PaymentSubProsphoraForm, PaymentSubMiscForm
 import uuid
 from collections import namedtuple
 
@@ -89,13 +89,57 @@ def repeat_sub_payment(guid, model, sub_form, template, after_submit_url):
         db.session.add(new_sub)
 
         db.session.commit()
-        if form.submit.data:
+        if form.submit_btn.data:
             flash(f'Added payment for {sub.membership}')
             return redirect(after_submit_url)
     if not form.payor.data:
         form.load_from(sub)
+        form.identifier.data = None
     return render_template(
         template,
         member=sub.membership,
         sub=sub,
         form=form)
+
+@payment.route('/add_dues_sub', methods=['POST'])
+# @login_required
+def add_dues_sub():
+    """Handle AJAX request to add a new dues sub-payment form"""
+    form = PaymentSubDuesForm()
+    return render_template('payment/_dues_sub_form.html', form=form)
+
+@payment.route('/add_prosphora_sub', methods=['POST'])
+# @login_required
+def add_prosphora_sub():
+    """Handle AJAX request to add a new prosphora sub-payment form"""
+    form = PaymentSubProsphoraForm()
+    return render_template('payment/_prosphora_sub_form.html', form=form)
+
+@payment.route('/add_misc_sub', methods=['POST'])
+# @login_required
+def add_misc_sub():
+    """Handle AJAX request to add a new misc sub-payment form"""
+    form = PaymentSubMiscForm()
+    return render_template('payment/_misc_sub_form.html', form=form)
+
+@payment.route('/multiple_subs', methods=['GET', 'POST'])
+# @login_required
+def multiple_subs():
+    """Display payments with multiple sub-payments"""
+    form = SearchForm()
+    payments = []
+    
+    if form.validate_on_submit():
+        session['search_term'] = form.search_term.data
+        return redirect(url_for(request.endpoint))
+    
+    search_term = session.get('search_term')
+    if search_term:
+        form.search_term.data = search_term
+        payments = find_payments_with_multiple_subs(search_term)
+        if len(payments) == 0:
+            flash('Nothing found, please try again')
+    
+    return render_template('payment/multiple_subs.html',
+                         form=form,
+                         payments=payments)

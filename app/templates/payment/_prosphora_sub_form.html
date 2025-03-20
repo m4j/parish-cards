@@ -1,0 +1,42 @@
+<div class="row">
+    <div class="col-md-6 mb-3">
+        {{ form.last_name.label(class="form-label") }}
+        {{ form.last_name(class="form-control") }}
+        {{ form.guid }}
+    </div>
+    <div class="col-md-6 mb-3">
+        {{ form.first_name.label(class="form-label") }}
+        {{ form.first_name(class="form-control") }}
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-4 mb-3">
+        {{ form.paid_from.label(class="form-label") }}
+        {{ form.paid_from(class="form-control") }}
+    </div>
+    <div class="col-md-4 mb-3">
+        {{ form.paid_through.label(class="form-label") }}
+        {{ form.paid_through(class="form-control") }}
+    </div>
+    <div class="col-md-4 mb-3">
+        {{ form.amount.label(class="form-label") }}
+        {{ form.amount(class="form-control") }}
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6 mb-3">
+        {{ form.quantity.label(class="form-label") }}
+        {{ form.quantity(class="form-control") }}
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="form-check mt-4">
+            {{ form.with_twelve_feasts(class="form-check-input") }}
+            {{ form.with_twelve_feasts.label(class="form-check-label") }}
+        </div>
+    </div>
+</div>
+<div class="mb-3">
+    {{ form.comment.label(class="form-label") }}
+    {{ form.comment(class="form-control", rows=2) }}
+</div>
+<button type="button" class="btn btn-sm btn-danger" onclick="removeSub(this)">Remove</button> 

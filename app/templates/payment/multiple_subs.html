@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Payments with Multiple Sub-payments</h2>
+    
+    {% include "search_form.html" %}
+    <!-- 
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-8">
+                    {{ form.search_term(class="form-control", placeholder="Search by payor, date, method, identifier, amount, or comment") }}
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    {% if form.search_term.data %}
+                    <a href="{{ url_for('.multiple_subs') }}" class="btn btn-secondary">Clear</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+    -->
+
+    <!-- Results Table -->
+    {% if payments %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 40px"></th>
+                    <th>Date</th>
+                    <th>Payor</th>
+                    <th>Method</th>
+                    <th>Identifier</th>
+                    <th>Amount</th>
+                    <th>Sub-payments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment, count in payments %}
+                <tr>
+                    <td>
+                        <button class="btn btn-sm btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#subs{{ payment.guid.hex }}" aria-expanded="false" aria-controls="subs{{ payment.guid.hex }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </td>
+                    <td>{{ payment.date }}</td>
+                    <td>{{ payment.payor }}</td>
+                    <td>{{ payment.method }}</td>
+                    <td>{{ payment.identifier or '' }}</td>
+                    <td>{{ payment.amount }}</td>
+                    <td>
+                        <span class="badge bg-primary">{{ count }}</span>
+                    </td>
+                    <td>
+                        <!-- a href=" url_for('.edit_payment', guid=payment.guid.hex) " class="btn btn-sm btn-primary">Edit</a-->
+                        <a href="" class="btn btn-sm btn-primary">Edit</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="8" class="p-0">
+                        <div class="collapse" id="subs{{ payment.guid.hex }}">
+                            <div class="card card-body border-0 bg-light">
+                                <!-- Dues Sub-payments -->
+                                {% if payment.dues_subs %}
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Dues Sub-payments</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Range</th>
+                                                    <th>Amount</th>
+                                                    <th>Comment</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for sub in payment.dues_subs %}
+                                                <tr>
+                                                    <td>{{ sub.last_name }}, {{ sub.first_name }}</td>
+                                                    <td>{{ sub.paid_from }} - {{ sub.paid_through }}</td>
+                                                    <td>{{ sub.amount }}</td>
+                                                    <td>{{ sub.comment or '' }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Prosphora Sub-payments -->
+                                {% if payment.prosphora_subs %}
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Prosphora Sub-payments</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Range</th>
+                                                    <th>Quantity</th>
+                                                    <th>12 Feasts</th>
+                                                    <th>Amount</th>
+                                                    <th>Comment</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for sub in payment.prosphora_subs %}
+                                                <tr>
+                                                    <td>{{ sub.last_name }}, {{ sub.first_name }}</td>
+                                                    <td>{{ sub.paid_from }} - {{ sub.paid_through }}</td>
+                                                    <td>{{ sub.quantity }}</td>
+                                                    <td>{{ "Yes" if sub.with_twelve_feasts else "No" }}</td>
+                                                    <td>{{ sub.amount }}</td>
+                                                    <td>{{ sub.comment or '' }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Misc Sub-payments -->
+                                {% if payment.misc_subs %}
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Miscellaneous Sub-payments</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Category</th>
+                                                    <th>Amount</th>
+                                                    <th>Comment</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for sub in payment.misc_subs %}
+                                                <tr>
+                                                    <td>{{ sub.category }}</td>
+                                                    <td>{{ sub.amount }}</td>
+                                                    <td>{{ sub.comment or '' }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        {% if form.search_term.data %}
+        No payments found matching your search criteria.
+        {% else %}
+        No payments with multiple sub-payments found.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add rotation to chevron icons when expanding/collapsing
+    const collapseButtons = document.querySelectorAll('[data-bs-toggle="collapse"]');
+    collapseButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const icon = this.querySelector('.bi');
+            if (icon) {
+                icon.style.transform = this.getAttribute('aria-expanded') === 'true' 
+                    ? 'rotate(90deg)' 
+                    : 'rotate(0deg)';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

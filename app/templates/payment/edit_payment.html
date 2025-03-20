@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if payment.guid %}Edit Payment{% else %}New Payment{% endif %}</h2>
+    
+    <form method="POST" class="needs-validation" novalidate>
+        {{ form.csrf_token }}
+        
+        <!-- Base Payment Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Payment Details</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.payment.payor.label(class="form-label") }}
+                        {{ form.payment.payor(class="form-control") }}
+                        {% if form.payment.payor.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.payment.payor.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.payment.date.label(class="form-label") }}
+                        {{ form.payment.date(class="form-control") }}
+                        {% if form.payment.date.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.payment.date.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        {{ form.payment.method.label(class="form-label") }}
+                        {{ form.payment.method(class="form-select") }}
+                        {% if form.payment.method.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.payment.method.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form.payment.identifier.label(class="form-label") }}
+                        {{ form.payment.identifier(class="form-control") }}
+                        {% if form.payment.identifier.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.payment.identifier.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form.payment.amount.label(class="form-label") }}
+                        {{ form.payment.amount(class="form-control") }}
+                        {% if form.payment.amount.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.payment.amount.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.payment.comment.label(class="form-label") }}
+                    {{ form.payment.comment(class="form-control", rows=3) }}
+                    {% if form.payment.comment.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.payment.comment.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Dues Sub-payments Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Dues Sub-payments</h4>
+                <button type="button" class="btn btn-sm btn-primary" onclick="addDuesSub()">Add Dues</button>
+            </div>
+            <div class="card-body" id="dues-subs-container">
+                {% for subform in form.dues_subs %}
+                <div class="dues-sub-entry border rounded p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ subform.last_name.label(class="form-label") }}
+                            {{ subform.last_name(class="form-control") }}
+                            {{ subform.guid }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ subform.first_name.label(class="form-label") }}
+                            {{ subform.first_name(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ subform.paid_from.label(class="form-label") }}
+                            {{ subform.paid_from(class="form-control") }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            {{ subform.paid_through.label(class="form-label") }}
+                            {{ subform.paid_through(class="form-control") }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            {{ subform.amount.label(class="form-label") }}
+                            {{ subform.amount(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ subform.comment.label(class="form-label") }}
+                        {{ subform.comment(class="form-control", rows=2) }}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeSub(this)">Remove</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Prosphora Sub-payments Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Prosphora Sub-payments</h4>
+                <button type="button" class="btn btn-sm btn-primary" onclick="addProsphoraSub()">Add Prosphora</button>
+            </div>
+            <div class="card-body" id="prosphora-subs-container">
+                {% for subform in form.prosphora_subs %}
+                <div class="prosphora-sub-entry border rounded p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ subform.last_name.label(class="form-label") }}
+                            {{ subform.last_name(class="form-control") }}
+                            {{ subform.guid }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ subform.first_name.label(class="form-label") }}
+                            {{ subform.first_name(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ subform.paid_from.label(class="form-label") }}
+                            {{ subform.paid_from(class="form-control") }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            {{ subform.paid_through.label(class="form-label") }}
+                            {{ subform.paid_through(class="form-control") }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            {{ subform.amount.label(class="form-label") }}
+                            {{ subform.amount(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ subform.quantity.label(class="form-label") }}
+                            {{ subform.quantity(class="form-control") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4">
+                                {{ subform.with_twelve_feasts(class="form-check-input") }}
+                                {{ subform.with_twelve_feasts.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ subform.comment.label(class="form-label") }}
+                        {{ subform.comment(class="form-control", rows=2) }}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeSub(this)">Remove</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Misc Sub-payments Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Miscellaneous Sub-payments</h4>
+                <button type="button" class="btn btn-sm btn-primary" onclick="addMiscSub()">Add Misc</button>
+            </div>
+            <div class="card-body" id="misc-subs-container">
+                {% for subform in form.misc_subs %}
+                <div class="misc-sub-entry border rounded p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ subform.category.label(class="form-label") }}
+                            {{ subform.category(class="form-select") }}
+                            {{ subform.guid }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            {{ subform.amount.label(class="form-label") }}
+                            {{ subform.amount(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ subform.comment.label(class="form-label") }}
+                        {{ subform.comment(class="form-control", rows=2) }}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeSub(this)">Remove</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('payment.payments') }}" class="btn btn-secondary">Cancel</a>
+            {{ form.submit_btn(class="btn btn-primary") }}
+        </div>
+    </form>
+</div>
+
+{% block scripts %}
+<script>
+function addSub(type) {
+    const container = document.getElementById(`${type}-subs-container`);
+    const entry = document.createElement('div');
+    entry.className = `${type}-sub-entry border rounded p-3 mb-3`;
+    
+    // Create a new form entry with empty fields
+    const formData = new FormData();
+    formData.append('csrf_token', '{{ form.csrf_token.current_token }}');
+    
+    fetch(`/payment/add_${type}_sub`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(html => {
+        entry.innerHTML = html;
+        container.appendChild(entry);
+    });
+}
+
+function addDuesSub() {
+    addSub('dues');
+}
+
+function addProsphoraSub() {
+    addSub('prosphora');
+}
+
+function addMiscSub() {
+    addSub('misc');
+}
+
+function removeSub(button) {
+    button.closest('.sub-entry').remove();
+}
+
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %}
+{% endblock %} 
