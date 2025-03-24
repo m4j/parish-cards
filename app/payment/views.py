@@ -126,7 +126,7 @@ def add_misc_sub():
 # @login_required
 def multiple_subs():
     """Display payments with multiple sub-payments"""
-    form = SearchForm()
+    form = SearchForm(search_label='Search by payor, date, method, identifier, amount, or comment')
     payments = []
     
     if form.validate_on_submit():
