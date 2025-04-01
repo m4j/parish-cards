@@ -398,24 +398,34 @@ class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
 class NameAndRangeMixin:
     last_name     = db.Column(db.String)
     first_name    = db.Column(db.String)
-    paid_from     = db.Column(db.String, db.ForeignKey('yyyy_mm.year_month'))
-    paid_through  = db.Column(db.String, db.ForeignKey('yyyy_mm.year_month'))
+
+    @db.declared_attr
+    def paid_from(cls):
+        return db.Column(db.String, db.ForeignKey('yyyy_mm.year_month'))
     
-    paid_from_year_month = db.relationship(
-        'YearMonth',
-        foreign_keys=[paid_from],
-        primaryjoin=lambda: NameAndRangeMixin.paid_from == YearMonth.year_month,
-        uselist=False,
-        viewonly=True
-    )
+    @db.declared_attr
+    def paid_through(cls):
+        return db.Column(db.String, db.ForeignKey('yyyy_mm.year_month'))
     
-    paid_through_year_month = db.relationship(
-        'YearMonth',
-        foreign_keys=[paid_through],
-        primaryjoin=lambda: NameAndRangeMixin.paid_through == YearMonth.year_month,
-        uselist=False,
-        viewonly=True
-    )
+    @db.declared_attr
+    def paid_from_year_month(cls):
+        return db.relationship(
+            'YearMonth',
+            foreign_keys=[cls.paid_from],
+            primaryjoin=lambda: cls.paid_from == YearMonth.year_month,
+            uselist=False,
+            viewonly=True
+        )
+
+    @db.declared_attr
+    def paid_through_year_month(cls):
+        return db.relationship(
+            'YearMonth',
+            foreign_keys=[cls.paid_through],
+            primaryjoin=lambda: cls.paid_through == YearMonth.year_month,
+            uselist=False,
+            viewonly=True
+        )
 
     def format_date_range(self):
         """Format the date range using English month and year from YearMonth records."""
@@ -449,7 +459,7 @@ class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
     membership = db.relationship(
         Card,
         back_populates='payments',
-        order_by=[NameAndRangeMixin.paid_from, NameAndRangeMixin.paid_through]
+        order_by=lambda: [PaymentSubDues.paid_from, PaymentSubDues.paid_through]
     )
 
     def __repr__(self):
@@ -473,7 +483,7 @@ class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
     membership = db.relationship(
         Prosphora,
         back_populates='payments',
-        order_by=[NameAndRangeMixin.paid_from, NameAndRangeMixin.paid_through]
+        order_by=lambda: [PaymentSubProsphora.paid_from, PaymentSubProsphora.paid_through]
     )
 
     def description(self):
