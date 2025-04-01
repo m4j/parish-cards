@@ -99,6 +99,15 @@ class MultiPaymentForm(FlaskForm):
     misc_subs = FieldList(FormField(PaymentSubMiscForm), min_entries=0)
     submit_btn = SubmitField('Submit')
 
+    def clear_guids(self):
+        """Set all sub-payment GUIDs to None"""
+        for entry in self.dues_subs.entries:
+            entry.form.guid.data = None
+        for entry in self.prosphora_subs.entries:
+            entry.form.guid.data = None
+        for entry in self.misc_subs.entries:
+            entry.form.guid.data = None
+
     def load_from_payment(self, payment):
         """Load data from a Payment object into the form"""
         self.payment.payor.data = payment.payor
@@ -111,7 +120,7 @@ class MultiPaymentForm(FlaskForm):
         # Load sub-payments
         for sub in payment.dues:
             form = PaymentSubDuesForm()
-            form.guid.data = sub.guid
+            form.guid.data = sub.guid.hex
             form.amount.data = sub.amount
             form.comment.data = sub.comment
             form.last_name.data = sub.last_name
@@ -122,7 +131,7 @@ class MultiPaymentForm(FlaskForm):
 
         for sub in payment.prosphora:
             form = PaymentSubProsphoraForm()
-            form.guid.data = sub.guid
+            form.guid.data = sub.guid.hex
             form.amount.data = sub.amount
             form.comment.data = sub.comment
             form.last_name.data = sub.last_name
@@ -135,7 +144,7 @@ class MultiPaymentForm(FlaskForm):
 
         for sub in payment.misc:
             form = PaymentSubMiscForm()
-            form.guid.data = sub.guid
+            form.guid.data = sub.guid.hex
             form.amount.data = sub.amount
             form.comment.data = sub.comment
             form.category.data = sub.category
@@ -146,26 +155,26 @@ class MultiPaymentForm(FlaskForm):
         payment.payor = self.payment.payor.data
         payment.date = self.payment.date.data
         payment.method = self.payment.method.data
-        payment.identifier = self.payment.identifier.data
+        payment.identifier = self.payment.identifier.data or None
         payment.amount = self.payment.amount.data
-        payment.comment = self.payment.comment.data
+        payment.comment = self.payment.comment.data or None
 
         # Track existing sub-payments by guid
-        existing_dues = {sub.guid: sub for sub in payment.dues}
-        existing_prosphora = {sub.guid: sub for sub in payment.prosphora}
-        existing_misc = {sub.guid: sub for sub in payment.misc}
+        existing_dues = {sub.guid.hex: sub for sub in payment.dues}
+        existing_prosphora = {sub.guid.hex: sub for sub in payment.prosphora}
+        existing_misc = {sub.guid.hex: sub for sub in payment.misc}
 
         # Update or create dues sub-payments
         payment.dues = []
         for form_data in self.dues_subs.data:
-            guid = uuid.UUID(form_data.get('guid'))
+            guid = form_data.get('guid')
             if guid and guid in existing_dues:
                 sub = existing_dues[guid]
             else:
                 sub = PaymentSubDues()
                 
             sub.amount = form_data['amount']
-            sub.comment = form_data.get('comment')
+            sub.comment = form_data.get('comment') or None
             sub.last_name = form_data['last_name']
             sub.first_name = form_data['first_name']
             sub.paid_from = form_data['paid_from']
@@ -175,14 +184,14 @@ class MultiPaymentForm(FlaskForm):
         # Update or create prosphora sub-payments
         payment.prosphora = []
         for form_data in self.prosphora_subs.data:
-            guid = uuid.UUID(form_data.get('guid'))
+            guid = form_data.get('guid')
             if guid and guid in existing_prosphora:
                 sub = existing_prosphora[guid]
             else:
                 sub = PaymentSubProsphora()
                 
             sub.amount = form_data['amount']
-            sub.comment = form_data.get('comment')
+            sub.comment = form_data.get('comment') or None
             sub.last_name = form_data['last_name']
             sub.first_name = form_data['first_name']
             sub.paid_from = form_data['paid_from']
@@ -194,13 +203,13 @@ class MultiPaymentForm(FlaskForm):
         # Update or create misc sub-payments
         payment.misc = []
         for form_data in self.misc_subs.data:
-            guid = uuid.UUID(form_data.get('guid'))
+            guid = form_data.get('guid')
             if guid and guid in existing_misc:
                 sub = existing_misc[guid]
             else:
                 sub = PaymentSubMisc()
                 
             sub.amount = form_data['amount']
-            sub.comment = form_data.get('comment')
+            sub.comment = form_data.get('comment') or None
             sub.category = form_data['category']
             payment.misc.append(sub) 

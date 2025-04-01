@@ -59,7 +59,7 @@
             <div class="card-body">
                 <div id="dues-subs-container">
                     {% for subform in form.dues_subs %}
-                    <div class="dues-sub-entry border rounded p-3 mb-3">
+                    <div class="sub-entry border rounded p-3 mb-3">
                         {% include 'payment/_dues_sub_form.html' %}
                     </div>
                     {% endfor %}
@@ -67,7 +67,7 @@
 
                 <div id="prosphora-subs-container">
                     {% for subform in form.prosphora_subs %}
-                    <div class="prosphora-sub-entry border rounded p-3 mb-3">
+                    <div class="sub-entry border rounded p-3 mb-3">
                         {% include 'payment/_prosphora_sub_form.html' %}
                     </div>
                     {% endfor %}
@@ -75,7 +75,7 @@
 
                 <div id="misc-subs-container">
                     {% for subform in form.misc_subs %}
-                    <div class="misc-sub-entry border rounded p-3 mb-3">
+                    <div class="sub-entry border rounded p-3 mb-3">
                         {% include 'payment/_misc_sub_form.html' %}
                     </div>
                     {% endfor %}
@@ -97,10 +97,10 @@
 function addSub(type) {
     const container = document.getElementById(`${type}-subs-container`);
     const entry = document.createElement('div');
-    entry.className = `${type}-sub-entry border rounded p-3 mb-3`;
+    entry.className = `sub-entry border rounded p-3 mb-3`;
     
     // Get the current number of entries to determine the index
-    const currentEntries = container.getElementsByClassName(`${type}-sub-entry`).length;
+    const currentEntries = container.getElementsByClassName(`sub-entry`).length;
     
     // Create a new form entry with empty fields
     const formData = new FormData();
@@ -131,9 +131,9 @@ function addMiscSub() {
 }
 
 function removeSub(button) {
-    const container = button.parentElement;
-    if (container) {
-        container.remove();
+    const subEntry = button.closest('.sub-entry');
+    if (subEntry) {
+        subEntry.remove();
     }
 }
 </script>

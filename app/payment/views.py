@@ -195,6 +195,8 @@ def repeat_payment(guid):
     if not form.submit_btn.data:
         form.load_from_payment(payment)
         form.payment.identifier.data = None
+        form.payment.date.data = None
+        form.clear_guids()
     return render_template('payment/edit_payment.html',
                          form=form,
                          payment=payment)
