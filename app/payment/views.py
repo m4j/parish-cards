@@ -3,7 +3,7 @@ from .. import db
 from . import payment
 from ..main.forms import SearchForm
 from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora, find_payments_with_multiple_subs
-from .forms import PaymentSubDuesForm, PaymentSubProsphoraForm, PaymentSubMiscForm
+from .forms import PaymentSubDuesForm, PaymentSubProsphoraForm, PaymentSubMiscForm, MultiPaymentForm
 import uuid
 from collections import namedtuple
 
@@ -105,22 +105,25 @@ def repeat_sub_payment(guid, model, sub_form, template, after_submit_url):
 # @login_required
 def add_dues_sub():
     """Handle AJAX request to add a new dues sub-payment form"""
-    form = PaymentSubDuesForm()
-    return render_template('payment/_dues_sub_form.html', form=form)
+    prefix = request.form.get('_prefix', '')
+    form = PaymentSubDuesForm(prefix=f'dues_subs-{prefix}-')
+    return render_template('payment/_dues_sub_form.html', subform=form)
 
 @payment.route('/add_prosphora_sub', methods=['POST'])
 # @login_required
 def add_prosphora_sub():
     """Handle AJAX request to add a new prosphora sub-payment form"""
-    form = PaymentSubProsphoraForm()
-    return render_template('payment/_prosphora_sub_form.html', form=form)
+    prefix = request.form.get('_prefix', '')
+    form = PaymentSubProsphoraForm(prefix=f'prosphora_subs-{prefix}-')
+    return render_template('payment/_prosphora_sub_form.html', subform=form)
 
 @payment.route('/add_misc_sub', methods=['POST'])
 # @login_required
 def add_misc_sub():
     """Handle AJAX request to add a new misc sub-payment form"""
-    form = PaymentSubMiscForm()
-    return render_template('payment/_misc_sub_form.html', form=form)
+    prefix = request.form.get('_prefix', '')
+    form = PaymentSubMiscForm(prefix=f'misc_subs-{prefix}-')
+    return render_template('payment/_misc_sub_form.html', subform=form)
 
 @payment.route('/multiple_subs', methods=['GET', 'POST'])
 # @login_required
@@ -143,3 +146,55 @@ def multiple_subs():
     return render_template('payment/multiple_subs.html',
                          form=form,
                          payments=payments)
+
+@payment.route('/edit', methods=['GET', 'POST'])
+@payment.route('/edit/<guid>', methods=['GET', 'POST'])
+def edit_payment(guid=None):
+    """Handle creating new payments and editing existing ones"""
+    form = MultiPaymentForm()
+    payment = None
+    
+    if guid:
+        payment = db.session.scalar(db.select(Payment).filter(Payment.guid == uuid.UUID(guid)))
+        if not payment:
+            abort(404)
+    
+    if form.validate_on_submit():
+        if not payment:
+            payment = Payment()
+            payment.guid = uuid.uuid4()
+            db.session.add(payment)
+        
+        form.save_to_payment(payment)
+        db.session.commit()
+        
+        flash('Payment saved successfully')
+        return redirect(url_for('.multiple_subs'))
+        
+    if guid and not form.submit_btn.data:
+        form.load_from_payment(payment)
+    return render_template('payment/edit_payment.html',
+                         form=form,
+                         payment=payment)
+
+@payment.route('/repeat/<guid>', methods=['GET', 'POST'])
+def repeat_payment(guid):
+    """Clone existing payment and edit the clone"""
+    payment = db.session.scalar(db.select(Payment).filter(Payment.guid == uuid.UUID(guid)))
+    if not payment:
+        abort(404)
+    form = MultiPaymentForm()
+    if form.validate_on_submit():
+        new_payment = Payment()
+        new_payment.guid = uuid.uuid4()
+        form.save_to_payment(new_payment)
+        db.session.add(new_payment)
+        db.session.commit()
+        flash('Payment repeated successfully')
+        return redirect(url_for('.multiple_subs'))
+    if not form.submit_btn.data:
+        form.load_from_payment(payment)
+        form.payment.identifier.data = None
+    return render_template('payment/edit_payment.html',
+                         form=form,
+                         payment=payment)

@@ -1,16 +1,17 @@
+{% import "bootstrap/wtf.html" as wtf %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Miscellaneous <button type="button" class="btn btn-sm btn-danger" onclick="removeSub(this)">Remove</button></h5>
+</div>
 <div class="row">
     <div class="col-md-4 mb-3">
-        {{ form.category.label(class="form-label") }}
-        {{ form.category(class="form-select") }}
-        {{ form.guid }}
+        {{ wtf.form_field(subform.category) }}
+        {{ subform.guid }}
     </div>
     <div class="col-md-4 mb-3">
-        {{ form.amount.label(class="form-label") }}
-        {{ form.amount(class="form-control") }}
+        {{ wtf.form_field(subform.amount) }}
     </div>
 </div>
 <div class="mb-3">
-    {{ form.comment.label(class="form-label") }}
-    {{ form.comment(class="form-control", rows=2) }}
-</div>
-<button type="button" class="btn btn-sm btn-danger" onclick="removeSub(this)">Remove</button> 
+    {{ wtf.form_field(subform.comment, rows=2) }}
+</div> 

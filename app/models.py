@@ -354,7 +354,11 @@ class PaymentMethod(db.Model):
 class PaymentCommonMixin:
     payor         = db.Column(db.String)
     date          = db.Column(db.String)
-    method        = db.Column(db.String, db.ForeignKey('payment_method.method'))
+
+    @db.declared_attr
+    def method(cls):
+        return db.Column(db.String, db.ForeignKey('payment_method.method'))
+    
     identifier    = db.Column(db.String, nullable=True)
     amount        = db.Column(db.Integer)
     comment       = db.Column(db.String)
@@ -376,9 +380,9 @@ class Payment(IdentityMixin, PaymentCommonMixin, db.Model):
         ),
     )
 
-    dues      = db.relationship('PaymentSubDues', back_populates='payment')
-    prosphora = db.relationship('PaymentSubProsphora', back_populates='payment')
-    misc = db.relationship('PaymentSubMisc', back_populates='payment')
+    dues      = db.relationship('PaymentSubDues', back_populates='payment', cascade="all, delete-orphan")
+    prosphora = db.relationship('PaymentSubProsphora', back_populates='payment', cascade="all, delete-orphan")
+    misc      = db.relationship('PaymentSubMisc', back_populates='payment', cascade="all, delete-orphan")
 
 class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
     @db.declared_attr.directive
@@ -394,8 +398,40 @@ class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
 class NameAndRangeMixin:
     last_name     = db.Column(db.String)
     first_name    = db.Column(db.String)
-    paid_from     = db.Column(db.String)
-    paid_through  = db.Column(db.String)
+    paid_from     = db.Column(db.String, db.ForeignKey('yyyy_mm.year_month'))
+    paid_through  = db.Column(db.String, db.ForeignKey('yyyy_mm.year_month'))
+    
+    paid_from_year_month = db.relationship(
+        'YearMonth',
+        foreign_keys=[paid_from],
+        primaryjoin=lambda: NameAndRangeMixin.paid_from == YearMonth.year_month,
+        uselist=False,
+        viewonly=True
+    )
+    
+    paid_through_year_month = db.relationship(
+        'YearMonth',
+        foreign_keys=[paid_through],
+        primaryjoin=lambda: NameAndRangeMixin.paid_through == YearMonth.year_month,
+        uselist=False,
+        viewonly=True
+    )
+
+    def format_date_range(self):
+        """Format the date range using English month and year from YearMonth records."""
+        if not self.paid_from_year_month or not self.paid_through_year_month:
+            return f"{self.paid_from} - {self.paid_through}"
+            
+        if self.paid_from_year_month.en_yy == self.paid_through_year_month.en_yy:
+            # Same year, use just month for start date
+            return f"{self.paid_from_year_month.en_mon}–{self.paid_through_year_month.en_mon_yy}"
+        else:
+            # Different years, show full month-year for both
+            return f"{self.paid_from_year_month.en_mon_yy}–{self.paid_through_year_month.en_mon_yy}"
+
+    def description(self):
+        """Return a formatted description of the payment range."""
+        return f"{self.last_name}, {self.first_name} ({self.format_date_range()})"
 
 class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
     __tablename__ = 'payment_sub_dues'
@@ -440,6 +476,12 @@ class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
         order_by=[NameAndRangeMixin.paid_from, NameAndRangeMixin.paid_through]
     )
 
+    def description(self):
+        """Return a formatted description of the prosphora payment range."""
+        quantity_str = f"({self.quantity})" 
+        feasts_str = " +12 Feasts" if self.with_twelve_feasts else ""
+        return f"Prosphora{quantity_str}{feasts_str}: {super().description()}"
+
 class PaymentSubMisc(PaymentSubMixin, db.Model):
     __tablename__ = 'payment_sub_misc'
     
@@ -454,6 +496,11 @@ class PaymentSubMisc(PaymentSubMixin, db.Model):
     def __table_args__(cls):
         return PaymentSubMixin.__table_args__
 
+    def description(self):
+        """Return a formatted description of the miscellaneous payment."""
+        comment_str = f" ({self.comment})" if self.comment else ""
+        return f"{self.category}{comment_str}"
+
     def __repr__(self):
         return f'{self.date} {self.payor} {self.method} {self.identifier} {self.amount} {self.category}'
 
@@ -463,6 +510,17 @@ class PaymentSubMiscCategory(db.Model):
     
     category = db.Column(db.String, primary_key=True)
     ru_category = db.Column(db.String, unique=True)
+
+class YearMonth(db.Model):
+    """Model for the yyyy_mm table that stores month-year information in various formats"""
+    __tablename__ = 'yyyy_mm'
+    
+    year_month = db.Column(db.String(7), primary_key=True, nullable=False)
+    en_month_year = db.Column(db.String)
+    ru_month_year = db.Column(db.String)
+    en_mon_yy = db.Column(db.String)
+    en_yy = db.Column(db.String)
+    en_mon = db.Column(db.String)
 
 def find_member(first_name, last_name):
     return db.session.execute(
