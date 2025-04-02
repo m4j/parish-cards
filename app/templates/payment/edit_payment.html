@@ -30,6 +30,9 @@
     border: none;
     padding-top: 0;
 }
+.datepicker {
+    z-index: 1051 !important;
+}
 </style>
 {% endblock %}
 
@@ -204,5 +207,26 @@ function removeSub(button) {
         subEntry.remove();
     }
 }
+
+// Initialize datepickers
+$(document).ready(function() {
+    // Payment date picker (full date)
+    $('input[name="payment-date"]').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        orientation: 'bottom auto'
+    });
+
+    // Month/Year pickers for paid_from and paid_through
+    $('input[name$="-paid_from"], input[name$="-paid_through"]').datepicker({
+        format: 'yyyy-mm',
+        viewMode: 'months',
+        minViewMode: 'months',
+        autoclose: true,
+        todayHighlight: true,
+        orientation: 'bottom auto'
+    });
+});
 </script>
 {% endblock %}
