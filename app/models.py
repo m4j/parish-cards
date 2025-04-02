@@ -441,7 +441,10 @@ class NameAndRangeMixin:
 
     def description(self):
         """Return a formatted description of the payment range."""
-        return f"{self.last_name}, {self.first_name} ({self.format_date_range()})"
+        name = self.last_name
+        if self.first_name:
+            name = f"{self.last_name}, {self.first_name}"
+        return f"{name} ({self.format_date_range()})"
 
 class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
     __tablename__ = 'payment_sub_dues'
@@ -490,7 +493,7 @@ class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
         """Return a formatted description of the prosphora payment range."""
         quantity_str = f"({self.quantity})" 
         feasts_str = " +12 Feasts" if self.with_twelve_feasts else ""
-        return f"Prosphora{quantity_str}{feasts_str}: {super().description()}"
+        return f"Prosphora{quantity_str}{feasts_str}: {super().description().upper()}"
 
 class PaymentSubMisc(PaymentSubMixin, db.Model):
     __tablename__ = 'payment_sub_misc'

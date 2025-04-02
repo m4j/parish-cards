@@ -92,6 +92,27 @@ class PaymentBaseForm(Form):
             method = db.session.scalar(db.select(PaymentMethod).filter(PaymentMethod.method == self.method.data))
             raise ValidationError(f'{method.validation_message} required')
 
+    def validate_total_amount(self, dues_subs, prosphora_subs, misc_subs):
+        """Validate that the total of all sub-payments equals the payment amount"""
+        total = 0
+        amounts = []
+        
+        for sub in dues_subs:
+            amounts.append(f"dues:{sub.form.amount.data}")
+            total += sub.form.amount.data
+            
+        for sub in prosphora_subs:
+            amounts.append(f"prosphora:{sub.form.amount.data}")
+            total += sub.form.amount.data
+            
+        for sub in misc_subs:
+            amounts.append(f"misc:{sub.form.amount.data}")
+            total += sub.form.amount.data
+            
+        if total != self.amount.data:
+            breakdown = " + ".join(amounts) if amounts else "0"
+            raise ValidationError(f'Total of sub-payments ({breakdown} = {total}) does not equal payment amount ({self.amount.data})')
+
 class MultiPaymentForm(FlaskForm):
     payment = FormField(PaymentBaseForm)
     dues_subs = FieldList(FormField(PaymentSubDuesForm), min_entries=0)
@@ -212,4 +233,15 @@ class MultiPaymentForm(FlaskForm):
             sub.amount = form_data['amount']
             sub.comment = form_data.get('comment') or None
             sub.category = form_data['category']
-            payment.misc.append(sub) 
+            payment.misc.append(sub)
+
+    def validate(self, extra_validators=None):
+        if not super().validate(extra_validators):
+            return False
+            
+        try:
+            self.payment.validate_total_amount(self.dues_subs, self.prosphora_subs, self.misc_subs)
+            return True
+        except ValidationError as e:
+            self.payment.amount.errors.append(str(e))
+            return False 

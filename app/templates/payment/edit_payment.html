@@ -1,65 +1,100 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
+{% block styles %}
+{{ super() }}
+<style>
+.sub-entry {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+.sub-entry.dues-entry {
+    background-color: #e6f3ff;
+}
+.sub-entry.prosphora-entry {
+    background-color: #e6ffe6;
+}
+.panel-no-border {
+    border: none;
+    box-shadow: none;
+}
+.panel-no-border > .panel-heading {
+    border: none;
+    background: none;
+    padding: 0;
+}
+.panel-no-border > .panel-body {
+    border: none;
+    padding-top: 0;
+}
+</style>
+{% endblock %}
+
 {% block page_content %}
-<div class="container mt-4">
-    <h2>{% if payment.guid %}Edit Payment{% else %}New Payment{% endif %}</h2>
+    <div class="page-header">
+        <h2>{% if payment.guid %}Edit Payment{% else %}New Payment{% endif %}</h2>
+    </div>
     
-    <form method="POST" class="needs-validation" novalidate>
+    <form method="POST" class="form" role="form" style="margin-bottom: 100px;">
         {{ form.csrf_token }}
         
         <!-- Base Payment Section -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>Payment Details</h4>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">Payment Details</h4>
             </div>
-            <div class="card-body">
+            <div class="panel-body">
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
                         {{ wtf.form_field(form.payment.payor) }}
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6">
                         {{ wtf.form_field(form.payment.date) }}
                     </div>
                 </div>
                 
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3">
                         {{ wtf.form_field(form.payment.method) }}
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3">
                         {{ wtf.form_field(form.payment.identifier) }}
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3">
                         {{ wtf.form_field(form.payment.amount) }}
                     </div>
                 </div>
                 
-                <div class="mb-3">
-                    {{ wtf.form_field(form.payment.comment, rows=3) }}
+                <div class="row">
+                    <div class="col-md-12">
+                        {{ wtf.form_field(form.payment.comment, rows=2) }}
+                    </div>
                 </div>
 
                 <!-- Add Sub-payment Buttons -->
-                <div class="row mt-3">
+                <div class="row" style="margin-top: 15px;">
                     <div class="col-md-4">
-                        <button type="button" class="btn btn-primary w-100" onclick="addDuesSub()">Add Dues</button>
+                        <button type="button" class="btn btn-sm btn-primary btn-block" onclick="addDuesSub()">Add Dues</button>
                     </div>
                     <div class="col-md-4">
-                        <button type="button" class="btn btn-primary w-100" onclick="addProsphoraSub()">Add Prosphora</button>
+                        <button type="button" class="btn btn-sm btn-primary btn-block" onclick="addProsphoraSub()">Add Prosphora</button>
                     </div>
                     <div class="col-md-4">
-                        <button type="button" class="btn btn-primary w-100" onclick="addMiscSub()">Add Misc</button>
+                        <button type="button" class="btn btn-sm btn-primary btn-block" onclick="addMiscSub()">Add Misc</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Sub-payments Container -->
-        <div class="card mb-4">
-            <div class="card-body">
+        <div class="panel panel-default panel-no-border">
+            <div class="panel-body">
                 <div id="dues-subs-container">
                     {% for subform in form.dues_subs %}
-                    <div class="sub-entry border rounded p-3 mb-3">
+                    <div class="sub-entry dues-entry">
                         {% include 'payment/_dues_sub_form.html' %}
                     </div>
                     {% endfor %}
@@ -67,7 +102,7 @@
 
                 <div id="prosphora-subs-container">
                     {% for subform in form.prosphora_subs %}
-                    <div class="sub-entry border rounded p-3 mb-3">
+                    <div class="sub-entry prosphora-entry">
                         {% include 'payment/_prosphora_sub_form.html' %}
                     </div>
                     {% endfor %}
@@ -75,7 +110,7 @@
 
                 <div id="misc-subs-container">
                     {% for subform in form.misc_subs %}
-                    <div class="sub-entry border rounded p-3 mb-3">
+                    <div class="sub-entry">
                         {% include 'payment/_misc_sub_form.html' %}
                     </div>
                     {% endfor %}
@@ -83,29 +118,62 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-between">
-            <a href="{{ url_for('payment.multiple_subs') }}" class="btn btn-secondary">Cancel</a>
-            {{ wtf.form_field(form.submit_btn, class="btn btn-primary") }}
+        <div class="row">
+            <div class="col-md-2">
+                <a href="{{ url_for('payment.multiple_subs') }}" class="btn btn-default btn-block">Cancel</a>
+            </div>
+            <div class="col-md-2">
+                {{ wtf.form_field(form.submit_btn, class="btn btn-primary btn-block") }}
+            </div>
         </div>
     </form>
-</div>
-{% endblock %} 
+{% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script>
+function getExistingPrefixes(container) {
+    const prefixes = new Set();
+    const entries = container.getElementsByClassName('sub-entry');
+    for (const entry of entries) {
+        // Look for any input field that's part of a subform
+        const inputs = entry.querySelectorAll('input, select, textarea');
+        for (const input of inputs) {
+            const name = input.getAttribute('name');
+            if (name) {
+                // Extract prefix from field name (e.g., 'dues_subs-1-last_name' -> '1')
+                const match = name.match(/^[^-]+-\d+-(?=[^-]+$)/);
+                if (match) {
+                    const prefix = match[0].split('-')[1];
+                    prefixes.add(prefix);
+                }
+            }
+        }
+    }
+    return prefixes;
+}
+
+function findNextAvailablePrefix(container) {
+    const existingPrefixes = getExistingPrefixes(container);
+    let prefix = 0;
+    while (existingPrefixes.has(prefix.toString())) {
+        prefix++;
+    }
+    return prefix;
+}
+
 function addSub(type) {
     const container = document.getElementById(`${type}-subs-container`);
     const entry = document.createElement('div');
-    entry.className = `sub-entry border rounded p-3 mb-3`;
+    entry.className = `sub-entry${type === 'dues' ? ' dues-entry' : type === 'prosphora' ? ' prosphora-entry' : ''}`;
     
-    // Get the current number of entries to determine the index
-    const currentEntries = container.getElementsByClassName(`sub-entry`).length;
+    // Find the next available prefix that doesn't exist yet
+    const prefix = findNextAvailablePrefix(container);
     
     // Create a new form entry with empty fields
     const formData = new FormData();
     formData.append('csrf_token', '{{ form.csrf_token.current_token }}');
-    formData.append('_prefix', currentEntries.toString());
+    formData.append('_prefix', prefix.toString());
     
     fetch(`/payment/add_${type}_sub`, {
         method: 'POST',
