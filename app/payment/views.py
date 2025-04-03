@@ -1,8 +1,8 @@
-from flask import render_template, abort, session, redirect, url_for, flash, Markup, request
+from flask import render_template, abort, session, redirect, url_for, flash, Markup, request, jsonify
 from .. import db
 from . import payment
 from ..main.forms import SearchForm
-from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora, find_payments_with_multiple_subs
+from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora, find_payments_with_multiple_subs, Card, Prosphora
 from .forms import PaymentSubDuesForm, PaymentSubProsphoraForm, PaymentSubMiscForm, MultiPaymentForm
 import uuid
 from collections import namedtuple
@@ -200,3 +200,75 @@ def repeat_payment(guid):
     return render_template('payment/edit_payment.html',
                          form=form,
                          payment=payment)
+
+@payment.route('/search_cards')
+def search_cards():
+    """Search for cards by name and return JSON results"""
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify([])
+    
+    # Build the query
+    q = db.select(Card)
+    if query:
+        q = q.filter(
+            (Card.last_name.ilike(f'%{query}%')) |
+            (Card.first_name.ilike(f'%{query}%')) |
+            (Card.other_name.ilike(f'%{query}%')) |
+            (Card.middle_name.ilike(f'%{query}%')) |
+            (Card.maiden_name.ilike(f'%{query}%')) |
+            (Card.ru_last_name.ilike(f'%{query}%')) |
+            (Card.ru_maiden_name.ilike(f'%{query}%')) |
+            (Card.ru_first_name.ilike(f'%{query}%')) |
+            (Card.ru_other_name.ilike(f'%{query}%')) |
+            (Card.ru_patronymic_name.ilike(f'%{query}%'))
+        )
+    
+    # Limit results and order by name
+    cards = db.session.scalars(q.order_by(Card.last_name, Card.first_name).limit(10)).all()
+    
+    # Format results for Selectize
+    results = []
+    for card in cards:
+        full_name = f"{card.last_name}, {card.first_name}"
+        results.append({
+            'value': full_name,
+            'text': str(card)
+        })
+    
+    return jsonify(results)
+
+@payment.route('/search_prosphora')
+def search_prosphora():
+    """Search for prosphora entries by name and return JSON results"""
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify([])
+    
+    # Build the query
+    q = db.select(Prosphora)
+    if query:
+        q = q.filter(
+            (Prosphora.last_name.ilike(f'%{query}%')) |
+            (Prosphora.first_name.ilike(f'%{query}%')) |
+            (Prosphora.family_name.ilike(f'%{query}%')) |
+            (Prosphora.ru_last_name.ilike(f'%{query}%')) |
+            (Prosphora.ru_first_name.ilike(f'%{query}%')) |
+            (Prosphora.ru_family_name.ilike(f'%{query}%')) |
+            (Prosphora.p_last_name.ilike(f'%{query}%')) |
+            (Prosphora.p_first_name.ilike(f'%{query}%'))
+        )
+    
+    # Limit results and order by name
+    prosphora_entries = db.session.scalars(q.order_by(Prosphora.last_name, Prosphora.first_name).limit(10)).all()
+    
+    # Format results for Selectize
+    results = []
+    for entry in prosphora_entries:
+        full_name = f"{entry.last_name}, {entry.first_name}"
+        results.append({
+            'value': full_name,
+            'text': str(entry)
+        })
+    
+    return jsonify(results)

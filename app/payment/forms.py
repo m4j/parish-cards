@@ -19,8 +19,7 @@ class PaymentSubMixin:
             raise ValidationError('Positive number please')
 
 class PaymentRangeSubMixin:
-    last_name = StringField('Last Name', validators=[DataRequired()])
-    first_name = StringField('First Name', validators=[DataRequired()])
+    member_name = StringField('Name', validators=[DataRequired()])
     paid_from = StringField('Range from', validators=[DataRequired(), ISOYearMonthValidator()])
     paid_through = StringField('To', validators=[DataRequired(), ISOYearMonthValidator()])
     
@@ -39,12 +38,23 @@ class PaymentRangeSubMixin:
         if self.does_range_with_date_exists(field.data):
             raise ValidationError(f'Date within another paid range')
 
+    def get_last_name(self):
+        if self.member_name.data:
+            return self.member_name.data.split(',')[0].strip()
+        return None
+
+    def get_first_name(self):
+        if self.member_name.data:
+            parts = self.member_name.data.split(',')
+            return parts[1].strip() if len(parts) > 1 else None
+        return None
+
 class PaymentSubDuesForm(PaymentSubMixin, PaymentRangeSubMixin, Form):
     def does_range_with_date_exists(self, date):
         dues = dues_range_containing_date(
             date,
-            self.first_name.data,
-            self.last_name.data)
+            self.get_first_name(),
+            self.get_last_name())
         if dues and self.guid.data:
             return dues.guid != uuid.UUID(self.guid.data)
         else:
@@ -57,12 +67,16 @@ class PaymentSubProsphoraForm(PaymentSubMixin, PaymentRangeSubMixin, Form):
     def does_range_with_date_exists(self, date):
         prosphora = prosphora_range_containing_date(
             date,
-            self.first_name.data,
-            self.last_name.data)
+            self.get_first_name(),
+            self.get_last_name())
         if prosphora and self.guid.data:
             return prosphora.guid != uuid.UUID(self.guid.data)
         else:
             return prosphora is not None
+
+    def validate_quantity(self, field):
+        if field.data <= 0:
+            raise ValidationError('Positive number please')
 
 class PaymentSubMiscForm(PaymentSubMixin, Form):
     category = SelectField('Category', validators=[DataRequired()])
@@ -144,8 +158,7 @@ class MultiPaymentForm(FlaskForm):
             form.guid.data = sub.guid.hex
             form.amount.data = sub.amount
             form.comment.data = sub.comment
-            form.last_name.data = sub.last_name
-            form.first_name.data = sub.first_name
+            form.member_name.data = f"{sub.last_name}, {sub.first_name}"
             form.paid_from.data = sub.paid_from
             form.paid_through.data = sub.paid_through
             self.dues_subs.append_entry(form.data)
@@ -155,8 +168,7 @@ class MultiPaymentForm(FlaskForm):
             form.guid.data = sub.guid.hex
             form.amount.data = sub.amount
             form.comment.data = sub.comment
-            form.last_name.data = sub.last_name
-            form.first_name.data = sub.first_name
+            form.member_name.data = f"{sub.last_name}, {sub.first_name}"
             form.paid_from.data = sub.paid_from
             form.paid_through.data = sub.paid_through
             form.quantity.data = sub.quantity
@@ -187,7 +199,8 @@ class MultiPaymentForm(FlaskForm):
 
         # Update or create dues sub-payments
         payment.dues = []
-        for form_data in self.dues_subs.data:
+        for entry in self.dues_subs:
+            form_data = entry.form.data
             guid = form_data.get('guid')
             if guid and guid in existing_dues:
                 sub = existing_dues[guid]
@@ -196,15 +209,16 @@ class MultiPaymentForm(FlaskForm):
                 
             sub.amount = form_data['amount']
             sub.comment = form_data.get('comment') or None
-            sub.last_name = form_data['last_name']
-            sub.first_name = form_data['first_name']
+            sub.last_name = entry.form.get_last_name()
+            sub.first_name = entry.form.get_first_name()
             sub.paid_from = form_data['paid_from']
             sub.paid_through = form_data['paid_through']
             payment.dues.append(sub)
 
         # Update or create prosphora sub-payments
         payment.prosphora = []
-        for form_data in self.prosphora_subs.data:
+        for entry in self.prosphora_subs:
+            form_data = entry.form.data
             guid = form_data.get('guid')
             if guid and guid in existing_prosphora:
                 sub = existing_prosphora[guid]
@@ -213,8 +227,8 @@ class MultiPaymentForm(FlaskForm):
                 
             sub.amount = form_data['amount']
             sub.comment = form_data.get('comment') or None
-            sub.last_name = form_data['last_name']
-            sub.first_name = form_data['first_name']
+            sub.last_name = entry.form.get_last_name()
+            sub.first_name = entry.form.get_first_name()
             sub.paid_from = form_data['paid_from']
             sub.paid_through = form_data['paid_through']
             sub.quantity = form_data['quantity']
@@ -223,7 +237,8 @@ class MultiPaymentForm(FlaskForm):
 
         # Update or create misc sub-payments
         payment.misc = []
-        for form_data in self.misc_subs.data:
+        for entry in self.misc_subs:
+            form_data = entry.form.data
             guid = form_data.get('guid')
             if guid and guid in existing_misc:
                 sub = existing_misc[guid]

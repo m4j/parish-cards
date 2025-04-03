@@ -33,6 +33,16 @@
 .datepicker {
     z-index: 1051 !important;
 }
+.selectize-control {
+    width: 100%;
+}
+.selectize-input {
+    min-height: 34px;
+    padding: 6px 12px;
+}
+.selectize-dropdown {
+    z-index: 1051;
+}
 </style>
 {% endblock %}
 
@@ -186,6 +196,9 @@ function addSub(type) {
     .then(html => {
         entry.innerHTML = html;
         container.appendChild(entry);
+        // Initialize Select2 on the new entry's name fields
+        initializeDatePickers();
+        initializeNameSelects();
     });
 }
 
@@ -208,8 +221,14 @@ function removeSub(button) {
     }
 }
 
-// Initialize datepickers
+// Initialize datepickers and Selectize
 $(document).ready(function() {
+    initializeDatePickers();
+    // Initialize Selectize on name fields
+    initializeNameSelects();
+});
+
+function initializeDatePickers() {
     // Payment date picker (full date)
     $('input[name="payment-date"]').datepicker({
         format: 'yyyy-mm-dd',
@@ -227,6 +246,53 @@ $(document).ready(function() {
         todayHighlight: true,
         orientation: 'bottom auto'
     });
-});
+}
+
+// Initialize Selectize on name fields
+function initializeNameSelects() {
+    $('input[name$="-member_name"]').each(function() {
+        const $input = $(this);
+        const formType = $input.closest('.sub-entry').hasClass('prosphora-entry') ? 'prosphora' : 'dues';
+        const searchUrl = formType === 'prosphora' 
+            ? '{{ url_for("payment.search_prosphora") }}'
+            : '{{ url_for("payment.search_cards") }}';
+        
+        // Initialize Selectize on name field
+        $input.selectize({
+            placeholder: 'Search by name...',
+            valueField: 'value',
+            labelField: 'text',
+            searchField: ['text'],
+            create: false,
+            maxItems: 1,
+            delimiter: ';', // need this because our values can contain commas
+            respect_word_boundaries: false,
+            load: function(query, callback) {
+                if (!query.length) return callback();
+                
+                $.ajax({
+                    url: searchUrl,
+                    data: { q: query },
+                    type: 'GET',
+                    error: function() {
+                        callback();
+                    },
+                    success: function(res) {
+                        callback(res);
+                    }
+                });
+            }
+        });
+
+        // If there's an initial value, set it
+        if ($input.val()) {
+            const selectize = $input[0].selectize;
+            selectize.addItem({
+                value: $input.val(),
+                text: $input.val()
+            });
+        }
+    });
+}
 </script>
 {% endblock %}

@@ -6,27 +6,24 @@
     </div>
 </div>
 <div class="row">
-    <div class="col-md-6">
-        {{ wtf.form_field(subform.last_name) }}
+    <div class="col-md-4">
+        {{ wtf.form_field(subform.member_name) }}
         {{ subform.guid }}
-    </div>
-    <div class="col-md-6">
-        {{ wtf.form_field(subform.first_name) }}
     </div>
 </div>
 <div class="row">
+    <div class="col-md-4">
+        {{ wtf.form_field(subform.amount) }}
+    </div>
     <div class="col-md-4">
         {{ wtf.form_field(subform.paid_from) }}
     </div>
     <div class="col-md-4">
         {{ wtf.form_field(subform.paid_through) }}
     </div>
-    <div class="col-md-4">
-        {{ wtf.form_field(subform.amount) }}
-    </div>
 </div>
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-3">
         {{ wtf.form_field(subform.quantity) }}
     </div>
     <div class="col-md-6">
