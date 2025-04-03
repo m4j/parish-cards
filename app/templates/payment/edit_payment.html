@@ -179,6 +179,7 @@ function addSub(type) {
     const container = document.getElementById(`${type}-subs-container`);
     const entry = document.createElement('div');
     entry.className = `sub-entry${type === 'dues' ? ' dues-entry' : type === 'prosphora' ? ' prosphora-entry' : ''}`;
+    entry.style.display = 'none'; // Start hidden for animation
     
     // Find the next available prefix that doesn't exist yet
     const prefix = findNextAvailablePrefix(container);
@@ -196,9 +197,17 @@ function addSub(type) {
     .then(html => {
         entry.innerHTML = html;
         container.appendChild(entry);
-        // Initialize Select2 on the new entry's name fields
-        initializeDatePickers();
-        initializeNameSelects();
+        // Animate the new entry sliding down
+        $(entry).slideDown(300, function() {
+            // Initialize Select2 on the new entry's name fields after animation
+            initializeDatePickers();
+            initializeNameSelects();
+            
+            // Smooth scroll to the new entry
+            $('html, body').animate({
+                scrollTop: $(entry).offset().top - 100 // Offset by 100px from top
+            }, 500);
+        });
     });
 }
 
@@ -217,7 +226,10 @@ function addMiscSub() {
 function removeSub(button) {
     const subEntry = button.closest('.sub-entry');
     if (subEntry) {
-        subEntry.remove();
+        // Animate the removal
+        $(subEntry).slideUp(300, function() {
+            $(this).remove();
+        });
     }
 }
 
