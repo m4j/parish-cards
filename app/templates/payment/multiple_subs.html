@@ -2,9 +2,21 @@
 
 {% block page_content %}
 <div class="container">
-    <h2>Payments with Multiple Sub-payments</h2>
+    <h2>Multiple Purpose Payments</h2>
+    <div class="alert alert-info">
+        Look up payments for several purposes, such as any combination of dues, prosphora or miscellaneous.
+    </div>
     
     {% include "search_form.html" %}
+
+    <div style="margin-top: 20px;"/>
+
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
+        </div>
+    {% endfor %}
 
     <!-- Results Table -->
     {% if payments %}
@@ -12,33 +24,33 @@
         <table class="table table-hover">
             <thead style="background-color: #f5f5f5;">
                 <tr>
-                    <th style="width: 40px"></th>
-                    <th>Date</th>
-                    <th>Payor</th>
-                    <th>Method</th>
-                    <th>Identifier</th>
-                    <th class="text-right">Amount</th>
-                    <th>Actions</th>
+                    <th style="width: 40px; vertical-align: middle;"></th>
+                    <th style="vertical-align: middle;">Date</th>
+                    <th style="vertical-align: middle;">Payor</th>
+                    <th style="vertical-align: middle;">Method</th>
+                    <th style="vertical-align: middle;">Identifier</th>
+                    <th class="text-right" style="vertical-align: middle;">Amount</th>
+                    <th style="vertical-align: middle;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for payment, count in payments %}
                 <tr>
-                    <td>
+                    <td style="vertical-align: middle;">
                         <button class="btn btn-link btn-sm" type="button" data-toggle="collapse" data-target="#subs{{ payment.guid.hex }}" aria-expanded="false" aria-controls="subs{{ payment.guid.hex }}">
                             <i class="glyphicon glyphicon-chevron-right"></i>
                         </button>
                     </td>
-                    <td>{{ payment.date }}</td>
-                    <td>{{ payment.payor }}</td>
-                    <td>{{ payment.method }}</td>
-                    <td>{{ payment.identifier or '' }}</td>
-                    <td class="text-right">{{ payment.amount }}</td>
-                    <td>
-                        <a href="{{ url_for('.edit_payment', guid=payment.guid.hex) }}" class="btn btn-sm btn-primary" title="Edit Payment">
+                    <td style="vertical-align: middle;">{{ payment.date }}</td>
+                    <td style="vertical-align: middle;">{{ payment.payor }}</td>
+                    <td style="vertical-align: middle;">{{ payment.method }}</td>
+                    <td style="vertical-align: middle;">{{ payment.identifier or '' }}</td>
+                    <td class="text-right" style="vertical-align: middle;">{{ payment.amount }}</td>
+                    <td style="vertical-align: middle;">
+                        <a href="{{ url_for('.edit_payment', guid=payment.guid.hex) }}" class="btn btn-sm btn-default" title="Edit Payment">
                             <i class="glyphicon glyphicon-edit"></i>
                         </a>
-                        <a href="{{ url_for('.repeat_payment', guid=payment.guid.hex) }}" class="btn btn-sm btn-info" title="Repeat Payment">
+                        <a href="{{ url_for('.repeat_payment', guid=payment.guid.hex) }}" class="btn btn-sm btn-default" title="Repeat Payment">
                             <i class="glyphicon glyphicon-repeat"></i>
                         </a>
                     </td>

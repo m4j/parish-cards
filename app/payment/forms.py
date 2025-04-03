@@ -86,8 +86,9 @@ class PaymentSubMiscForm(PaymentSubMixin, Form):
         self.category.choices = [(cat.category, cat.category) for cat in db.session.scalars(db.select(PaymentSubMiscCategory))]
 
 class PaymentBaseForm(Form):
+    guid = HiddenField('GUID')
     payor = StringField('Payor', validators=[DataRequired()], render_kw={'autofocus': True, 'placeholder': 'Last, first name(s)'})
-    date = StringField('Date', validators=[DataRequired(), ISOYearMonthDayValidator()])
+    date = StringField('Date', validators=[DataRequired(), ISOYearMonthDayValidator()], render_kw={'placeholder': 'Date on the check, credit card slip, etc...'})
     method = SelectField('Method', validators=[DataRequired()])
     identifier = StringField('Identifier', render_kw={'placeholder': 'Check number, credit card auth., etc...'})
     amount = IntegerField('Amount', validators=[DataRequired()])
@@ -136,6 +137,7 @@ class MultiPaymentForm(FlaskForm):
 
     def clear_guids(self):
         """Set all sub-payment GUIDs to None"""
+        self.payment.guid.data = None
         for entry in self.dues_subs.entries:
             entry.form.guid.data = None
         for entry in self.prosphora_subs.entries:
@@ -145,6 +147,7 @@ class MultiPaymentForm(FlaskForm):
 
     def load_from_payment(self, payment):
         """Load data from a Payment object into the form"""
+        self.payment.guid.data = payment.guid.hex
         self.payment.payor.data = payment.payor
         self.payment.date.data = payment.date
         self.payment.method.data = payment.method
@@ -158,7 +161,7 @@ class MultiPaymentForm(FlaskForm):
             form.guid.data = sub.guid.hex
             form.amount.data = sub.amount
             form.comment.data = sub.comment
-            form.member_name.data = f"{sub.last_name}, {sub.first_name}"
+            form.member_name.data = sub.full_name()
             form.paid_from.data = sub.paid_from
             form.paid_through.data = sub.paid_through
             self.dues_subs.append_entry(form.data)
@@ -168,7 +171,7 @@ class MultiPaymentForm(FlaskForm):
             form.guid.data = sub.guid.hex
             form.amount.data = sub.amount
             form.comment.data = sub.comment
-            form.member_name.data = f"{sub.last_name}, {sub.first_name}"
+            form.member_name.data = sub.full_name()
             form.paid_from.data = sub.paid_from
             form.paid_through.data = sub.paid_through
             form.quantity.data = sub.quantity

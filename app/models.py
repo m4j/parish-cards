@@ -3,6 +3,9 @@ from sqlalchemy import func
 from . import db
 
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 class IdentityMixin:
     guid = db.Column(db.Uuid(native_uuid=False), unique=True, default=uuid.uuid4)
@@ -35,10 +38,15 @@ class Prosphora(IdentityMixin, db.Model):
         )
     )
 
-    def __repr__(self):
+    def full_name(self):
+        """Return the full name of the member."""
+        name = self.last_name
         if self.first_name:
-            return f'{self.last_name}, {self.first_name}'
-        return self.last_name
+            name = f"{self.last_name}, {self.first_name}"
+        return name
+
+    def __repr__(self):
+        return self.full_name()
 
 class Card(IdentityMixin, db.Model):
     __tablename__ = 'card'
@@ -96,10 +104,15 @@ class Card(IdentityMixin, db.Model):
             ['last_name', 'first_name'], ['person.last', 'person.first']
         )
     )
+    def full_name(self):
+        """Return the full name of the member."""
+        name = self.last_name
+        if self.first_name:
+            name = f"{self.last_name}, {self.first_name}"
+        return name
 
     def __repr__(self):
-        fullname = f'{self.last_name}, {self.first_name}{" †" if self.membership_termination_reason == "Deceased" else ""}'
-        return fullname
+        return f'{self.full_name()}{" †" if self.membership_termination_reason == "Deceased" else ""}'
 
 def get_postal_code(zip_code):
     return zip_code.split('-')[0].strip()
@@ -438,13 +451,19 @@ class NameAndRangeMixin:
         else:
             # Different years, show full month-year for both
             return f"{self.paid_from_year_month.en_mon_yy}–{self.paid_through_year_month.en_mon_yy}"
-
-    def description(self):
-        """Return a formatted description of the payment range."""
+    
+    def full_name(self):
+        """Return the full name of the member."""
         name = self.last_name
         if self.first_name:
             name = f"{self.last_name}, {self.first_name}"
-        return f"{name} ({self.format_date_range()})"
+        return name
+    
+    def description(self):
+        """Return a formatted description of the payment range."""
+        result = f"{self.full_name()} ({self.format_date_range()})"
+        logger.info(f"Generated description for dues payment: {result}")
+        return result
 
 class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
     __tablename__ = 'payment_sub_dues'
@@ -493,7 +512,9 @@ class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
         """Return a formatted description of the prosphora payment range."""
         quantity_str = f"({self.quantity})" 
         feasts_str = " +12 Feasts" if self.with_twelve_feasts else ""
-        return f"Prosphora{quantity_str}{feasts_str}: {super().description().upper()}"
+        result = f"Prosphora{quantity_str}{feasts_str}: {super().description()}"
+        logger.info(f"Generated description for prosphora payment: {result}")
+        return result
 
 class PaymentSubMisc(PaymentSubMixin, db.Model):
     __tablename__ = 'payment_sub_misc'
@@ -512,7 +533,9 @@ class PaymentSubMisc(PaymentSubMixin, db.Model):
     def description(self):
         """Return a formatted description of the miscellaneous payment."""
         comment_str = f" ({self.comment})" if self.comment else ""
-        return f"{self.category}{comment_str}"
+        result = f"{self.category}{comment_str}"
+        logger.info(f"Generated description for misc payment: {result}")
+        return result
 
     def __repr__(self):
         return f'{self.date} {self.payor} {self.method} {self.identifier} {self.amount} {self.category}'

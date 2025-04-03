@@ -2,6 +2,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 from urllib.parse import urlparse
 
 db_uri = os.environ['CARDS_DATABASE_URI']
@@ -10,6 +12,35 @@ db_path = urlparse(db_uri).path
 
 db = SQLAlchemy()
 bootstrap = Bootstrap()
+
+def init_logging(app):
+    """Initialize logging configuration for the application"""
+    log_file = os.environ.get('CARDS_LOG')
+    if log_file:
+        # Create directory if it doesn't exist
+        log_dir = os.path.dirname(log_file)
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+            
+        file_handler = RotatingFileHandler(log_file,
+                                         maxBytes=10240, backupCount=10)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s '
+            '[in %(pathname)s:%(lineno)d]'
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+    else:
+        # Default to console logging
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s'
+        ))
+        console_handler.setLevel(logging.INFO)
+        app.logger.addHandler(console_handler)
+
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('Parish Cards startup')
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -21,6 +52,9 @@ def create_app(config_name):
     if os.environ.get('BOOTSTRAP_SERVE_LOCAL') in ['YES', 'TRUE', '1']:
         app.config['BOOTSTRAP_SERVE_LOCAL'] = True
     bootstrap.init_app(app)
+
+    # Initialize logging
+    init_logging(app)
 
     from .main import main as main_bp
     from .application import application as application_bp

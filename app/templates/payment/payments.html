@@ -38,7 +38,7 @@
                 <td class="right">{{ payment.amount }}</td>
                 <td><a href="{{ url_for(parameters.member_view, guid=payment.membership.guid.hex) }}">{{ payment.membership }}</a></td>
                 <td>{{ payment.paid_from }} → {{ payment.paid_through }}</td>
-                <td><a href="{{ url_for(parameters.repeat_payment_view, guid=payment.guid.hex) }}"><span class="glyphicon glyphicon-repeat"></span></a></td>
+                <td><a href="{{ url_for('.repeat_payment', guid=payment.payment.guid.hex) }}"><span class="glyphicon glyphicon-repeat"></span></a></td>
             </tr>
         </tbody>
         {% endfor %}

@@ -230,9 +230,8 @@ def search_cards():
     # Format results for Selectize
     results = []
     for card in cards:
-        full_name = f"{card.last_name}, {card.first_name}"
         results.append({
-            'value': full_name,
+            'value': card.full_name(),
             'text': str(card)
         })
     
@@ -265,10 +264,23 @@ def search_prosphora():
     # Format results for Selectize
     results = []
     for entry in prosphora_entries:
-        full_name = f"{entry.last_name}, {entry.first_name}"
         results.append({
-            'value': full_name,
+            'value': entry.full_name(),
             'text': str(entry)
         })
     
     return jsonify(results)
+
+@payment.route('/delete/<guid>', methods=['POST'])
+def delete_payment(guid):
+    """Delete a payment (sub-payments will be deleted by cascade)"""
+    payment = db.session.scalar(db.select(Payment).filter(Payment.guid == uuid.UUID(guid)))
+    if not payment:
+        abort(404)
+    
+    # Delete the payment (sub-payments will be deleted by cascade)
+    db.session.delete(payment)
+    db.session.commit()
+    
+    flash('Payment deleted successfully')
+    return redirect(url_for('.multiple_subs'))

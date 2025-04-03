@@ -13,13 +13,15 @@
                         <button type="button" class="btn btn-default" onclick="clearSearch();">
                             <span class="glyphicon glyphicon-remove"></span>
                         </button>
+                        <button type="submit" class="btn btn-default">
+                            <span class="glyphicon glyphicon-search"></span>
+                        </button>
                     </span>
                 </div>
                 {% if form.search_term.description %}
                     <p class="help-block">{{ form.search_term.description }}</p>
                 {% endif %}
             </div>
-            {{ wtf.form_field(form.submit_search) }}
         </form>
     </div>
 </div> 
