@@ -19,7 +19,7 @@ class PaymentSubMixin:
             raise ValidationError('Positive number please')
 
 class PaymentRangeSubMixin:
-    member_name = StringField('Name', validators=[DataRequired()])
+    member_name = StringField(label=None, validators=[DataRequired()])
     paid_from = StringField('Range from', validators=[DataRequired(), ISOYearMonthValidator()])
     paid_through = StringField('To', validators=[DataRequired(), ISOYearMonthValidator()])
     

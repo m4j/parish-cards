@@ -108,13 +108,13 @@
 
                 <!-- Add Sub-payment Buttons -->
                 <div class="row" style="margin-top: 15px;">
-                    <div class="col-md-4">
+                    <div class="col-md-4 col-xs-12" style="margin-bottom: 15px;">
                         <button type="button" class="btn btn-sm btn-primary btn-block" onclick="addDuesSub()">Add Dues</button>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 col-xs-12" style="margin-bottom: 15px;">
                         <button type="button" class="btn btn-sm btn-primary btn-block" onclick="addProsphoraSub()">Add Prosphora</button>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 col-xs-12" style="margin-bottom: 15px;">
                         <button type="button" class="btn btn-sm btn-primary btn-block" onclick="addMiscSub()">Add Misc</button>
                     </div>
                 </div>
@@ -152,16 +152,16 @@
 
         <div class="row">
             {% if form.payment.guid.data %}
-            <div class="col-md-2">
+            <div class="col-md-2 col-xs-12" style="margin-bottom: 15px;">
                 <button type="button" class="btn btn-default btn-block" onclick="deletePayment()">
                     <span class="glyphicon glyphicon-trash"></span> Delete
                 </button>
             </div>
             {% endif %}
-            <div class="col-md-2 col-md-offset-{% if form.payment.guid.data %}6{% else %}8{% endif %}">
-                <a href="{{ url_for('payment.multiple_subs') }}" class="btn btn-default btn-block">Cancel</a>
+            <div class="col-md-2 col-xs-12 col-md-offset-{% if form.payment.guid.data %}6{% else %}8{% endif %}" style="margin-bottom: 15px;">
+                <a href="{{ url_for('payment.' + return_route) }}" class="btn btn-default btn-block">Cancel</a>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2 col-xs-12" style="margin-bottom: 15px;">
                 {{ wtf.form_field(form.submit_btn, class="btn btn-primary btn-block") }}
             </div>
         </div>
@@ -268,7 +268,7 @@ $(document).ready(function() {
     // Handle delete confirmation
     $('#confirmDelete').click(function() {
         const form = document.querySelector('form');
-        form.action = "{{ url_for('payment.delete_payment', guid=form.payment.guid.data) if form.payment.guid.data else '' }}";
+        form.action = "{{ url_for('payment.delete_payment', guid=form.payment.guid.data, return_route=return_route) if form.payment.guid.data else '' }}";
         form.method = 'POST';
         form.submit();
     });

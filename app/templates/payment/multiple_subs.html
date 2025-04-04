@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 
 {% block page_content %}
-<div class="container">
-    <h2>Multiple Purpose Payments</h2>
-    <div class="alert alert-info">
-        Look up payments for several purposes, such as any combination of dues, prosphora or miscellaneous.
+    <div class="page-header">
+        <h2>Multipurpose Payments</h2>
+        <h4>Any combination of dues, prosphora or miscellaneous.</h4>
     </div>
     
     {% include "search_form.html" %}
@@ -47,10 +46,10 @@
                     <td style="vertical-align: middle;">{{ payment.identifier or '' }}</td>
                     <td class="text-right" style="vertical-align: middle;">{{ payment.amount }}</td>
                     <td style="vertical-align: middle;">
-                        <a href="{{ url_for('.edit_payment', guid=payment.guid.hex) }}" class="btn btn-sm btn-default" title="Edit Payment">
+                        <a href="{{ url_for('.edit_payment', guid=payment.guid.hex, return_route='multiple_subs') }}" class="btn btn-sm btn-default" title="Edit Payment">
                             <i class="glyphicon glyphicon-edit"></i>
                         </a>
-                        <a href="{{ url_for('.repeat_payment', guid=payment.guid.hex) }}" class="btn btn-sm btn-default" title="Repeat Payment">
+                        <a href="{{ url_for('.repeat_payment', guid=payment.guid.hex, return_route='multiple_subs') }}" class="btn btn-sm btn-default" title="Repeat Payment">
                             <i class="glyphicon glyphicon-repeat"></i>
                         </a>
                     </td>
@@ -58,7 +57,7 @@
                 <tr class="p-0">
                     <td colspan="7" style="padding: 0;">
                         <div class="collapse" id="subs{{ payment.guid.hex }}">
-                            <div class="panel panel-default" style="border: none; box-shadow: none;">
+                            <div class="panel panel-default" style="border: none; box-shadow: none; margin-bottom: 0;">
                                 <div class="panel-body">
                                     <div class="table-responsive">
                                         <table class="table table-condensed mb-0">
@@ -112,7 +111,6 @@
         {% endif %}
     </div>
     {% endif %}
-</div>
 {% endblock %} 
 
 {% block scripts %}

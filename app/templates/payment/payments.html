@@ -4,7 +4,7 @@
 {% block page_content %}
 
     <div class="page-header">
-        <h2>{{ parameters.header }}<h2>
+        <h2>{{ parameters.header }}</h2>
     </div>
 
     {% include "search_form.html" %}
@@ -21,26 +21,32 @@
     <table class="table">
         <thead>
             <tr>
-                <th>Payor</th>
                 <th>Date</th>
+                <th>Payor</th>
+                <th>Description</th>
                 <th>Payment</th>
                 <th class="right">Amount</th>
-                <th>Member</th>
-                <th>Dues Range</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
         {% for payment in payments %}
             <tr>
-                <td>{{ payment.payor }}</td>
-                <td>{{ payment.date }}</td>
-                <td>{{ payment.method }} {{ payment.identifier or '' }}</td>
-                <td class="right">{{ payment.amount }}</td>
-                <td><a href="{{ url_for(parameters.member_view, guid=payment.membership.guid.hex) }}">{{ payment.membership }}</a></td>
-                <td>{{ payment.paid_from }} → {{ payment.paid_through }}</td>
-                <td><a href="{{ url_for('.repeat_payment', guid=payment.payment.guid.hex) }}"><span class="glyphicon glyphicon-repeat"></span></a></td>
+                <td style="vertical-align: middle;">{{ payment.date }}</td>
+                <td style="vertical-align: middle;">{{ payment.payor }}</td>
+                <td style="vertical-align: middle;"><a href="{{ url_for(parameters.member_view, guid=payment.membership.guid.hex) }}">{{ payment.description() }}</a></td>
+                <td style="vertical-align: middle;">{{ payment.method }} {{ payment.identifier or '' }}</td>
+                <td class="right" style="vertical-align: middle;">{{ payment.amount }}</td>
+                <td style="vertical-align: middle;">
+                    <a href="{{ url_for('.edit_payment', guid=payment.payment.guid.hex, return_route=parameters.return_route) }}" class="btn btn-sm btn-default" title="Edit Payment">
+                        <span class="glyphicon glyphicon-edit"></span>
+                    </a>
+                    <a href="{{ url_for('.repeat_payment', guid=payment.payment.guid.hex, return_route=parameters.return_route) }}" class="btn btn-sm btn-default" title="Repeat Payment">
+                        <span class="glyphicon glyphicon-repeat"></span>
+                    </a>
+                </td>
             </tr>
-        </tbody>
         {% endfor %}
+        </tbody>
     </table>
 {% endblock %}

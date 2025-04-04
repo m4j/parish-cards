@@ -1,11 +1,6 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 <div class="row">
-    <div class="col-md-12">
-        <h5>Miscellaneous <button type="button" class="btn btn-sm" onclick="removeSub(this)"><i class="glyphicon glyphicon-trash"></i> Remove</button></h5>
-    </div>
-</div>
-<div class="row">
     <div class="col-md-4">
         {{ wtf.form_field(subform.category) }}
         {{ subform.guid }}
@@ -19,3 +14,8 @@
         {{ wtf.form_field(subform.comment, rows=2) }}
     </div>
 </div> 
+<div class="row">
+    <div class="col-md-2 col-md-offset-10">
+        <button type="button" class="btn btn-link btn-block" onclick="removeSub(this)"><i class="glyphicon glyphicon-trash"></i> Delete</button>
+    </div>
+</div>

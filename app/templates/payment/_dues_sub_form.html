@@ -1,13 +1,15 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 <div class="row">
-    <div class="col-md-12">
-        <h5>Dues <button type="button" class="btn btn-sm" onclick="removeSub(this)"><i class="glyphicon glyphicon-trash"></i> Remove</button></h5>
+    <div class="col-md-4">
+        <div class="form-group" style="display: flex; align-items: center;">
+            <label class="control-label" style="margin-right: 10px; margin-bottom: 0; white-space: nowrap;">Dues for</label>
+            <div style="flex: 1;">{{ subform.member_name }}</div>
+        </div>
     </div>
 </div>
 <div class="row">
     <div class="col-md-4">
-        {{ wtf.form_field(subform.member_name) }}
         {{ subform.guid }}
     </div>
 </div>
@@ -27,3 +29,8 @@
         {{ wtf.form_field(subform.comment, rows=2) }}
     </div>
 </div> 
+<div class="row">
+    <div class="col-md-2 col-md-offset-10">
+        <button type="button" class="btn btn-link btn-block" onclick="removeSub(this)"><i class="glyphicon glyphicon-trash"></i> Delete</button>
+    </div>
+</div>
