@@ -2,21 +2,23 @@ from flask import render_template, abort, session, redirect, url_for, flash, Mar
 from .. import db
 from . import payment
 from ..main.forms import SearchForm
-from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora, find_payments_with_multiple_subs, Card, Prosphora
+from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora, find_all_payments, Card, Prosphora
 from .forms import PaymentSubDuesForm, PaymentSubProsphoraForm, PaymentSubMiscForm, MultiPaymentForm
 import uuid
 from collections import namedtuple
 
-TemplateValues = namedtuple('TemplateValues', 'header member_view return_route')
+TemplateValues = namedtuple('TemplateValues', 'header header_sub member_view return_route')
 
 _dues_template_values = TemplateValues(
         header='Member Dues Payments',
+        header_sub='For at least one member',
         member_view='main.member',
         return_route='dues',
 )
 
 _prosphora_template_values = TemplateValues(
         header='Prosphora Payments',
+        header_sub='At least a prosphora payment',
         member_view='main.book',
         return_route='prosphora',
 )
@@ -86,7 +88,7 @@ def multiple_subs():
     search_term = session.get('search_term')
     if search_term:
         form.search_term.data = search_term
-        payments = find_payments_with_multiple_subs(search_term)
+        payments = find_all_payments(search_term)
     
     return render_template('payment/multiple_subs.html',
                          form=form,

@@ -754,3 +754,103 @@ def find_payments_with_multiple_subs(fragment=None):
 # for payment, count in results:
     # print(f"Payment {payment.payor} on {payment.date} has {count} sub-payments")
 
+def find_all_payments(fragment=None):
+    search_conditions = []
+    if fragment:
+        search_term = f'%{fragment}%'
+        search_conditions = [
+            db.or_(
+                PaymentSubDues.payor.ilike(search_term),
+                PaymentSubDues.date.ilike(search_term),
+                PaymentSubDues.method.ilike(search_term),
+                PaymentSubDues.identifier.ilike(search_term),
+                PaymentSubDues.amount.cast(db.String).ilike(search_term),
+                PaymentSubDues.comment.ilike(search_term),
+                PaymentSubDues.last_name.ilike(search_term),
+                PaymentSubDues.first_name.ilike(search_term),
+                PaymentSubDues.paid_from.ilike(search_term),
+                PaymentSubDues.paid_through.ilike(search_term)
+            )
+        ]
+
+    dues_subq = (
+        db.select(Payment.payor, Payment.date, Payment.method, Payment.identifier)
+        .join(PaymentSubDues)
+        .filter(*search_conditions)
+    ).subquery()
+    
+    if fragment:
+        search_conditions = [
+            db.or_(
+                PaymentSubProsphora.payor.ilike(search_term),
+                PaymentSubProsphora.date.ilike(search_term),
+                PaymentSubProsphora.method.ilike(search_term),
+                PaymentSubProsphora.identifier.ilike(search_term),
+                PaymentSubProsphora.amount.cast(db.String).ilike(search_term),
+                PaymentSubProsphora.comment.ilike(search_term),
+                PaymentSubProsphora.last_name.ilike(search_term),
+                PaymentSubProsphora.first_name.ilike(search_term),
+                PaymentSubProsphora.paid_from.ilike(search_term),
+                PaymentSubProsphora.paid_through.ilike(search_term)
+            )
+        ]
+
+    prosphora_subq = (
+        db.select(Payment.payor, Payment.date, Payment.method, Payment.identifier)
+        .join(PaymentSubProsphora)
+        .filter(*search_conditions)
+    ).subquery()
+    
+    if fragment:
+        search_conditions = [
+            db.or_(
+                PaymentSubMisc.payor.ilike(search_term),
+                PaymentSubMisc.date.ilike(search_term),
+                PaymentSubMisc.method.ilike(search_term),
+                PaymentSubMisc.identifier.ilike(search_term),
+                PaymentSubMisc.amount.cast(db.String).ilike(search_term),
+                PaymentSubMisc.comment.ilike(search_term),
+                PaymentSubMisc.category.ilike(search_term)
+            )
+        ]
+
+    misc_subq = (
+        db.select(Payment.payor, Payment.date, Payment.method, Payment.identifier)
+        .join(PaymentSubMisc)
+        .filter(*search_conditions)
+    ).subquery()
+
+    # Union all subqueries
+    union_subq = (
+        db.union_all(
+            dues_subq.select(),
+            prosphora_subq.select(),
+            misc_subq.select()
+        )
+    ).subquery()
+
+    # Select all payments from the union subquery, ensuring uniqueness
+    query = (
+        db.select(Payment)
+        .join(
+            union_subq,
+            db.and_(
+                Payment.payor == union_subq.c.payor,
+                Payment.date == union_subq.c.date,
+                Payment.method == union_subq.c.method,
+                db.or_(
+                    db.and_(Payment.identifier == union_subq.c.identifier),
+                    db.and_(Payment.identifier.is_(None), union_subq.c.identifier.is_(None))
+                )
+            )
+        )
+        .distinct()
+        .order_by(Payment.date.desc())
+    )
+
+    return db.session.scalars(query).all()
+
+# results = find_all_payments()
+# for payment in results:
+#     print(f"Payment {payment.payor} on {payment.date}")
+

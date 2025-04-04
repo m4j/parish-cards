@@ -2,7 +2,7 @@
 
 {% block page_content %}
     <div class="page-header">
-        <h2>Multipurpose Payments</h2>
+        <h2>All Payments</h2>
         <h4>Any combination of dues, prosphora or miscellaneous.</h4>
     </div>
     
@@ -33,7 +33,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for payment, count in payments %}
+                {% for payment in payments %}
                 <tr>
                     <td style="vertical-align: middle;">
                         <button class="btn btn-link btn-sm" type="button" data-toggle="collapse" data-target="#subs{{ payment.guid.hex }}" aria-expanded="false" aria-controls="subs{{ payment.guid.hex }}">
