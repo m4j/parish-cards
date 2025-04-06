@@ -462,7 +462,7 @@ class NameAndRangeMixin:
     def description(self):
         """Return a formatted description of the payment range."""
         result = f"{self.full_name()} ({self.format_date_range()})"
-        logger.info(f"Generated description for dues payment: {result}")
+        #logger.info(f"Generated description for dues payment: {result}")
         return result
 
 class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
@@ -513,7 +513,7 @@ class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
         quantity_str = f"({self.quantity})" 
         feasts_str = " +12 Feasts" if self.with_twelve_feasts else ""
         result = f"Prosphora{quantity_str}{feasts_str}: {super().description()}"
-        logger.info(f"Generated description for prosphora payment: {result}")
+        #logger.info(f"Generated description for prosphora payment: {result}")
         return result
 
 class PaymentSubMisc(PaymentSubMixin, db.Model):
@@ -534,7 +534,7 @@ class PaymentSubMisc(PaymentSubMixin, db.Model):
         """Return a formatted description of the miscellaneous payment."""
         comment_str = f" ({self.comment})" if self.comment else ""
         result = f"{self.category}{comment_str}"
-        logger.info(f"Generated description for misc payment: {result}")
+        #logger.info(f"Generated description for misc payment: {result}")
         return result
 
     def __repr__(self):
