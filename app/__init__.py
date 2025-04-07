@@ -16,6 +16,7 @@ bootstrap = Bootstrap()
 def init_logging(app):
     """Initialize logging configuration for the application"""
     log_file = os.environ.get('CARDS_LOG')
+    log_level = os.environ.get('CARDS_LOG_LEVEL', 'INFO')
     if log_file:
         # Create directory if it doesn't exist
         log_dir = os.path.dirname(log_file)
@@ -28,18 +29,10 @@ def init_logging(app):
             '%(asctime)s %(levelname)s: %(message)s '
             '[in %(pathname)s:%(lineno)d]'
         ))
-        file_handler.setLevel(logging.INFO)
+        file_handler.setLevel(log_level)
         app.logger.addHandler(file_handler)
-    else:
-        # Default to console logging
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s'
-        ))
-        console_handler.setLevel(logging.INFO)
-        app.logger.addHandler(console_handler)
 
-    app.logger.setLevel(logging.INFO)
+    app.logger.setLevel(log_level)
     app.logger.info('Parish Cards startup')
 
 def create_app(config_name):

@@ -1,4 +1,4 @@
-from flask import render_template, abort, session, redirect, url_for, flash, Markup, request, jsonify
+from flask import render_template, abort, session, redirect, url_for, flash, Markup, request, jsonify, current_app
 from .. import db
 from . import payment
 from ..main.forms import SearchForm
@@ -6,6 +6,7 @@ from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Paymen
 from .forms import PaymentSubDuesForm, PaymentSubProsphoraForm, PaymentSubMiscForm, MultiPaymentForm
 import uuid
 from collections import namedtuple
+import time  # Add time module import
 
 TemplateValues = namedtuple('TemplateValues', 'header header_sub member_view return_route')
 
@@ -88,11 +89,18 @@ def multiple_subs():
     search_term = session.get('search_term')
     if search_term:
         form.search_term.data = search_term
+        start_time = time.time()
         payments = find_all_payments(search_term)
+        find_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        current_app.logger.debug(f"find_all_payments execution time: {find_time:.2f}ms")
     
-    return render_template('payment/multiple_subs.html',
+    start_time = time.time()
+    result = render_template('payment/multiple_subs.html',
                          form=form,
                          payments=payments)
+    render_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+    current_app.logger.debug(f"render_template execution time: {render_time:.2f}ms")
+    return result
 
 @payment.route('/edit', methods=['GET', 'POST'])
 @payment.route('/edit/<guid>', methods=['GET', 'POST'])

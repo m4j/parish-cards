@@ -393,9 +393,36 @@ class Payment(IdentityMixin, PaymentCommonMixin, db.Model):
         ),
     )
 
-    dues      = db.relationship('PaymentSubDues', back_populates='payment', cascade="all, delete-orphan")
-    prosphora = db.relationship('PaymentSubProsphora', back_populates='payment', cascade="all, delete-orphan")
-    misc      = db.relationship('PaymentSubMisc', back_populates='payment', cascade="all, delete-orphan")
+    dues      = db.relationship(
+        'PaymentSubDues', 
+        back_populates='payment', 
+        cascade="all, delete-orphan",
+        primaryjoin="and_(Payment.payor==PaymentSubDues.payor, "
+                   "Payment.date==PaymentSubDues.date, "
+                   "Payment.method==PaymentSubDues.method, "
+                   "or_(and_(Payment.identifier==PaymentSubDues.identifier), "
+                   "and_(Payment.identifier.is_(None), PaymentSubDues.identifier.is_(None))))"
+    )
+    prosphora = db.relationship(
+        'PaymentSubProsphora', 
+        back_populates='payment', 
+        cascade="all, delete-orphan",
+        primaryjoin="and_(Payment.payor==PaymentSubProsphora.payor, "
+                   "Payment.date==PaymentSubProsphora.date, "
+                   "Payment.method==PaymentSubProsphora.method, "
+                   "or_(and_(Payment.identifier==PaymentSubProsphora.identifier), "
+                   "and_(Payment.identifier.is_(None), PaymentSubProsphora.identifier.is_(None))))"
+    )
+    misc      = db.relationship(
+        'PaymentSubMisc', 
+        back_populates='payment', 
+        cascade="all, delete-orphan",
+        primaryjoin="and_(Payment.payor==PaymentSubMisc.payor, "
+                   "Payment.date==PaymentSubMisc.date, "
+                   "Payment.method==PaymentSubMisc.method, "
+                   "or_(and_(Payment.identifier==PaymentSubMisc.identifier), "
+                   "and_(Payment.identifier.is_(None), PaymentSubMisc.identifier.is_(None))))"
+    )
 
 class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
     @db.declared_attr.directive
@@ -650,173 +677,102 @@ def _range_containing_date(model, date, first_name, last_name):
                 date <= model.paid_through,
             ))).scalar()
 
-def find_payments_with_multiple_subs(fragment=None):
-    search_conditions = []
-    if fragment:
-        search_term = f'%{fragment}%'
-        search_conditions = [
-            db.or_(
-                PaymentSubDues.payor.ilike(search_term),
-                PaymentSubDues.date.ilike(search_term),
-                PaymentSubDues.method.ilike(search_term),
-                PaymentSubDues.identifier.ilike(search_term),
-                PaymentSubDues.amount.cast(db.String).ilike(search_term),
-                PaymentSubDues.comment.ilike(search_term),
-                PaymentSubDues.last_name.ilike(search_term),
-                PaymentSubDues.first_name.ilike(search_term),
-                PaymentSubDues.paid_from.ilike(search_term),
-                PaymentSubDues.paid_through.ilike(search_term)
-            )
-        ]
-
-    dues_subq = (
-        db.select(Payment.payor, Payment.date, Payment.method, Payment.identifier)
-        .join(PaymentSubDues)
-        .filter(*search_conditions)
-    ).subquery()
-    
-    if fragment:
-        search_conditions = [
-            db.or_(
-                PaymentSubProsphora.payor.ilike(search_term),
-                PaymentSubProsphora.date.ilike(search_term),
-                PaymentSubProsphora.method.ilike(search_term),
-                PaymentSubProsphora.identifier.ilike(search_term),
-                PaymentSubProsphora.amount.cast(db.String).ilike(search_term),
-                PaymentSubProsphora.comment.ilike(search_term),
-                PaymentSubProsphora.last_name.ilike(search_term),
-                PaymentSubProsphora.first_name.ilike(search_term),
-                PaymentSubProsphora.paid_from.ilike(search_term),
-                PaymentSubProsphora.paid_through.ilike(search_term)
-            )
-        ]
-
-    prosphora_subq = (
-        db.select(Payment.payor, Payment.date, Payment.method, Payment.identifier)
-        .join(PaymentSubProsphora)
-        .filter(*search_conditions)
-    ).subquery()
-    
-    if fragment:
-        search_conditions = [
-            db.or_(
-                PaymentSubMisc.payor.ilike(search_term),
-                PaymentSubMisc.date.ilike(search_term),
-                PaymentSubMisc.method.ilike(search_term),
-                PaymentSubMisc.identifier.ilike(search_term),
-                PaymentSubMisc.amount.cast(db.String).ilike(search_term),
-                PaymentSubMisc.comment.ilike(search_term),
-                PaymentSubMisc.category.ilike(search_term)
-            )
-        ]
-
-    misc_subq = (
-        db.select(Payment.payor, Payment.date, Payment.method, Payment.identifier)
-        .join(PaymentSubMisc)
-        .filter(*search_conditions)
-    ).subquery()
-
-    # Union all subqueries
-    union_subq = (
-        db.union_all(
-            dues_subq.select(),
-            prosphora_subq.select(),
-            misc_subq.select()
-        )
-    ).subquery()
-
-    # Count occurrences and filter for more than one
-    query = (
-        db.select(
-            Payment,
-            db.func.count().label('sub_count')
-        )
-        .join(
-            union_subq,
-            db.and_(
-                Payment.payor == union_subq.c.payor,
-                Payment.date == union_subq.c.date,
-                Payment.method == union_subq.c.method,
-                db.or_(
-                    db.and_(Payment.identifier == union_subq.c.identifier),
-                    db.and_(Payment.identifier.is_(None), union_subq.c.identifier.is_(None))
-                )
-            )
-        )
-        .group_by(Payment)
-        .having(db.func.count() > 1)
-        .order_by(Payment.date.desc())
-    )
-
-    return db.session.execute(query).all()
-
-# results = find_payments_with_multiple_subs()
-# for payment, count in results:
-    # print(f"Payment {payment.payor} on {payment.date} has {count} sub-payments")
-
 def find_all_payments(fragment=None):
     search_conditions = []
     if fragment:
-        search_term = f'%{fragment}%'
+        search_term = f'%{fragment.lower()}%'
         search_conditions = [
             db.or_(
-                PaymentSubDues.payor.ilike(search_term),
-                PaymentSubDues.date.ilike(search_term),
-                PaymentSubDues.method.ilike(search_term),
-                PaymentSubDues.identifier.ilike(search_term),
-                PaymentSubDues.amount.cast(db.String).ilike(search_term),
-                PaymentSubDues.comment.ilike(search_term),
-                PaymentSubDues.last_name.ilike(search_term),
-                PaymentSubDues.first_name.ilike(search_term),
-                PaymentSubDues.paid_from.ilike(search_term),
-                PaymentSubDues.paid_through.ilike(search_term)
+                PaymentSubDues.payor.like(search_term),
+                PaymentSubDues.date.like(search_term),
+                PaymentSubDues.method.like(search_term),
+                PaymentSubDues.identifier.like(search_term),
+                PaymentSubDues.amount.cast(db.String).like(search_term),
+                PaymentSubDues.comment.like(search_term),
+                PaymentSubDues.last_name.like(search_term),
+                PaymentSubDues.first_name.like(search_term),
+                PaymentSubDues.paid_from.like(search_term),
+                PaymentSubDues.paid_through.like(search_term)
             )
         ]
 
     dues_subq = (
         db.select(Payment.payor, Payment.date, Payment.method, Payment.identifier)
-        .join(PaymentSubDues)
+        .join(
+            PaymentSubDues,
+            db.and_(
+                Payment.payor == PaymentSubDues.payor,
+                Payment.date == PaymentSubDues.date,
+                Payment.method == PaymentSubDues.method,
+                db.or_(
+                    db.and_(Payment.identifier == PaymentSubDues.identifier),
+                    db.and_(Payment.identifier.is_(None), PaymentSubDues.identifier.is_(None))
+                )
+            )
+        )
         .filter(*search_conditions)
     ).subquery()
     
     if fragment:
         search_conditions = [
             db.or_(
-                PaymentSubProsphora.payor.ilike(search_term),
-                PaymentSubProsphora.date.ilike(search_term),
-                PaymentSubProsphora.method.ilike(search_term),
-                PaymentSubProsphora.identifier.ilike(search_term),
-                PaymentSubProsphora.amount.cast(db.String).ilike(search_term),
-                PaymentSubProsphora.comment.ilike(search_term),
-                PaymentSubProsphora.last_name.ilike(search_term),
-                PaymentSubProsphora.first_name.ilike(search_term),
-                PaymentSubProsphora.paid_from.ilike(search_term),
-                PaymentSubProsphora.paid_through.ilike(search_term)
+                PaymentSubProsphora.payor.like(search_term),
+                PaymentSubProsphora.date.like(search_term),
+                PaymentSubProsphora.method.like(search_term),
+                PaymentSubProsphora.identifier.like(search_term),
+                PaymentSubProsphora.amount.cast(db.String).like(search_term),
+                PaymentSubProsphora.comment.like(search_term),
+                PaymentSubProsphora.last_name.like(search_term),
+                PaymentSubProsphora.first_name.like(search_term),
+                PaymentSubProsphora.paid_from.like(search_term),
+                PaymentSubProsphora.paid_through.like(search_term)
             )
         ]
 
     prosphora_subq = (
         db.select(Payment.payor, Payment.date, Payment.method, Payment.identifier)
-        .join(PaymentSubProsphora)
+        .join(
+            PaymentSubProsphora,
+            db.and_(
+                Payment.payor == PaymentSubProsphora.payor,
+                Payment.date == PaymentSubProsphora.date,
+                Payment.method == PaymentSubProsphora.method,
+                db.or_(
+                    db.and_(Payment.identifier == PaymentSubProsphora.identifier),
+                    db.and_(Payment.identifier.is_(None), PaymentSubProsphora.identifier.is_(None))
+                )
+            )
+        )
         .filter(*search_conditions)
     ).subquery()
     
     if fragment:
         search_conditions = [
             db.or_(
-                PaymentSubMisc.payor.ilike(search_term),
-                PaymentSubMisc.date.ilike(search_term),
-                PaymentSubMisc.method.ilike(search_term),
-                PaymentSubMisc.identifier.ilike(search_term),
-                PaymentSubMisc.amount.cast(db.String).ilike(search_term),
-                PaymentSubMisc.comment.ilike(search_term),
-                PaymentSubMisc.category.ilike(search_term)
+                PaymentSubMisc.payor.like(search_term),
+                PaymentSubMisc.date.like(search_term),
+                PaymentSubMisc.method.like(search_term),
+                PaymentSubMisc.identifier.like(search_term),
+                PaymentSubMisc.amount.cast(db.String).like(search_term),
+                PaymentSubMisc.comment.like(search_term),
+                PaymentSubMisc.category.like(search_term)
             )
         ]
 
     misc_subq = (
         db.select(Payment.payor, Payment.date, Payment.method, Payment.identifier)
-        .join(PaymentSubMisc)
+        .join(
+            PaymentSubMisc,
+            db.and_(
+                Payment.payor == PaymentSubMisc.payor,
+                Payment.date == PaymentSubMisc.date,
+                Payment.method == PaymentSubMisc.method,
+                db.or_(
+                    db.and_(Payment.identifier == PaymentSubMisc.identifier),
+                    db.and_(Payment.identifier.is_(None), PaymentSubMisc.identifier.is_(None))
+                )
+            )
+        )
         .filter(*search_conditions)
     ).subquery()
 
@@ -847,6 +803,8 @@ def find_all_payments(fragment=None):
         .distinct()
         .order_by(Payment.date.desc())
     )
+
+    logger.debug(f"Query: {query}")
 
     return db.session.scalars(query).all()
 
