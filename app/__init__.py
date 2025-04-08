@@ -57,3 +57,13 @@ def create_app(config_name):
     app.register_blueprint(payment_bp, url_prefix='/payment')
 
     return app
+
+# Enable foreign key constraints for SQLite
+from sqlalchemy.engine import Engine
+from sqlalchemy import event
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()

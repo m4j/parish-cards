@@ -200,8 +200,18 @@ class MultiPaymentForm(FlaskForm):
         existing_prosphora = {sub.guid.hex: sub for sub in payment.prosphora}
         existing_misc = {sub.guid.hex: sub for sub in payment.misc}
 
-        # Update or create dues sub-payments
-        payment.dues = []
+        for dues in payment.dues:
+            if dues.guid.hex not in [entry.form.guid.data for entry in self.dues_subs]:
+                payment.dues.remove(dues)
+
+        for prosphora in payment.prosphora:
+            if prosphora.guid.hex not in [entry.form.guid.data for entry in self.prosphora_subs]:
+                payment.prosphora.remove(prosphora)
+
+        for misc in payment.misc:
+            if misc.guid.hex not in [entry.form.guid.data for entry in self.misc_subs]:
+                payment.misc.remove(misc)
+
         for entry in self.dues_subs:
             form_data = entry.form.data
             guid = form_data.get('guid')
@@ -209,6 +219,7 @@ class MultiPaymentForm(FlaskForm):
                 sub = existing_dues[guid]
             else:
                 sub = PaymentSubDues()
+                payment.dues.append(sub)
                 
             sub.amount = form_data['amount']
             sub.comment = form_data.get('comment') or None
@@ -216,10 +227,7 @@ class MultiPaymentForm(FlaskForm):
             sub.first_name = entry.form.get_first_name()
             sub.paid_from = form_data['paid_from']
             sub.paid_through = form_data['paid_through']
-            payment.dues.append(sub)
 
-        # Update or create prosphora sub-payments
-        payment.prosphora = []
         for entry in self.prosphora_subs:
             form_data = entry.form.data
             guid = form_data.get('guid')
@@ -227,6 +235,7 @@ class MultiPaymentForm(FlaskForm):
                 sub = existing_prosphora[guid]
             else:
                 sub = PaymentSubProsphora()
+                payment.prosphora.append(sub)
                 
             sub.amount = form_data['amount']
             sub.comment = form_data.get('comment') or None
@@ -236,10 +245,7 @@ class MultiPaymentForm(FlaskForm):
             sub.paid_through = form_data['paid_through']
             sub.quantity = form_data['quantity']
             sub.with_twelve_feasts = form_data['with_twelve_feasts']
-            payment.prosphora.append(sub)
 
-        # Update or create misc sub-payments
-        payment.misc = []
         for entry in self.misc_subs:
             form_data = entry.form.data
             guid = form_data.get('guid')
@@ -247,11 +253,11 @@ class MultiPaymentForm(FlaskForm):
                 sub = existing_misc[guid]
             else:
                 sub = PaymentSubMisc()
+                payment.misc.append(sub)
                 
             sub.amount = form_data['amount']
             sub.comment = form_data.get('comment') or None
             sub.category = form_data['category']
-            payment.misc.append(sub)
 
     def validate(self, extra_validators=None):
         if not super().validate(extra_validators):

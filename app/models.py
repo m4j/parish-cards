@@ -431,7 +431,8 @@ class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
             db.PrimaryKeyConstraint('guid'),
             db.ForeignKeyConstraint(
                 ['payor', 'date', 'method', 'identifier'],
-                ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier']
+                ['payment.payor', 'payment.date', 'payment.method', 'payment.identifier'],
+                onupdate='CASCADE'
             ),
         )
 
@@ -489,7 +490,6 @@ class NameAndRangeMixin:
     def description(self):
         """Return a formatted description of the payment range."""
         result = f"{self.full_name()} ({self.format_date_range()})"
-        #logger.info(f"Generated description for dues payment: {result}")
         return result
 
 class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
@@ -540,7 +540,6 @@ class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
         quantity_str = f"({self.quantity})" 
         feasts_str = " +12 Feasts" if self.with_twelve_feasts else ""
         result = f"Prosphora{quantity_str}{feasts_str}: {super().description()}"
-        #logger.info(f"Generated description for prosphora payment: {result}")
         return result
 
 class PaymentSubMisc(PaymentSubMixin, db.Model):
@@ -561,7 +560,6 @@ class PaymentSubMisc(PaymentSubMixin, db.Model):
         """Return a formatted description of the miscellaneous payment."""
         comment_str = f" ({self.comment})" if self.comment else ""
         result = f"{self.category}{comment_str}"
-        #logger.info(f"Generated description for misc payment: {result}")
         return result
 
     def __repr__(self):
@@ -641,20 +639,20 @@ def find_sub_prosphora_payments(fragment):
     return _find_sub_payments(fragment, PaymentSubProsphora)
 
 def _find_sub_payments(fragment, model):
-    search_term = f'%{fragment}%'
+    search_term = f'%{fragment.lower()}%'
     return db.session.scalars(
         db.select(model).filter(
             db.or_(
-                model.payor.ilike(search_term),
-                model.date.ilike(search_term),
-                model.method.ilike(search_term),
-                model.identifier.ilike(search_term),
-                model.amount.ilike(search_term),
-                model.last_name.ilike(search_term),
-                model.first_name.ilike(search_term),
-                model.paid_from.ilike(search_term),
-                model.paid_through.ilike(search_term),
-                model.comment.ilike(search_term)
+                model.payor.like(search_term),
+                model.date.like(search_term),
+                model.method.like(search_term),
+                model.identifier.like(search_term),
+                model.amount.like(search_term),
+                model.last_name.like(search_term),
+                model.first_name.like(search_term),
+                model.paid_from.like(search_term),
+                model.paid_through.like(search_term),
+                model.comment.like(search_term)
             ))
         .order_by(
             model.paid_from.desc(),
