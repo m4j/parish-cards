@@ -27,7 +27,6 @@
                     <th style="vertical-align: middle;">Date</th>
                     <th style="vertical-align: middle;">Payor</th>
                     <th style="vertical-align: middle;">Method</th>
-                    <th style="vertical-align: middle;">Identifier</th>
                     <th class="text-right" style="vertical-align: middle;">Amount</th>
                     <th style="vertical-align: middle;">Actions</th>
                 </tr>
@@ -42,8 +41,7 @@
                     </td>
                     <td style="vertical-align: middle;">{{ payment.date }}</td>
                     <td style="vertical-align: middle;">{{ payment.payor }}</td>
-                    <td style="vertical-align: middle;">{{ payment.method }}</td>
-                    <td style="vertical-align: middle;">{{ payment.identifier or '' }}</td>
+                    <td style="vertical-align: middle;">{{ payment.method }} {{ payment.identifier or '' }}</td>
                     <td class="text-right" style="vertical-align: middle;">{{ payment.amount }}</td>
                     <td style="vertical-align: middle;">
                         <a href="{{ url_for('.edit_payment', guid=payment.guid.hex, return_route='multiple_subs') }}" class="btn btn-sm btn-default" title="Edit Payment">

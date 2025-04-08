@@ -15,8 +15,11 @@ bootstrap = Bootstrap()
 
 def init_logging(app):
     """Initialize logging configuration for the application"""
+    logging.basicConfig()
     log_file = os.environ.get('CARDS_LOG')
     log_level = os.environ.get('CARDS_LOG_LEVEL', 'INFO')
+    db_log_level = os.environ.get('CARDS_DB_LOG_LEVEL', 'WARNING')
+    db_logger = logging.getLogger('sqlalchemy.engine')
     if log_file:
         # Create directory if it doesn't exist
         log_dir = os.path.dirname(log_file)
@@ -31,8 +34,10 @@ def init_logging(app):
         ))
         file_handler.setLevel(log_level)
         app.logger.addHandler(file_handler)
+        db_logger.addHandler(file_handler)
 
     app.logger.setLevel(log_level)
+    db_logger.setLevel(db_log_level)
     app.logger.info('Parish Cards startup')
 
 def create_app(config_name):

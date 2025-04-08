@@ -4,6 +4,7 @@ from . import db
 
 import uuid
 import logging
+from collections import namedtuple
 
 logger = logging.getLogger(__name__)
 
@@ -470,15 +471,19 @@ class NameAndRangeMixin:
 
     def format_date_range(self):
         """Format the date range using English month and year from YearMonth records."""
-        if not self.paid_from_year_month or not self.paid_through_year_month:
+        # Use the get_components function instead of database lookups
+        from_components = YearMonth.get_components(self.paid_from)
+        through_components = YearMonth.get_components(self.paid_through)
+        
+        if not from_components or not through_components:
             return f"{self.paid_from} - {self.paid_through}"
             
-        if self.paid_from_year_month.en_yy == self.paid_through_year_month.en_yy:
+        if from_components.en_yy == through_components.en_yy:
             # Same year, use just month for start date
-            return f"{self.paid_from_year_month.en_mon}–{self.paid_through_year_month.en_mon_yy}"
+            return f"{from_components.en_mon}–{through_components.en_mon_yy}"
         else:
             # Different years, show full month-year for both
-            return f"{self.paid_from_year_month.en_mon_yy}–{self.paid_through_year_month.en_mon_yy}"
+            return f"{from_components.en_mon_yy}–{through_components.en_mon_yy}"
     
     def full_name(self):
         """Return the full name of the member."""
@@ -583,6 +588,86 @@ class YearMonth(db.Model):
     en_yy = db.Column(db.String)
     en_mon = db.Column(db.String)
 
+    @classmethod
+    def get_components(cls, year_month_str):
+        """
+        Generate all components for a given year_month string.
+        
+        Args:
+            year_month_str: String in format 'YYYY-MM' (e.g., '2024-01')
+            
+        Returns:
+            Named tuple containing (year_month, en_month_year, ru_month_year, en_mon_yy, en_yy, en_mon)
+            or None if validation fails
+        """
+        from collections import namedtuple
+        
+        # Define the named tuple
+        YearMonthComponents = namedtuple('YearMonthComponents', 
+                                        ['year_month', 'en_month_year', 'ru_month_year', 
+                                         'en_mon_yy', 'en_yy', 'en_mon'])
+        
+        try:
+            # Parse the year and month
+            year, month = year_month_str.split('-')
+            
+            # Validate year is exactly 4 digits
+            if not (len(year) == 4 and year.isdigit()):
+                return None
+                
+            year_int = int(year)
+            month_int = int(month)
+            
+            # Validate month is between 1 and 12
+            if not (1 <= month_int <= 12):
+                return None
+            
+            # Get the two-digit year
+            yy = year[-2:]
+            
+            # Month names and abbreviations
+            month_names = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ]
+            month_abbrs = [
+                "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+            ]
+            ru_month_names = [
+                "январь", "февраль", "март", "апрель", "май", "июнь",
+                "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"
+            ]
+            
+            # Get the month name and abbreviation
+            # Use try/except to handle potential index errors
+            try:
+                month_name = month_names[month_int - 1]
+                month_abbr = month_abbrs[month_int - 1]
+                ru_month_name = ru_month_names[month_int - 1]
+            except IndexError:
+                return None
+            
+            # Generate all properties
+            en_month_year = f"{month_name} {year}"
+            ru_month_year = f"{ru_month_name} {year}"
+            en_mon_yy = f"{month_abbr} {yy}"
+            en_yy = yy
+            en_mon = month_abbr
+            
+            # Return a named tuple
+            return YearMonthComponents(
+                year_month=year_month_str,
+                en_month_year=en_month_year,
+                ru_month_year=ru_month_year,
+                en_mon_yy=en_mon_yy,
+                en_yy=en_yy,
+                en_mon=en_mon
+            )
+        except (ValueError, IndexError):
+            # Handle any parsing errors or index errors
+            return None
+
 def find_member(first_name, last_name):
     return db.session.execute(
             db.select(Card).filter(
@@ -647,7 +732,7 @@ def _find_sub_payments(fragment, model):
                 model.date.like(search_term),
                 model.method.like(search_term),
                 model.identifier.like(search_term),
-                model.amount.like(search_term),
+                model.amount.cast(db.String).like(search_term),
                 model.last_name.like(search_term),
                 model.first_name.like(search_term),
                 model.paid_from.like(search_term),
