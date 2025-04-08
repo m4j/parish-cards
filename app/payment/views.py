@@ -75,6 +75,23 @@ def add_misc_sub():
     form = PaymentSubMiscForm(prefix=f'misc_subs-{prefix}-')
     return render_template('payment/_misc_sub_form.html', subform=form)
 
+@payment.route('/get_payment_subs', methods=['GET'])
+# @login_required
+def get_payment_subs():
+    """Handle AJAX request to get payment subs for a specific payment"""
+    payment_id = request.args.get('payment_id')
+    if not payment_id:
+        return 'Payment ID is required', 400
+    
+    try:
+        payment = db.session.scalar(db.select(Payment).filter(Payment.guid == uuid.UUID(payment_id)))
+        if not payment:
+            return 'Payment not found', 404
+        
+        return render_template('payment/_payment_subs.html', payment=payment)
+    except (ValueError, TypeError):
+        return 'Invalid payment ID', 400
+
 @payment.route('/multiple_subs', methods=['GET', 'POST'])
 # @login_required
 def multiple_subs():

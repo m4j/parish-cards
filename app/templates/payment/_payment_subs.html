@@ -1,0 +1,38 @@
+<div class="panel panel-default" style="border: none; box-shadow: none; margin-bottom: 0;">
+    <div class="panel-body">
+        <div class="table-responsive">
+            <table class="table table-condensed" style="margin-bottom: 0;">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th class="text-right">Amount</th>
+                        <th>Comment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in payment.dues %}
+                    <tr>
+                        <td>{{ sub.description() }}</td>
+                        <td class="text-right">{{ sub.amount }}</td>
+                        <td>{{ sub.comment or '' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for sub in payment.prosphora %}
+                    <tr>
+                        <td>{{ sub.description() }}</td>
+                        <td class="text-right">{{ sub.amount }}</td>
+                        <td>{{ sub.comment or '' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for sub in payment.misc %}
+                    <tr>
+                        <td>{{ sub.description() }}</td>
+                        <td class="text-right">{{ sub.amount }}</td>
+                        <td>{{ sub.comment or '' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div> 
