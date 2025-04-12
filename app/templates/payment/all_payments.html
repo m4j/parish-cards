@@ -44,10 +44,10 @@
                     <td style="vertical-align: middle;">{{ payment.method }} {{ payment.identifier or '' }}</td>
                     <td class="text-right" style="vertical-align: middle;">{{ payment.amount }}</td>
                     <td style="vertical-align: middle;">
-                        <a href="{{ url_for('.edit_payment', guid=payment.guid.hex, return_route='multiple_subs') }}" class="btn btn-sm btn-default" title="Edit Payment">
+                        <a href="{{ url_for('.edit_payment', guid=payment.guid.hex, return_route='all') }}" class="btn btn-sm btn-default" title="Edit Payment">
                             <i class="glyphicon glyphicon-edit"></i>
                         </a>
-                        <a href="{{ url_for('.repeat_payment', guid=payment.guid.hex, return_route='multiple_subs') }}" class="btn btn-sm btn-default" title="Repeat Payment">
+                        <a href="{{ url_for('.repeat_payment', guid=payment.guid.hex, return_route='all') }}" class="btn btn-sm btn-default" title="Repeat Payment">
                             <i class="glyphicon glyphicon-repeat"></i>
                         </a>
                     </td>

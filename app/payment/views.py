@@ -92,9 +92,9 @@ def get_payment_subs():
     except (ValueError, TypeError):
         return 'Invalid payment ID', 400
 
-@payment.route('/multiple_subs', methods=['GET', 'POST'])
+@payment.route('/all', methods=['GET', 'POST'])
 # @login_required
-def multiple_subs():
+def all():
     """Display payments with multiple sub-payments"""
     form = SearchForm(search_label='Search by payor, date, method, identifier, amount, or comment')
     payments = []
@@ -112,7 +112,7 @@ def multiple_subs():
         current_app.logger.debug(f"find_all_payments execution time: {find_time:.2f}ms")
     
     start_time = time.time()
-    result = render_template('payment/multiple_subs.html',
+    result = render_template('payment/all_payments.html',
                          form=form,
                          payments=payments)
     render_time = (time.time() - start_time) * 1000  # Convert to milliseconds
@@ -122,7 +122,7 @@ def multiple_subs():
 @payment.route('/edit', methods=['GET', 'POST'])
 @payment.route('/edit/<guid>', methods=['GET', 'POST'])
 @payment.route('/edit/<guid>/<return_route>', methods=['GET', 'POST'])
-def edit_payment(guid=None, return_route='multiple_subs'):
+def edit_payment(guid=None, return_route='all'):
     """Handle creating new payments and editing existing ones"""
     form = MultiPaymentForm()
     payment = None
@@ -153,7 +153,7 @@ def edit_payment(guid=None, return_route='multiple_subs'):
 
 @payment.route('/repeat/<guid>', methods=['GET', 'POST'])
 @payment.route('/repeat/<guid>/<return_route>', methods=['GET', 'POST'])
-def repeat_payment(guid, return_route='multiple_subs'):
+def repeat_payment(guid, return_route='all'):
     """Clone existing payment and edit the clone"""
     payment = db.session.scalar(db.select(Payment).filter(Payment.guid == uuid.UUID(guid)))
     if not payment:
@@ -249,7 +249,7 @@ def search_prosphora():
 
 @payment.route('/delete/<guid>', methods=['POST'])
 @payment.route('/delete/<guid>/<return_route>', methods=['POST'])
-def delete_payment(guid, return_route='multiple_subs'):
+def delete_payment(guid, return_route='all'):
     """Delete a payment (sub-payments will be deleted by cascade)"""
     payment = db.session.scalar(db.select(Payment).filter(Payment.guid == uuid.UUID(guid)))
     if not payment:
