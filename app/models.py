@@ -383,7 +383,7 @@ class PaymentCommonMixin:
 
 class Payment(IdentityMixin, PaymentCommonMixin, db.Model):
     __tablename__ = 'payment'
-    record_id     = db.Column(db.String, default='9999-12-31')
+    record_id     = db.Column(db.String, db.ForeignKey('record_sheet.identifier'), default='9999-12-31')
 
     __table_args__ = (
         db.PrimaryKeyConstraint(
@@ -424,6 +424,7 @@ class Payment(IdentityMixin, PaymentCommonMixin, db.Model):
                    "or_(and_(Payment.identifier==PaymentSubMisc.identifier), "
                    "and_(Payment.identifier.is_(None), PaymentSubMisc.identifier.is_(None))))"
     )
+    record_sheet = db.relationship('RecordSheet', backref='payments')
 
 class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
     @db.declared_attr.directive
@@ -667,6 +668,17 @@ class YearMonth(db.Model):
         except (ValueError, IndexError):
             # Handle any parsing errors or index errors
             return None
+
+class RecordSheet(IdentityMixin, db.Model):
+    """Model for the record_sheet table that stores record sheet information"""
+    __tablename__ = 'record_sheet'
+    
+    identifier = db.Column(db.String, primary_key=True, nullable=False)
+    date = db.Column(db.String, nullable=False)
+    description = db.Column(db.String)
+
+    def __repr__(self):
+        return f'RecordSheet({self.identifier}, {self.date}, {self.description})'
 
 def find_member(first_name, last_name):
     return db.session.execute(
