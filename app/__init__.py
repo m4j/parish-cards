@@ -57,9 +57,11 @@ def create_app(config_name):
     from .main import main as main_bp
     from .application import application as application_bp
     from .payment import payment as payment_bp
+    from .report import report as report_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(application_bp, url_prefix='/application')
     app.register_blueprint(payment_bp, url_prefix='/payment')
+    app.register_blueprint(report_bp, url_prefix='/report')
 
     return app
 

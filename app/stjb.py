@@ -10,8 +10,8 @@ def connect(database):
 
 ARCHIVE_CELL = '...'
 DISTANT_PAST = '1970-01'
-FIRST_FROM = '2020-01'
-LAST_THRU = '2025-12'
+FIRST_FROM = '2021-01'
+LAST_THRU = '2026-12'
 MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 MONTH_NUMBERS = ['01','02','03','04','05','06','07','08','09','10','11','12']
 MONTHS_DICT = { number : MONTHS[int(number)-1] for number in MONTH_NUMBERS }
@@ -103,7 +103,7 @@ class AbstractMember(ABC):
         buffer = ''
         payments = self.payments
         first_from = payments[0]['Paid_From'] if len(payments) > 0 else FIRST_FROM
-        first_from = min(first_from, FIRST_FROM)
+        first_from = max(first_from, FIRST_FROM)
         last_through = LAST_THRU
         first_year = int(first_from.split('-')[0])
         last_year = int(last_through.split('-')[0])

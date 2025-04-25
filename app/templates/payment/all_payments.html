@@ -84,18 +84,8 @@
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Add rotation to chevron icons when expanding/collapsing
-    const collapseButtons = document.querySelectorAll('[data-toggle="collapse"]');
-    collapseButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const icon = this.querySelector('.glyphicon');
-            if (icon) {
-                icon.style.transform = this.getAttribute('aria-expanded') === 'true' 
-                    ? 'rotate(0deg)' 
-                    : 'rotate(90deg)';
-            }
-        });
-    });
+    // Initialize collapse buttons with rotating chevrons
+    initCollapseButtons();
     
     // Handle AJAX loading of payment subs
     $('.toggle-subs').on('click', function() {

@@ -68,5 +68,23 @@ function clearSearch() {
     searchInput.value = '';
     searchInput.form.submit();
 }
+
+/**
+ * Initializes collapse buttons with rotating chevron icons
+ * @param {string} [selector='[data-toggle="collapse"]'] - CSS selector for collapse buttons
+ */
+function initCollapseButtons(selector = '[data-toggle="collapse"]') {
+    const collapseButtons = document.querySelectorAll(selector);
+    collapseButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const icon = this.querySelector('.glyphicon');
+            if (icon) {
+                icon.style.transform = this.getAttribute('aria-expanded') === 'true' 
+                    ? 'rotate(0deg)' 
+                    : 'rotate(90deg)';
+            }
+        });
+    });
+}
 </script>
 {% endblock %}

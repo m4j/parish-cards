@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+
+<div class="page-header">
+    <h2>Record Sheets</h2>
+</div>
+
+{% include "search_form.html" %}
+
+<div style="margin-top: 20px;"/>
+
+{% for message in get_flashed_messages() %}
+    <div class="alert alert-warning">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+    </div>
+{% endfor %}
+
+{% if results %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 40px; vertical-align: middle;"></th>
+                    <th>Identifier</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in results %}
+                <tr>
+                    <td style="vertical-align: middle;">
+                        <button class="btn btn-link btn-sm toggle-subs" type="button" data-toggle="collapse" data-target="#subs{{ record.guid }}" aria-expanded="false" aria-controls="subs{{ record.guid }}" data-record-id="{{ record.identifier }}">
+                            <i class="glyphicon glyphicon-chevron-right"></i>
+                        </button>
+                    </td>
+                    <td>{{ record.identifier }}</td>
+                    <td>{{ record.date }}</td>
+                    <td>{{ record.description or '' }}</td>
+                </tr>
+                <tr style="padding: 0;">
+                    <td colspan="4" style="padding: 0;">
+                        <div class="collapse" id="subs{{ record.guid }}">
+                            <div class="panel panel-default" style="border: none; box-shadow: none; margin-bottom: 0; min-height: 100px;">
+                                <div class="panel-body">
+                                    <div class="text-center">
+                                        <i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Loading...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% elif search_term %}
+    <div class="alert alert-info">
+        No results found for "{{ search_term }}"
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize collapse buttons with rotating chevrons
+    initCollapseButtons();
+    
+    // Handle AJAX loading of record sheet payments
+    $('.toggle-subs').on('click', function() {
+        const targetId = $(this).data('target');
+        const recordId = $(this).data('record-id');
+        const $target = $(targetId);
+        
+        // Only load content if it hasn't been loaded yet
+        if ($target.find('.panel-body table').length === 0) {
+            $.ajax({
+                url: "{{ url_for('.get_record_sheet_payments') }}",
+                data: { record_id: recordId },
+                success: function(data) {
+                    // Replace the loading placeholder with the actual content
+                    $target.find('.panel-body').html($(data).find('.panel-body').html());
+                },
+                error: function() {
+                    $target.find('.panel-body').html('<div class="alert alert-danger">Error loading payment details.</div>');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %} 

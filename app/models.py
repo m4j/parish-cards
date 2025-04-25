@@ -5,6 +5,7 @@ from . import db
 import uuid
 import logging
 from collections import namedtuple
+from markupsafe import Markup
 
 logger = logging.getLogger(__name__)
 
@@ -426,6 +427,25 @@ class Payment(IdentityMixin, PaymentCommonMixin, db.Model):
     )
     record_sheet = db.relationship('RecordSheet', backref='payments')
 
+    def get_combined_description_markup(self):
+        """Generate a combined description from all subpayments."""
+        descriptions = []
+        
+        # Add descriptions from dues subpayments
+        for sub in self.dues:
+            descriptions.append(sub.description())
+        
+        # Add descriptions from prosphora subpayments
+        for sub in self.prosphora:
+            descriptions.append(sub.description())
+        
+        # Add descriptions from misc subpayments
+        for sub in self.misc:
+            descriptions.append(sub.description())
+        
+        # Join with HTML line breaks and mark as safe for HTML rendering
+        return Markup('<br>'.join(descriptions)) if descriptions else ''
+
 class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
     @db.declared_attr.directive
     def __table_args__(cls):
@@ -495,7 +515,7 @@ class NameAndRangeMixin:
     
     def description(self):
         """Return a formatted description of the payment range."""
-        result = f"{self.full_name()} ({self.format_date_range()})"
+        result = f"{self.full_name()} {self.format_date_range()}"
         return result
 
 class PaymentSubDues(PaymentSubMixin, NameAndRangeMixin, db.Model):
@@ -906,4 +926,37 @@ def find_all_payments(fragment=None):
 # results = find_all_payments()
 # for payment in results:
 #     print(f"Payment {payment.payor} on {payment.date}")
+
+def find_record_sheets(search_term):
+    """Search record sheets case-insensitively by identifier, date, or description"""
+    if not search_term:
+        return []
+    
+    search_pattern = f'%{search_term}%'
+    return db.session.scalars(
+        db.select(RecordSheet).filter(
+            db.or_(
+                func.lower(RecordSheet.identifier).like(func.lower(search_pattern)),
+                func.lower(RecordSheet.date).like(func.lower(search_pattern)),
+                func.lower(RecordSheet.description).like(func.lower(search_pattern))
+            )
+        ).order_by(RecordSheet.date.desc())
+    ).all()
+
+def find_payments_by_record_id(record_id):
+    """
+    Find all payments associated with a specific record sheet, ordered by payment method section and payor.
+    
+    Args:
+        record_id (str): The record sheet identifier to search for
+        
+    Returns:
+        List[Payment]: List of payments ordered by PaymentMethod.section and Payment.payor
+    """
+    return db.session.scalars(
+        db.select(Payment)
+        .join(PaymentMethod)
+        .filter(Payment.record_id == record_id)
+        .order_by(PaymentMethod.section, Payment.payor)
+    ).all()
 
