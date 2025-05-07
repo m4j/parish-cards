@@ -928,17 +928,36 @@ def find_all_payments(fragment=None):
 #     print(f"Payment {payment.payor} on {payment.date}")
 
 def find_record_sheets(search_term):
-    """Search record sheets case-insensitively by identifier, date, or description"""
+    """Search record sheets case-insensitively by identifier, date, or description,
+    and also search through associated payments including Date, Payor, Identifier, Method, Amount"""
     if not search_term:
         return []
     
     search_pattern = f'%{search_term}%'
+    
+    # Create a subquery to find payments matching the search term
+    payment_subq = (
+        db.select(Payment.record_id)
+        .filter(
+            db.or_(
+                func.lower(Payment.date).like(func.lower(search_pattern)),
+                func.lower(Payment.payor).like(func.lower(search_pattern)),
+                func.lower(Payment.identifier).like(func.lower(search_pattern)),
+                func.lower(Payment.method).like(func.lower(search_pattern)),
+                Payment.amount.cast(db.String).like(search_pattern)
+            )
+        )
+        .distinct()
+    ).subquery()
+    
+    # Main query that combines record sheet search with payment search
     return db.session.scalars(
         db.select(RecordSheet).filter(
             db.or_(
                 func.lower(RecordSheet.identifier).like(func.lower(search_pattern)),
                 func.lower(RecordSheet.date).like(func.lower(search_pattern)),
-                func.lower(RecordSheet.description).like(func.lower(search_pattern))
+                func.lower(RecordSheet.description).like(func.lower(search_pattern)),
+                RecordSheet.identifier.in_(payment_subq)
             )
         ).order_by(RecordSheet.date.desc())
     ).all()
