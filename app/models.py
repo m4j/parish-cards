@@ -384,7 +384,11 @@ class PaymentCommonMixin:
 
 class Payment(IdentityMixin, PaymentCommonMixin, db.Model):
     __tablename__ = 'payment'
-    record_id     = db.Column(db.String, db.ForeignKey('record_sheet.identifier'), default='9999-12-31')
+    record_id     = db.Column(db.String,
+                        db.ForeignKey('record_sheet.identifier',
+                                    onupdate='CASCADE',
+                                    ondelete='SET DEFAULT'),
+                        default='9999-12-31')
 
     __table_args__ = (
         db.PrimaryKeyConstraint(
@@ -425,7 +429,7 @@ class Payment(IdentityMixin, PaymentCommonMixin, db.Model):
                    "or_(and_(Payment.identifier==PaymentSubMisc.identifier), "
                    "and_(Payment.identifier.is_(None), PaymentSubMisc.identifier.is_(None))))"
     )
-    record_sheet = db.relationship('RecordSheet', backref='payments')
+    record_sheet = db.relationship('RecordSheet', back_populates='payments')
 
     def get_combined_description_markup(self):
         """Generate a combined description from all subpayments."""
@@ -499,6 +503,8 @@ class NameAndRangeMixin:
         if not from_components or not through_components:
             return f"{self.paid_from} - {self.paid_through}"
             
+        if from_components.en_mon_yy == through_components.en_mon_yy:
+            return from_components.en_mon_yy
         if from_components.en_yy == through_components.en_yy:
             # Same year, use just month for start date
             return f"{from_components.en_mon}–{through_components.en_mon_yy}"
@@ -696,6 +702,13 @@ class RecordSheet(IdentityMixin, db.Model):
     identifier = db.Column(db.String, primary_key=True, nullable=False)
     date = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
+    
+    # Add payments relationship
+    payments = db.relationship(
+        'Payment',
+        back_populates='record_sheet',
+        order_by='Payment.date.desc()'
+    )
 
     def __repr__(self):
         return f'RecordSheet({self.identifier}, {self.date}, {self.description})'
@@ -978,4 +991,41 @@ def find_payments_by_record_id(record_id):
         .filter(Payment.record_id == record_id)
         .order_by(PaymentMethod.section, Payment.payor)
     ).all()
+
+def delete_record_sheet(record_id):
+    """
+    Delete a record sheet and update its associated payments.
+    
+    This function:
+    1. Updates all associated payments by setting their record_id to '9999-12-31'
+    2. Deletes the record sheet object
+    
+    Args:
+        record_id (str): The identifier of the record sheet to delete
+        
+    Returns:
+        bool: True if deletion was successful, False if record sheet not found
+    """
+    # Find the record sheet
+    record_sheet = db.session.get(RecordSheet, record_id)
+    if not record_sheet:
+        return False
+    
+    try:
+        # Update all associated payments
+        db.session.execute(
+            db.update(Payment)
+            .where(Payment.record_id == record_id)
+            .values(record_id='9999-12-31')
+        )
+        
+        # Delete the record sheet
+        db.session.delete(record_sheet)
+        db.session.commit()
+        return True
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting record sheet {record_id}: {str(e)}")
+        raise
 
