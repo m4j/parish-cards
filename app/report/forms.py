@@ -7,12 +7,7 @@ from sqlalchemy import func
 class RecordSheetForm(FlaskForm):
     identifier = StringField('Identifier', validators=[DataRequired()])
     date = StringField('Date', validators=[DataRequired()])
-    description = SelectField('Description', validators=[Optional()], coerce=str,
-                            render_kw={
-                                'class': 'form-control',
-                                'data-editable': 'true',
-                                'data-placeholder': 'Select or type a description'
-                            })
+    description = SelectField('Description', validators=[Optional()], coerce=str)
     submit = SubmitField('Save Changes')
 
     def __init__(self, *args, **kwargs):
