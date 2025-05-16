@@ -1,21 +1,51 @@
 {% extends "base.html" %}
-{% from 'bootstrap/wtf.html' import form_field %}
+{% import "bootstrap/wtf.html" as wtf %}
 
 {% block page_content %}
 <div class="page-header">
     <h2>Edit Record Sheet</h2>
 </div>
 
-<form method="POST" class="form-horizontal">
+<form method="POST" class="form" role="form" style="margin-bottom: 100px;">
     {{ form.csrf_token }}
     
-    {{ form_field(form.identifier) }}
-    {{ form_field(form.date, class="datepicker") }}
-    {{ form_field(form.description) }}
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.identifier) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.date, class="datepicker") }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="control-label" for="description">{{ form.description.label.text }}</label>
+                        <div class="input-group">
+                            {{ form.description(class="form-control") }}
+                            <div class="input-group-btn">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    {% for desc in form.descriptions %}
+                                    <li><a href="#" class="description-choice">{{ desc }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="form-group">
         <div class="col-sm-offset-2 col-sm-10">
-            {{ form.submit(class="btn btn-primary") }}
+            {{ form.submit_btn(class="btn btn-primary") }}
             <a href="{{ url_for('.index') }}" class="btn btn-default">Cancel</a>
             <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
                 Delete Record Sheet
@@ -71,6 +101,13 @@ $(document).ready(function() {
         autoclose: true,
         todayHighlight: true,
         clearBtn: true
+    });
+
+    // Handle description dropdown selection
+    $('.description-choice').click(function(e) {
+        e.preventDefault();
+        var description = $(this).text();
+        $('#description').val(description);
     });
 });
 </script>
