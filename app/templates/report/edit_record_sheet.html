@@ -16,7 +16,7 @@
                     {{ wtf.form_field(form.identifier) }}
                 </div>
                 <div class="col-md-6">
-                    {{ wtf.form_field(form.date, class="datepicker") }}
+                    {{ wtf.form_field(form.date) }}
                 </div>
             </div>
             
@@ -96,11 +96,11 @@
 <script>
 $(document).ready(function() {
     // Initialize Bootstrap Datepicker
-    $('.datepicker').datepicker({
+    $('input[name="date"]').datepicker({
         format: 'yyyy-mm-dd',
         autoclose: true,
         todayHighlight: true,
-        clearBtn: true
+        orientation: 'bottom auto'
     });
 
     // Handle description dropdown selection
