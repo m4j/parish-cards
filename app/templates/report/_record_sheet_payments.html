@@ -4,6 +4,9 @@
         <table class="table table-condensed">
             <thead>
                 <tr>
+                    {% if show_checkboxes %}
+                    <th style="width: 40px;"></th>
+                    {% endif %}
                     <th>Date</th>
                     <th>Payor</th>
                     <th>Description</th>
@@ -14,6 +17,11 @@
             <tbody>
                 {% for payment in payments %}
                 <tr>
+                    {% if show_checkboxes %}
+                    <td>
+                        <input type="checkbox" class="payment-select" name="selected_payments" value="{{ payment.guid }}" checked>
+                    </td>
+                    {% endif %}
                     <td>{{ payment.date }}</td>
                     <td>{{ payment.payor }}</td>
                     <td>{{ payment.get_combined_description_markup() }}</td>
