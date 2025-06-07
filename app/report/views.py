@@ -3,9 +3,10 @@ from app.report import report
 from app.main.forms import SearchForm
 from app.models import find_record_sheets, find_payments_by_record_id, RecordSheet, db, delete_record_sheet, Payment
 from .forms import RecordSheetForm
+import uuid
 
 @report.route('/record_sheets', methods=['GET', 'POST'])
-def index():
+def record_sheets():
     form = SearchForm(search_label='Search by identifier, date, payor or description')
     results = []
     
@@ -35,7 +36,7 @@ def edit_record_sheet(record_id=None):
     record_sheet = None
     if record_id == '9999-12-31':
         flash('Cannot edit default record sheet.', 'error')
-        return redirect(url_for('.index'))
+        return redirect(url_for('.record_sheets'))
     if record_id:
         record_sheet = db.session.get(RecordSheet, record_id)
         if not record_sheet:
@@ -47,19 +48,23 @@ def edit_record_sheet(record_id=None):
             record_sheet = RecordSheet()
             db.session.add(record_sheet)
             
-        # Common code for both new and existing record sheets
         form.populate_obj(record_sheet)
         # Get selected payments from form
         selected_payments = []
         if form.selected_payments.data:
+            uuids = [uuid.UUID(guid) for guid in form.selected_payments.data]
             selected_payments = db.session.scalars(
-                db.select(Payment).filter(Payment.guid.in_(form.selected_payments.data))
+                db.select(Payment).filter(Payment.guid.in_(uuids))
             ).all()
-        record_sheet.payments = selected_payments
+        # Move deselected payments to the default record sheet
+        removed_payments = set(record_sheet.payments) - set(selected_payments)
+        default_record_sheet = db.session.get(RecordSheet, '9999-12-31')
+        for payment in removed_payments:
+            payment.record_sheet = default_record_sheet
         db.session.commit()
         
         flash('Record sheet successfully created.' if not record_id else 'Record sheet successfully updated.')
-        return redirect(url_for('.index'))
+        return redirect(url_for('.record_sheets'))
         
     return render_template('report/edit_record_sheet.html',
                          form=form,
@@ -67,7 +72,7 @@ def edit_record_sheet(record_id=None):
                          payments=record_sheet.payments if record_sheet else find_payments_by_record_id('9999-12-31'))
 
 @report.route('/record_sheet/<record_id>/delete', methods=['POST'])
-def delete_record_sheet(record_id):
+def record_sheet_delete(record_id):
     if record_id == '9999-12-31':
         flash('Cannot delete default record sheet.', 'error')
         return redirect(url_for('.record_sheets'))

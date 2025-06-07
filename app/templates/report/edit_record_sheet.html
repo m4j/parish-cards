@@ -4,15 +4,18 @@
 {% block styles %}
 {{ super() }}
 <style>
+    #payments-container {
+        margin-bottom: 20px;
+    }
 </style>
 {% endblock %}
 
 {% block page_content %}
 <div class="page-header">
-    <h2>Edit Record Sheet</h2>
+    <h2>{{ "Edit" if form.identifier.data else "New" }} Record Sheet</h2>
 </div>
 
-<form method="POST" class="form" role="form" style="margin-bottom: 100px;">
+<form method="POST" class="form" role="form">
     {{ form.csrf_token }}
     
     <div class="panel panel-default">
@@ -49,25 +52,31 @@
         </div>
     </div>
 
-    <div class="form-group">
-        <div class="col-sm-offset-2 col-sm-10">
-            {{ form.submit_btn(class="btn btn-primary") }}
-            <a href="{{ url_for('.index') }}" class="btn btn-default">Cancel</a>
-            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
-                Delete Record Sheet
+    <div class="row" id="payments-container">
+        <div class="col-sm-12">
+            <h4>Payments</h4>
+            {% with show_checkboxes=True %}
+                {% include "report/_record_sheet_payments.html" %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <div class="row">
+        {% if form.identifier.data %}
+        <div class="col-md-2 col-xs-12" style="margin-bottom: 15px;">
+            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#deleteModal">
+                <span class="glyphicon glyphicon-trash"></span> Delete Record Sheet
             </button>
+        </div>
+        {% endif %}
+        <div class="col-md-2 col-xs-12 col-md-offset-{% if form.identifier.data %}6{% else %}8{% endif %}" style="margin-bottom: 15px;">
+            <a href="{{ url_for('.record_sheets') }}" class="btn btn-default">Cancel</a>
+        </div>
+        <div class="col-md-2 col-xs-12" style="margin-bottom: 15px;">
+            {{ form.submit_btn(class="btn btn-primary") }}
         </div>
     </div>
 </form>
-
-<div class="row">
-    <div class="col-sm-12">
-        <h3>Payments</h3>
-        {% with show_checkboxes=True %}
-            {% include "report/_record_sheet_payments.html" %}
-        {% endwith %}
-    </div>
-</div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel">
@@ -85,7 +94,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <form method="POST" action="{{ url_for('.delete_record_sheet', record_id=record_sheet.identifier) }}" style="display: inline;">
+                <form method="POST" action="{{ url_for('.record_sheet_delete', record_id=record_sheet.identifier) }}" style="display: inline;">
                     <button type="submit" class="btn btn-danger">Delete Record Sheet</button>
                 </form>
             </div>
