@@ -1,12 +1,11 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-8">
         <form method="POST" class="form" role="form">
             {{ form.hidden_tag() }}
             {{ wtf.form_errors(form, hiddens="only") }}
             <div class="form-group">
-                {{ form.search_term.label }}
                 <div class="input-group">
                     {{ form.search_term(class="form-control", **{"data-original-value": form.search_term.data or ""}) }}
                     <span class="input-group-btn">

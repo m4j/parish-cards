@@ -15,4 +15,5 @@ class SearchForm(FlaskForm):
         super(SearchForm, self).__init__(*args, **kwargs)
         if search_label:
             self.search_term.label.text = search_label
+            self.search_term.render_kw['placeholder'] = search_label
 
