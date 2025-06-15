@@ -61,6 +61,8 @@ def edit_record_sheet(record_id=None):
         default_record_sheet = db.session.get(RecordSheet, '9999-12-31')
         for payment in removed_payments:
             payment.record_sheet = default_record_sheet
+        for payment in selected_payments:
+            payment.record_sheet = record_sheet
         db.session.commit()
         
         flash('Record sheet successfully created.' if not record_id else 'Record sheet successfully updated.')

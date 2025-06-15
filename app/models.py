@@ -374,7 +374,7 @@ class PaymentCommonMixin:
     def method(cls):
         return db.Column(db.String, db.ForeignKey('payment_method.method'))
     
-    identifier    = db.Column(db.String, nullable=True)
+    identifier    = db.Column(db.String)
     amount        = db.Column(db.Integer)
     comment       = db.Column(db.String)
 
