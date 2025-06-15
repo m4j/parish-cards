@@ -101,12 +101,8 @@ class AbstractMember(ABC):
 
     def format_payments_table(self):
         buffer = ''
-        payments = self.payments
-        first_from = payments[0]['Paid_From'] if len(payments) > 0 else FIRST_FROM
-        first_from = max(first_from, FIRST_FROM)
-        last_through = LAST_THRU
-        first_year = int(first_from.split('-')[0])
-        last_year = int(last_through.split('-')[0])
+        first_year = int(FIRST_FROM.split('-')[0])
+        last_year = int(LAST_THRU.split('-')[0])
         buffer += format_header(range(first_year, last_year + 1)) + '\n'
         year_totals = list(map(lambda y: 0, range(first_year, last_year + 1)))
         paid_through_m = self.paid_through_month()
