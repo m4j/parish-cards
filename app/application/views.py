@@ -2,7 +2,17 @@ from flask import render_template, session, redirect, url_for, flash, request, M
 from .. import db
 from . import application
 from .forms import ApplicationForm, ApplicantsRegistrationForm, UpdateDecisionsForm
-from ..models import Application, Person, Card, Marriage, find_member, find_person, find_active_marriage, find_active_marriage_of_husband, find_active_marriage_of_wife
+
+from ..models import Application
+from ..models import Person
+from ..models import Card
+from ..models import Marriage
+from ..models import find_member
+from ..models import find_person
+from ..models import find_active_marriage
+from ..models import find_active_marriage_of_husband
+from ..models import find_active_marriage_of_wife
+
 import uuid
 
 @application.route("/")

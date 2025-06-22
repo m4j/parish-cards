@@ -367,14 +367,14 @@ class PaymentMethod(db.Model):
     validation_message = db.Column(db.String)
 
 class PaymentCommonMixin:
-    payor         = db.Column(db.String)
-    date          = db.Column(db.String)
+    payor         = db.Column(db.String, nullable=False)
+    date          = db.Column(db.String, nullable=False)
 
     @db.declared_attr
     def method(cls):
-        return db.Column(db.String, db.ForeignKey('payment_method.method'))
+        return db.Column(db.String, db.ForeignKey('payment_method.method'), nullable=False)
     
-    identifier    = db.Column(db.String)
+    identifier    = db.Column(db.String, default='')
     amount        = db.Column(db.Integer)
     comment       = db.Column(db.String)
 
@@ -449,6 +449,28 @@ class Payment(IdentityMixin, PaymentCommonMixin, db.Model):
         
         # Join with HTML line breaks and mark as safe for HTML rendering
         return Markup('<br>'.join(descriptions)) if descriptions else ''
+
+    def get_combined_amount_markup(self):
+        """Generate a combined amount list from all subpayments."""
+        amounts = []
+        
+        # Add amounts from dues subpayments
+        for sub in self.dues:
+            amounts.append(str(sub.amount))
+        
+        # Add amounts from prosphora subpayments
+        for sub in self.prosphora:
+            amounts.append(str(sub.amount))
+        
+        # Add amounts from misc subpayments
+        for sub in self.misc:
+            amounts.append(str(sub.amount))
+        
+        # Return empty string if there's only one subpayment, otherwise join with HTML line breaks
+        if len(amounts) <= 1:
+            return ''
+        else:
+            return Markup('<br>'.join(amounts))
 
 class PaymentSubMixin(IdentityMixin, PaymentCommonMixin):
     @db.declared_attr.directive

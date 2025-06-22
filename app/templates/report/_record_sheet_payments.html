@@ -11,7 +11,7 @@
                     <th>Payor</th>
                     <th>Description</th>
                     <th>Method</th>
-                    <th class="text-right">Amount</th>
+                    <th class="text-right" colspan="2">Amount</th>
                 </tr>
             </thead>
             <tbody>
@@ -26,7 +26,8 @@
                     <td>{{ payment.payor }}</td>
                     <td>{{ payment.get_combined_description_markup() }}</td>
                     <td>{{ payment.method }} {{ payment.identifier or '' }}</td>
-                    <td class="text-right">{{ payment.amount }}</td>
+                    <td class="text-right" style="vertical-align: middle;">{{ payment.get_combined_amount_markup() }}</td>
+                    <td class="text-right" style="vertical-align: middle;">{{ payment.amount }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
