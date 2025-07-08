@@ -1,9 +1,11 @@
-from flask import render_template, request, redirect, url_for, session, flash, abort
+from flask import render_template, request, redirect, url_for, session, flash, abort, Response
 from app.report import report
 from app.main.forms import SearchForm
-from app.models import find_record_sheets, find_payments_by_record_id, RecordSheet, db, delete_record_sheet, Payment
+from app.models import find_record_sheets, RecordSheet, db, delete_record_sheet, Payment, find_payments_by_record_id
 from .forms import RecordSheetForm
+from app.latex import jinja_latex_env, escape_special_latex_characters, md_to_latex
 import uuid
+from sqlalchemy import text
 
 @report.route('/record_sheets', methods=['GET', 'POST'])
 def record_sheets():
@@ -88,3 +90,62 @@ def record_sheet_delete(record_id):
         flash(f'Error deleting record sheet: {str(e)}', 'error')
         
     return redirect(url_for('.record_sheets'))
+
+@report.route('/record_sheet/<record_id>/print')
+def generate_record_sheet_pdf(record_id):
+    """
+    Generate LaTeX code for a record sheet using the poop_sheet.tex template.
+    
+    This route:
+    1. Retrieves the record sheet
+    2. Queries the payment_sheet_v database view for all payment data
+    3. Generates LaTeX using the custom Jinja environment with LaTeX-specific delimiters
+    4. Returns the LaTeX file as a downloadable attachment
+    
+    Args:
+        record_id (str): The record sheet identifier
+        
+    Returns:
+        Response: LaTeX content with appropriate headers for file download
+    """
+    # Get the record sheet
+    record_sheet = db.session.get(RecordSheet, record_id)
+    if not record_sheet:
+        abort(404)
+    
+    # Get data from the payment_sheet_v database view
+    result = db.session.execute(
+        text('SELECT * FROM payment_sheet_v WHERE record_id = :record_id'),
+        {'record_id': record_id}
+    )
+    
+    # Convert the result to a list of dictionaries
+    data = []
+    for row in result:
+        row_dict = dict(row._mapping)
+        row_dict_strings = {k: str(v) for k, v in row_dict.items()}
+        # Convert markdown to LaTeX, but only for the purpose field
+        row_dict_strings['purpose'] = md_to_latex(row_dict_strings['purpose'])
+        # Escape special LaTeX characters
+        data.append(escape_special_latex_characters(row_dict_strings))
+    
+    if not data:
+        flash('No payments found for this record sheet.', 'warning')
+        return redirect(url_for('.record_sheets'))
+    
+    # Generate LaTeX using the custom Jinja environment
+    try:
+        template = jinja_latex_env.get_template('poop_sheet.tex')
+        latex_content = template.render(data=data)
+    except Exception as e:
+        flash(f'Error generating LaTeX: {str(e)}', 'error')
+        return redirect(url_for('.record_sheets'))
+    
+    # Return as LaTeX file with appropriate headers
+    return Response(
+        latex_content,
+        mimetype='application/x-tex',
+        headers={
+            'Content-Disposition': f'attachment; filename=record_sheet_{record_id}.tex'
+        }
+    )

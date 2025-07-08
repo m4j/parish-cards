@@ -2,8 +2,10 @@
 
 import os
 import jinja2
+from pytracetoix import c__, d__
+import re
 
-jinja_env = jinja2.Environment(
+jinja_latex_env = jinja2.Environment(
     block_start_string='\BLOCK{',
     block_end_string='}',
     variable_start_string='\VAR{',
@@ -19,19 +21,13 @@ jinja_env = jinja2.Environment(
     loader=jinja2.PackageLoader(__name__, 'templates')
 )
 
-class LaTexReader:
+jinja_latex_env.globals['c__'] = c__
+jinja_latex_env.globals['d__'] = d__
 
-    def __init__(self, reader):
-        self.reader = reader
-
-    def __next__(self):
-        row = next(self.reader)
-        return self.escape_special_characters(row)
-
-    def __iter__(self):
-        return self
-
-    def escape_special_characters(self, el_str):
+def escape_special_latex_characters(el_str):
+    if isinstance(el_str, dict):
+        return {k: escape_special_latex_characters(v) for k, v in el_str.items()}
+    if isinstance(el_str, str):
         s = el_str.replace('$', '\\$')
         s = s.replace('<', '$<$')
         s = s.replace('>', '$>$')
@@ -40,4 +36,8 @@ class LaTexReader:
         s = s.replace('&', '\\&')
         s = s.replace('\r\n', '\n\n')
         return s
+    return el_str
 
+def md_to_latex(string):
+    string = re.sub(r"\*\*(.*)\*\*", r"\\textbf{\1}", string)
+    return string
