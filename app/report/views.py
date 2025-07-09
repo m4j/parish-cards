@@ -6,6 +6,10 @@ from .forms import RecordSheetForm
 from app.latex import jinja_latex_env, escape_special_latex_characters, md_to_latex
 import uuid
 from sqlalchemy import text
+import tempfile
+import os
+import subprocess
+import shutil
 
 @report.route('/record_sheets', methods=['GET', 'POST'])
 def record_sheets():
@@ -94,19 +98,20 @@ def record_sheet_delete(record_id):
 @report.route('/record_sheet/<record_id>/print')
 def generate_record_sheet_pdf(record_id):
     """
-    Generate LaTeX code for a record sheet using the poop_sheet.tex template.
+    Generate PDF for a record sheet using the poop_sheet.tex template and XeLaTeX.
     
     This route:
     1. Retrieves the record sheet
     2. Queries the payment_sheet_v database view for all payment data
     3. Generates LaTeX using the custom Jinja environment with LaTeX-specific delimiters
-    4. Returns the LaTeX file as a downloadable attachment
+    4. Compiles the LaTeX to PDF using XeLaTeX
+    5. Returns the PDF file as a downloadable attachment
     
     Args:
         record_id (str): The record sheet identifier
         
     Returns:
-        Response: LaTeX content with appropriate headers for file download
+        Response: PDF content with appropriate headers for file download
     """
     # Get the record sheet
     record_sheet = db.session.get(RecordSheet, record_id)
@@ -141,11 +146,57 @@ def generate_record_sheet_pdf(record_id):
         flash(f'Error generating LaTeX: {str(e)}', 'error')
         return redirect(url_for('.record_sheets'))
     
-    # Return as LaTeX file with appropriate headers
-    return Response(
-        latex_content,
-        mimetype='application/x-tex',
-        headers={
-            'Content-Disposition': f'attachment; filename=record_sheet_{record_id}.tex'
-        }
-    )
+    # Create a temporary directory for LaTeX compilation
+    temp_dir = tempfile.mkdtemp()
+    tex_file = os.path.join(temp_dir, f'record_sheet_{record_id}.tex')
+    pdf_file = os.path.join(temp_dir, f'record_sheet_{record_id}.pdf')
+    
+    try:
+        # Write LaTeX content to temporary file
+        with open(tex_file, 'w', encoding='utf-8') as f:
+            f.write(latex_content)
+        
+        # Compile LaTeX to PDF using XeLaTeX (run twice for proper compilation)
+        for run in range(2):
+            result = subprocess.run(
+                ['xelatex', '-halt-on-error', '-interaction=nonstopmode', tex_file],
+                cwd=temp_dir,
+                capture_output=True,
+                text=True,
+                timeout=60  # 60 second timeout
+            )
+            
+            if result.returncode != 0:
+                flash(f'Error compiling PDF (run {run + 1}): {result.stderr}', 'error')
+                return redirect(url_for('.record_sheets'))
+        
+        # Check if PDF was created
+        if not os.path.exists(pdf_file):
+            flash('PDF compilation failed - no output file generated', 'error')
+            return redirect(url_for('.record_sheets'))
+        
+        # Read the generated PDF
+        with open(pdf_file, 'rb') as f:
+            pdf_content = f.read()
+        
+        # Return PDF with appropriate headers
+        return Response(
+            pdf_content,
+            mimetype='application/pdf',
+            headers={
+                'Content-Disposition': f'inline; filename=record_sheet_{record_id}.pdf'
+            }
+        )
+        
+    except subprocess.TimeoutExpired:
+        flash('PDF compilation timed out', 'error')
+        return redirect(url_for('.record_sheets'))
+    except Exception as e:
+        flash(f'Error during PDF compilation: {str(e)}', 'error')
+        return redirect(url_for('.record_sheets'))
+    finally:
+        # Clean up temporary directory
+        try:
+            shutil.rmtree(temp_dir)
+        except Exception:
+            pass  # Ignore cleanup errors
