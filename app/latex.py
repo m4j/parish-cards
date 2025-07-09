@@ -2,7 +2,6 @@
 
 import os
 import jinja2
-from pytracetoix import c__, d__
 import re
 
 jinja_latex_env = jinja2.Environment(
@@ -20,9 +19,6 @@ jinja_latex_env = jinja2.Environment(
     #loader=jinja2.FileSystemLoader(os.getcwd()))
     loader=jinja2.PackageLoader(__name__, 'templates')
 )
-
-jinja_latex_env.globals['c__'] = c__
-jinja_latex_env.globals['d__'] = d__
 
 def escape_special_latex_characters(el_str):
     if isinstance(el_str, dict):
