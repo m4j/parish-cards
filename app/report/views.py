@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, session, flash, abort, Response
+from flask import render_template, request, redirect, url_for, session, flash, abort, Response, jsonify
 from app.report import report
 from app.main.forms import SearchForm
 from app.models import find_record_sheets, RecordSheet, db, delete_record_sheet, Payment, find_payments_by_record_id
@@ -10,6 +10,8 @@ import tempfile
 import os
 import subprocess
 import shutil
+import base64
+import datetime
 
 @report.route('/record_sheets', methods=['GET', 'POST'])
 def record_sheets():
@@ -95,8 +97,8 @@ def record_sheet_delete(record_id):
         
     return redirect(url_for('.record_sheets'))
 
-@report.route('/record_sheet/<record_id>/print')
-def generate_record_sheet_pdf(record_id):
+@report.route('/record_sheet/<record_id>/print_ajax')
+def generate_record_sheet_pdf_ajax(record_id):
     """
     Generate PDF for a record sheet using the poop_sheet.tex template and XeLaTeX.
     
@@ -105,18 +107,18 @@ def generate_record_sheet_pdf(record_id):
     2. Queries the payment_sheet_v database view for all payment data
     3. Generates LaTeX using the custom Jinja environment with LaTeX-specific delimiters
     4. Compiles the LaTeX to PDF using XeLaTeX
-    5. Returns the PDF file as a downloadable attachment
+    5. Returns the PDF data as base64 encoded JSON for client-side blob creation and display
     
     Args:
         record_id (str): The record sheet identifier
         
     Returns:
-        Response: PDF content with appropriate headers for file download
+        dict: JSON response with base64 encoded PDF data and filename, or error message
     """
     # Get the record sheet
     record_sheet = db.session.get(RecordSheet, record_id)
     if not record_sheet:
-        abort(404)
+        return {'error': 'Record sheet not found'}, 404
     
     # Get data from the payment_sheet_v database view
     result = db.session.execute(
@@ -135,16 +137,18 @@ def generate_record_sheet_pdf(record_id):
         data.append(escape_special_latex_characters(row_dict_strings))
     
     if not data:
-        flash('No payments found for this record sheet.', 'warning')
-        return redirect(url_for('.record_sheets'))
+        return {'error': 'No payments found for this record sheet'}, 400
     
     # Generate LaTeX using the custom Jinja environment
     try:
         template = jinja_latex_env.get_template('poop_sheet.tex')
-        latex_content = template.render(data=data)
+        latex_content = template.render(
+            data=data,
+            description=record_sheet.description or '',
+            date=datetime.datetime.fromisoformat(record_sheet.date).strftime('%d%b%Y').upper(),
+        )
     except Exception as e:
-        flash(f'Error generating LaTeX: {str(e)}', 'error')
-        return redirect(url_for('.record_sheets'))
+        return {'error': f'Error generating LaTeX: {str(e)}'}, 500
     
     # Create a temporary directory for LaTeX compilation
     temp_dir = tempfile.mkdtemp()
@@ -167,33 +171,29 @@ def generate_record_sheet_pdf(record_id):
             )
             
             if result.returncode != 0:
-                flash(f'Error compiling PDF (run {run + 1}): {result.stderr}', 'error')
-                return redirect(url_for('.record_sheets'))
+                return {'error': f'Error compiling PDF (run {run + 1}): {result.stderr}'}, 500
         
         # Check if PDF was created
         if not os.path.exists(pdf_file):
-            flash('PDF compilation failed - no output file generated', 'error')
-            return redirect(url_for('.record_sheets'))
+            return {'error': 'PDF compilation failed - no output file generated'}, 500
         
-        # Read the generated PDF
+        # Read the generated PDF and encode as base64
+        import base64
         with open(pdf_file, 'rb') as f:
             pdf_content = f.read()
         
-        # Return PDF with appropriate headers
-        return Response(
-            pdf_content,
-            mimetype='application/pdf',
-            headers={
-                'Content-Disposition': f'inline; filename=record_sheet_{record_id}.pdf'
-            }
-        )
+        pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+        
+        # Return base64 encoded PDF data
+        return {
+            'pdf_data': pdf_base64,
+            'filename': f'record_sheet_{record_id}.pdf'
+        }
         
     except subprocess.TimeoutExpired:
-        flash('PDF compilation timed out', 'error')
-        return redirect(url_for('.record_sheets'))
+        return {'error': 'PDF compilation timed out'}, 500
     except Exception as e:
-        flash(f'Error during PDF compilation: {str(e)}', 'error')
-        return redirect(url_for('.record_sheets'))
+        return {'error': f'Error during PDF compilation: {str(e)}'}, 500
     finally:
         # Clean up temporary directory
         try:

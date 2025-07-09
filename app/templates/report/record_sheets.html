@@ -53,7 +53,7 @@
                         <a href="{{ url_for('.edit_record_sheet', record_id=record.identifier) }}" class="btn btn-sm btn-default" title="Edit Record Sheet">
                             <span class="glyphicon glyphicon-edit"></span>
                         </a>
-                        <a href="{{ url_for('.generate_record_sheet_pdf', record_id=record.identifier) }}" class="btn btn-sm btn-default" title="Print Record Sheet">
+                        <a href="#" class="btn btn-sm btn-default print-record-sheet" title="Print Record Sheet" data-record-id="{{ record.identifier }}">
                             <span class="glyphicon glyphicon-print"></span>
                         </a>
                     </td>
@@ -80,6 +80,74 @@
         No results found for "{{ search_term }}"
     </div>
 {% endif %}
+<!-- Loading overlay -->
+<div id="loading-overlay" style="display: none;">
+    <div class="loading-dialog">
+        <div class="loading-content">
+            <div class="loading-body">
+                <img src="{{ url_for('static', filename='loading.svg') }}" alt="Loading...">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+/* Loading overlay styles for Bootstrap 3 compatibility */
+#loading-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    z-index: 9999 !important;
+    display: none !important;
+}
+
+#loading-overlay.show {
+    display: block !important;
+}
+
+#loading-overlay .loading-dialog {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    width: auto !important;
+}
+
+#loading-overlay .loading-content {
+    text-align: center !important;
+    padding: 20px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+#loading-overlay .loading-body {
+    padding: 20px !important;
+}
+
+#loading-overlay img {
+    width: 200px !important;
+    height: 200px !important;
+    display: block !important;
+    margin: 0 auto !important;
+}
+
+#loading-overlay p {
+    margin-top: 15px !important;
+    font-size: 16px !important;
+    color: #333 !important;
+    margin-bottom: 0 !important;
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -109,6 +177,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+    });
+    
+    // Handle print record sheet button clicks
+    $('.print-record-sheet').on('click', function(e) {
+        e.preventDefault();
+        
+        // Show loading overlay
+        $('#loading-overlay').addClass('show');
+        
+        // Get the record ID from the button
+        const recordId = $(this).data('record-id');
+        
+        // Make AJAX request to get PDF data
+        $.ajax({
+            url: `/report/record_sheet/${recordId}/print_ajax`,
+            method: 'GET',
+            success: function(response) {
+                // Convert base64 to blob
+                const byteCharacters = atob(response.pdf_data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                
+                // Create blob URL and open PDF
+                const blobUrl = URL.createObjectURL(blob);
+                window.open(blobUrl, '_self');
+                
+                // Hide loading overlay
+                $('#loading-overlay').removeClass('show');
+                
+                // Clean up blob URL after a delay
+                setTimeout(function() {
+                    URL.revokeObjectURL(blobUrl);
+                }, 1000);
+            },
+            error: function(xhr, status, error) {
+                // Hide loading overlay
+                $('#loading-overlay').removeClass('show');
+                
+                // Show error message
+                let errorMessage = 'Error loading PDF';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+                alert(errorMessage);
+            }
+        });
     });
 });
 </script>

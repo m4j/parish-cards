@@ -191,7 +191,7 @@ class MultiPaymentForm(FlaskForm):
         payment.payor = self.payment.payor.data
         payment.date = self.payment.date.data
         payment.method = self.payment.method.data
-        payment.identifier = self.payment.identifier.data or None
+        payment.identifier = self.payment.identifier.data.strip()
         payment.amount = self.payment.amount.data
         payment.comment = self.payment.comment.data or None
 
