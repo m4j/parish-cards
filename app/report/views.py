@@ -1,17 +1,18 @@
-from flask import render_template, request, redirect, url_for, session, flash, abort, Response, jsonify
-from app.report import report
+from .forms import RecordSheetForm
+from app.latex import compile_latex_to_pdf
+from app.latex import jinja_latex_env, escape_special_latex_characters, md_to_latex
 from app.main.forms import SearchForm
 from app.models import find_record_sheets, RecordSheet, db, delete_record_sheet, Payment, find_payments_by_record_id
-from .forms import RecordSheetForm
-from app.latex import jinja_latex_env, escape_special_latex_characters, md_to_latex
-import uuid
+from app.report import report
+from flask import render_template, request, redirect, url_for, session, flash, abort, Response, jsonify
 from sqlalchemy import text
-import tempfile
-import os
-import subprocess
-import shutil
 import base64
 import datetime
+import os
+import shutil
+import subprocess
+import tempfile
+import uuid
 
 @report.route('/record_sheets', methods=['GET', 'POST'])
 def record_sheets():
@@ -153,35 +154,16 @@ def generate_record_sheet_pdf_ajax(record_id):
     # Create a temporary directory for LaTeX compilation
     temp_dir = tempfile.mkdtemp()
     tex_file = os.path.join(temp_dir, f'record_sheet_{record_id}.tex')
-    pdf_file = os.path.join(temp_dir, f'record_sheet_{record_id}.pdf')
     
     try:
         # Write LaTeX content to temporary file
         with open(tex_file, 'w', encoding='utf-8') as f:
             f.write(latex_content)
         
-        # Compile LaTeX to PDF using XeLaTeX (run twice for proper compilation)
-        for run in range(2):
-            result = subprocess.run(
-                ['xelatex', '-halt-on-error', '-interaction=nonstopmode', tex_file],
-                cwd=temp_dir,
-                capture_output=True,
-                text=True,
-                timeout=60  # 60 second timeout
-            )
-            
-            if result.returncode != 0:
-                return {'error': f'Error compiling PDF (run {run + 1}): {result.stderr}'}, 500
+        # Compile LaTeX to PDF using the helper function
+        pdf_content = compile_latex_to_pdf(tex_file, f'record_sheet_{record_id}.pdf')
         
-        # Check if PDF was created
-        if not os.path.exists(pdf_file):
-            return {'error': 'PDF compilation failed - no output file generated'}, 500
-        
-        # Read the generated PDF and encode as base64
-        import base64
-        with open(pdf_file, 'rb') as f:
-            pdf_content = f.read()
-        
+        # Encode PDF as base64
         pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
         
         # Return base64 encoded PDF data
@@ -192,6 +174,10 @@ def generate_record_sheet_pdf_ajax(record_id):
         
     except subprocess.TimeoutExpired:
         return {'error': 'PDF compilation timed out'}, 500
+    except subprocess.CalledProcessError as e:
+        return {'error': f'Error compiling PDF: {e.stderr}'}, 500
+    except FileNotFoundError as e:
+        return {'error': str(e)}, 500
     except Exception as e:
         return {'error': f'Error during PDF compilation: {str(e)}'}, 500
     finally:
