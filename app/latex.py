@@ -75,7 +75,7 @@ def compile_latex_to_pdf(tex_file_path, output_filename=None, timeout=60):
     for run in range(max_runs):
         # Run XeLaTeX
         result = subprocess.run(
-            ['xelatex', '-halt-on-error', '-interaction=nonstopmode', tex_file_path],
+            ['xelatex', '-halt-on-error', '-interaction=batchmode', '-no-pdf' if run == 0 else '', tex_file_path],
             cwd=temp_dir,
             capture_output=True,
             text=True,
@@ -85,7 +85,7 @@ def compile_latex_to_pdf(tex_file_path, output_filename=None, timeout=60):
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
                 result.returncode,
-                ['xelatex', '-halt-on-error', '-interaction=nonstopmode', tex_file_path],
+                ['xelatex', '-halt-on-error', '-interaction=batchmode', tex_file_path],
                 result.stdout,
                 result.stderr
             )
