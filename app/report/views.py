@@ -4,7 +4,7 @@ from app.latex import jinja_latex_env, escape_special_latex_characters, md_to_la
 from app.main.forms import SearchForm
 from app.models import find_record_sheets, RecordSheet, db, delete_record_sheet, Payment, find_payments_by_record_id
 from app.report import report
-from flask import render_template, request, redirect, url_for, session, flash, abort, Response, jsonify
+from flask import render_template, request, redirect, url_for, session, flash, abort, Response, jsonify, current_app
 from sqlalchemy import text
 import base64
 import datetime
@@ -154,7 +154,8 @@ def generate_record_sheet_pdf_ajax(record_id):
     
     # Create a temporary directory for LaTeX compilation
     temp_dir = tempfile.mkdtemp()
-    logging.info(f'Temporary directory: {temp_dir}')
+    current_app.logger.info(f'Created temporary directory for LaTeX compilation: {temp_dir}')
+    
     tex_file = os.path.join(temp_dir, f'record_sheet_{record_id}.tex')
     
     try:
