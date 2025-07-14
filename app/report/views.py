@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import tempfile
 import uuid
+import logging
 
 @report.route('/record_sheets', methods=['GET', 'POST'])
 def record_sheets():
@@ -153,6 +154,7 @@ def generate_record_sheet_pdf_ajax(record_id):
     
     # Create a temporary directory for LaTeX compilation
     temp_dir = tempfile.mkdtemp()
+    logging.info(f'Temporary directory: {temp_dir}')
     tex_file = os.path.join(temp_dir, f'record_sheet_{record_id}.tex')
     
     try:
