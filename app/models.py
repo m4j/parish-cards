@@ -729,7 +729,7 @@ class RecordSheet(IdentityMixin, db.Model):
     payments = db.relationship(
         'Payment',
         back_populates='record_sheet',
-        order_by='Payment.date.desc()'
+        order_by='Payment.payor.asc(), Payment.date.desc()'
     )
 
     def __repr__(self):

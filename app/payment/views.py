@@ -11,15 +11,15 @@ import time  # Add time module import
 TemplateValues = namedtuple('TemplateValues', 'header header_sub member_view return_route')
 
 _dues_template_values = TemplateValues(
-        header='Member Dues Payments',
-        header_sub='For at least one member',
+        header='Membership Dues',
+        header_sub='Payments ordered by paid period (latest on top)',
         member_view='main.member',
         return_route='dues',
 )
 
 _prosphora_template_values = TemplateValues(
-        header='Prosphora Payments',
-        header_sub='At least a prosphora payment',
+        header='Commemoration books/prosphoras',
+        header_sub='Payments ordered by paid period (latest on top)',
         member_view='main.book',
         return_route='prosphora',
 )
