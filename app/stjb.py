@@ -2,6 +2,8 @@ import sqlite3
 import decimal
 from abc import ABC, abstractmethod
 from functools import reduce
+from . import db
+from .models import PaymentMethod, PaymentSubMiscCategory
 
 def connect(database):
     conn = sqlite3.connect(database)
@@ -15,7 +17,6 @@ LAST_THRU = '2026-12'
 MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 MONTH_NUMBERS = ['01','02','03','04','05','06','07','08','09','10','11','12']
 MONTHS_DICT = { number : MONTHS[int(number)-1] for number in MONTH_NUMBERS }
-SQL_PAYMENT_METHODS = 'SELECT * FROM payment_method'
 TABLE_CELL_WIDTH = 11
 NON_MEMBER_CELL = f'{"" :░<{TABLE_CELL_WIDTH}}'
 
@@ -57,7 +58,7 @@ class AbstractMember(ABC):
 
     def load_payments(self, conn):
         self.payments = self.find_payments(conn)
-        self.payment_methods = load_payment_methods(conn)
+        self.payment_methods = load_payment_methods()
         return self
 
     @property
@@ -169,8 +170,8 @@ class AbstractMember(ABC):
         right.append('archived, see paper cards')
 
         for method in self.payment_methods.values():
-            left.append(method['Display_Short'] or method['Method'])
-            right.append(method['Display_Long'])
+            left.append(method.display_short or method.method)
+            right.append(method.display_long)
 
         return (
                 '\n────────────────────────────────────────────────────────────\n'
@@ -197,7 +198,7 @@ class AbstractMember(ABC):
         if not method:
             return None
         methodrow = self.payment_methods[method] or {}
-        return methodrow['Display_Short'] or method
+        return methodrow.display_short or method
 
 def print_error_incorrect():
     print('--------------------')
@@ -303,12 +304,10 @@ def format_two_columns(left, right, width):
     return result or ''
 
 def _add_payment_method(dict, row):
-    dict[row['Method']] = row
+    dict[row.method] = row
     return dict
 
-def load_payment_methods(conn):
-    cursor = conn.cursor()
-    cursor.execute(SQL_PAYMENT_METHODS)
-    rows = cursor.fetchall()
+def load_payment_methods():
+    rows = db.session.scalars(db.select(PaymentMethod)).all()
     return reduce(_add_payment_method, rows, {})
 
