@@ -57,6 +57,17 @@
 {% block content %}
 <div class="container">
   {% block page_content %}{% endblock%}
+<!-- Loading overlay -->
+<div id="loading-overlay" style="display: none;">
+    <div class="loading-dialog">
+        <div class="loading-content">
+            <div class="loading-body">
+                <img src="{{ url_for('static', filename='loading.svg') }}" alt="Loading...">
+            </div>
+        </div>
+    </div>
+</div>
+
 </div>
 {% endblock %}
 
@@ -86,6 +97,54 @@ function initCollapseButtons(selector = '[data-toggle="collapse"]') {
                     : 'rotate(90deg)';
             }
         });
+    });
+}
+
+/**
+ * Loads and displays a PDF from a URL via AJAX
+ * @param {string} url - The URL to fetch the PDF data from
+ */
+function loadPdfFromUrl(url) {
+    // Show loading overlay
+    $('#loading-overlay').addClass('show');
+    
+    // Make AJAX request to get PDF data
+    $.ajax({
+        url: url,
+        method: 'GET',
+        success: function(response) {
+            // Convert base64 to blob
+            const byteCharacters = atob(response.pdf_data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            
+            // Create blob URL and open PDF
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_self');
+            
+            // Hide loading overlay
+            $('#loading-overlay').removeClass('show');
+            
+            // Clean up blob URL after a delay
+            setTimeout(function() {
+                URL.revokeObjectURL(blobUrl);
+            }, 1000);
+        },
+        error: function(xhr, status, error) {
+            // Hide loading overlay
+            $('#loading-overlay').removeClass('show');
+            
+            // Show error message
+            let errorMessage = 'Error loading PDF';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMessage = xhr.responseJSON.error;
+            }
+            alert(errorMessage);
+        }
     });
 }
 </script>

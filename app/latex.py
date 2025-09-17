@@ -5,6 +5,7 @@ import os
 import subprocess
 import jinja2
 import re
+from flask import current_app
 
 jinja_latex_env = jinja2.Environment(
     block_start_string='\BLOCK{',
@@ -73,13 +74,19 @@ def compile_latex_to_pdf(tex_file_path, output_filename=None, timeout=60):
     max_runs = 5  # Prevent infinite loops
 
     for run in range(max_runs):
+        # Set up environment with TEXINPUTS pointing to templates directory
+        env = os.environ.copy()
+        templates_dir = os.path.join(current_app.root_path, 'templates')
+        env['TEXINPUTS'] = f".{os.pathsep}{templates_dir}{os.pathsep}"
+        
         # Run XeLaTeX
         result = subprocess.run(
             ['xelatex', '-halt-on-error', '-interaction=batchmode', '-no-pdf' if run == 0 else '', tex_file_path],
             cwd=temp_dir,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            env=env
         )
 
         if result.returncode != 0:

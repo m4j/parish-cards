@@ -15,6 +15,8 @@ import tempfile
 import uuid
 import logging
 
+logger = logging.getLogger(__name__)
+
 @report.route('/record_sheets', methods=['GET', 'POST'])
 def record_sheets():
     form = SearchForm(search_label='Search by identifier, date, payor or description')
@@ -117,75 +119,166 @@ def generate_record_sheet_pdf_ajax(record_id):
     Returns:
         dict: JSON response with base64 encoded PDF data and filename, or error message
     """
-    # Get the record sheet
-    record_sheet = db.session.get(RecordSheet, record_id)
-    if not record_sheet:
-        return {'error': 'Record sheet not found'}, 404
-    
-    # Get data from the payment_sheet_v database view
-    result = db.session.execute(
-        text('SELECT * FROM payment_sheet_v WHERE record_id = :record_id'),
-        {'record_id': record_id}
-    )
-    
-    # Convert the result to a list of dictionaries
-    data = []
-    for row in result:
-        row_dict = dict(row._mapping)
-        row_dict_strings = {k: str(v) for k, v in row_dict.items()}
-        # Convert markdown to LaTeX, but only for the purpose field
-        row_dict_strings['purpose'] = md_to_latex(row_dict_strings['purpose'])
-        # Escape special LaTeX characters
-        data.append(escape_special_latex_characters(row_dict_strings))
-    
-    if not data:
-        return {'error': 'No payments found for this record sheet'}, 400
-    
-    # Generate LaTeX using the custom Jinja environment
     try:
-        template = jinja_latex_env.get_template('poop_sheet.tex')
-        latex_content = template.render(
-            data=data,
-            description=record_sheet.description or '',
-            date=datetime.datetime.fromisoformat(record_sheet.date).strftime('%d%b%Y').upper(),
+        # Get the record sheet
+        record_sheet = db.session.get(RecordSheet, record_id)
+        if not record_sheet:
+            return {'error': 'Record sheet not found'}, 404
+        
+        # Get data from the payment_sheet_v database view
+        result = db.session.execute(
+            text('SELECT * FROM payment_sheet_v WHERE record_id = :record_id'),
+            {'record_id': record_id}
         )
-    except Exception as e:
-        return {'error': f'Error generating LaTeX: {str(e)}'}, 500
-    
-    # Create a temporary directory for LaTeX compilation
-    temp_dir = tempfile.mkdtemp()
-    current_app.logger.info(f'Created temporary directory for LaTeX compilation: {temp_dir}')
-    
-    tex_file = os.path.join(temp_dir, f'record_sheet_{record_id}.tex')
-    
-    try:
-        # Write LaTeX content to temporary file
-        with open(tex_file, 'w', encoding='utf-8') as f:
-            f.write(latex_content)
         
-        # Compile LaTeX to PDF using the helper function
-        pdf_content = compile_latex_to_pdf(tex_file, f'record_sheet_{record_id}.pdf')
+        # Convert the result to a list of dictionaries
+        data = []
+        for row in result:
+            row_dict = dict(row._mapping)
+            row_dict_strings = {k: str(v or '') for k, v in row_dict.items()}
+            # Convert markdown to LaTeX, but only for the purpose field
+            row_dict_strings['purpose'] = md_to_latex(row_dict_strings['purpose'])
+            # Escape special LaTeX characters
+            data.append(escape_special_latex_characters(row_dict_strings))
         
-        # Encode PDF as base64
-        pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+        if not data:
+            return {'error': 'No payments found for this record sheet'}, 400
         
-        # Return base64 encoded PDF data
-        return {
-            'pdf_data': pdf_base64,
-            'filename': f'record_sheet_{record_id}.pdf'
-        }
-        
-    except subprocess.TimeoutExpired:
-        return {'error': 'PDF compilation timed out'}, 500
-    except subprocess.CalledProcessError as e:
-        return {'error': f'Error compiling PDF: {e.stderr}'}, 500
-    except FileNotFoundError as e:
-        return {'error': str(e)}, 500
-    except Exception as e:
-        return {'error': f'Error during PDF compilation: {str(e)}'}, 500
-    finally:
-        # Clean up temporary directory
+        # Generate LaTeX using the custom Jinja environment
         try:
-            shutil.rmtree(temp_dir)
-        except Exception:
-            pass  # Ignore cleanup errors
+            template = jinja_latex_env.get_template('poop_sheet.tex')
+            latex_content = template.render(
+                data=data,
+                description=record_sheet.description or '',
+                date=datetime.datetime.fromisoformat(record_sheet.date).strftime('%d%b%Y').upper(),
+            )
+        except Exception as e:
+            logger.error(f'Error generating LaTeX for record sheet {record_id}: {str(e)}', exc_info=True)
+            return {'error': f'Error generating LaTeX: {str(e)}'}, 500
+        
+        # Create a temporary directory for LaTeX compilation
+        temp_dir = tempfile.mkdtemp()
+        logger.info(f'Created temporary directory for LaTeX compilation: {temp_dir}')
+        
+        tex_file = os.path.join(temp_dir, f'record_sheet_{record_id}.tex')
+        
+        try:
+            # Write LaTeX content to temporary file
+            with open(tex_file, 'w', encoding='utf-8') as f:
+                f.write(latex_content)
+            
+            # Compile LaTeX to PDF using the helper function
+            pdf_content = compile_latex_to_pdf(tex_file, f'record_sheet_{record_id}.pdf')
+            
+            # Encode PDF as base64
+            pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+            
+            # Return base64 encoded PDF data
+            return {
+                'pdf_data': pdf_base64,
+                'filename': f'record_sheet_{record_id}.pdf'
+            }
+            
+        except subprocess.TimeoutExpired:
+            logger.error(f'PDF compilation timed out for record sheet {record_id}', exc_info=True)
+            return {'error': 'PDF compilation timed out'}, 500
+        except subprocess.CalledProcessError as e:
+            logger.error(f'Error compiling PDF for record sheet {record_id}: {e.stderr}', exc_info=True)
+            return {'error': f'Error compiling PDF: {e.stderr}'}, 500
+        except FileNotFoundError as e:
+            logger.error(f'File not found during PDF compilation for record sheet {record_id}: {str(e)}', exc_info=True)
+            return {'error': str(e)}, 500
+        except Exception as e:
+            logger.error(f'Error during PDF compilation for record sheet {record_id}: {str(e)}', exc_info=True)
+            return {'error': f'Error during PDF compilation: {str(e)}'}, 500
+        finally:
+            # Clean up temporary directory
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception:
+                pass  # Ignore cleanup errors
+    except Exception as e:
+        logger.error(f'Error in generate_record_sheet_pdf_ajax route for record_id {record_id}: {str(e)}', exc_info=True)
+        return {'error': f'An unexpected error occurred: {str(e)}'}, 500
+
+@report.route('/prosphora/print_ajax')
+def generate_prosphora_pdf_ajax():
+    """
+    Generate PDF for prosphora data using the prosphoras.tex template and XeLaTeX.
+    
+    This route:
+    1. Queries the prosphora_current_v database view for all prosphora data
+    2. Generates LaTeX using the custom Jinja environment with LaTeX-specific delimiters
+    3. Compiles the LaTeX to PDF using XeLaTeX
+    4. Returns the PDF data as base64 encoded JSON for client-side blob creation and display
+    
+    Returns:
+        dict: JSON response with base64 encoded PDF data and filename, or error message
+    """
+    try:
+        # Get data from the prosphora_current_v database view
+        result = db.session.execute(
+            text('SELECT * FROM prosphora_current_v ORDER BY name')
+        )
+        
+        # Convert the result to a list of dictionaries
+        data = []
+        for row in result:
+            row_dict = dict(row._mapping)
+            row_dict_strings = {k: str(v or '') for k, v in row_dict.items()}
+            # Escape special LaTeX characters
+            data.append(escape_special_latex_characters(row_dict_strings))
+        
+        if not data:
+            return {'error': 'No prosphora data found'}, 400
+        
+        # Generate LaTeX using the custom Jinja environment
+        try:
+            template = jinja_latex_env.get_template('prosphoras.tex')
+            latex_content = template.render(data=data)
+        except Exception as e:
+            logger.error(f'Error generating LaTeX for prosphora PDF: {str(e)}', exc_info=True)
+            return {'error': f'Error generating LaTeX: {str(e)}'}, 500
+        
+        # Create a temporary directory for LaTeX compilation
+        temp_dir = tempfile.mkdtemp()
+        tex_file = os.path.join(temp_dir, 'prosphoras.tex')
+        
+        try:
+            # Write LaTeX content to temporary file
+            with open(tex_file, 'w', encoding='utf-8') as f:
+                f.write(latex_content)
+            
+            # Compile LaTeX to PDF using the helper function
+            pdf_content = compile_latex_to_pdf(tex_file, 'prosphoras.pdf')
+            
+            # Encode PDF as base64
+            pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+            
+            # Return base64 encoded PDF data
+            return {
+                'pdf_data': pdf_base64,
+                'filename': 'prosphoras.pdf'
+            }
+            
+        except subprocess.TimeoutExpired:
+            logger.error(f'PDF compilation timed out for prosphora PDF', exc_info=True)
+            return {'error': 'PDF compilation timed out'}, 500
+        except subprocess.CalledProcessError as e:
+            logger.error(f'Error compiling PDF for prosphora: {e.stderr}', exc_info=True)
+            return {'error': f'Error compiling PDF: {e.stderr}'}, 500
+        except FileNotFoundError as e:
+            logger.error(f'File not found during PDF compilation for prosphora: {str(e)}', exc_info=True)
+            return {'error': str(e)}, 500
+        except Exception as e:
+            logger.error(f'Error during PDF compilation for prosphora: {str(e)}', exc_info=True)
+            return {'error': f'Error during PDF compilation: {str(e)}'}, 500
+        finally:
+            # Clean up temporary directory
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception:
+                pass  # Ignore cleanup errors
+    except Exception as e:
+        logger.error(f'Error in generate_prosphora_pdf_ajax route: {str(e)}', exc_info=True)
+        return {'error': f'An unexpected error occurred: {str(e)}'}, 500
