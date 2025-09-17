@@ -4,31 +4,38 @@ import re
 from datetime import datetime
 import os
 import sys
+from . import db
+from .models import Prosphora
 
 class Member(stjb.AbstractMember):
 
-    sql_members_by_name = """select * from prosphora_v
-                where en_last_name like :name or
-                      en_first_name like :name or
-                      en_family_name like :name or
-                      ru_last_name like :name or
-                      ru_first_name like :name or
-                      ru_family_name like :name
-                 order by en_last_name, en_first_name"""
+    model = Prosphora
 
-    sql_member_by_guid = "select * from prosphora_v where guid = :guid"
-
-    sql_payments_by_member = """select * from payment_sub_prosphora
-                where last_name = :lname and (first_name is null or first_name = :fname)
-                 order by paid_from, paid_through"""
+    @classmethod
+    def find_all_by_name(cls, name):
+        selected = f'%{name}%'
+        rows = db.session.scalars(
+            db.select(Prosphora).filter(
+                db.or_(
+                    Prosphora.last_name.like(selected),
+                    Prosphora.first_name.like(selected),
+                    Prosphora.family_name.like(selected),
+                    Prosphora.ru_last_name.like(selected),
+                    Prosphora.ru_first_name.like(selected),
+                    Prosphora.ru_family_name.like(selected)
+                )
+            ).order_by(
+                Prosphora.last_name, Prosphora.first_name
+            )).all()
+        return [cls(row) for row in rows]
 
     @property
     def fname(self):
-        return self['en_first_name']
+        return self.row.first_name
 
     @property
     def lname(self):
-        return self['en_last_name']
+        return self.row.last_name
 
     def _format_name(self, last_name, name, patronymic = None):
         names = []
@@ -44,8 +51,8 @@ class Member(stjb.AbstractMember):
         return fullname
 
     def format_name(self):
-        ru_fullname = self._format_name(self['ru_last_name'], self.row['ru_first_name'])
-        en_fullname = self._format_name(self['en_last_name'], self.row['en_first_name'])
+        ru_fullname = self._format_name(self.row.ru_last_name, self.row.ru_first_name)
+        en_fullname = self._format_name(self.row.last_name, self.row.first_name)
         return f'{en_fullname} ({ru_fullname})'
 
     @property
@@ -62,9 +69,13 @@ class Member(stjb.AbstractMember):
 
     def format_details_header(self):
         name = self.format_name()
-        quantity = self['quantity']
-        service = self['liturgy'] or 'Slavonic'
-        comment = self['comment'] or ''
+        quantity = self.row.quantity
+        service = self.row.liturgy or 'Slavonic'
+        comment = ''
+        if len(self.row.payments) > 0:
+            comment = '+12 Great Feasts' if self.row.payments[-1].with_twelve_feasts else ''
+        comment = comment + (self.row.notes or '')
+        comment = comment.strip()
         result = (
             f'✼ {name : <55}\n\n'
             f'  Liturgy: {service : <55}\n'

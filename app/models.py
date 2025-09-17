@@ -30,8 +30,16 @@ class Prosphora(IdentityMixin, db.Model):
     paid_through        = db.Column(db.String)
     liturgy             = db.Column(db.String)
     notes               = db.Column(db.String)
-    payments            = db.relationship('PaymentSubProsphora', back_populates='membership')
     person              = db.relationship('Person', back_populates='prosphora')
+
+    payments            = db.relationship(
+        'PaymentSubProsphora',
+        back_populates='membership',
+        primaryjoin="and_(PaymentSubProsphora.last_name==Prosphora.last_name, "
+                        "or_(and_(PaymentSubProsphora.first_name.is_(None), Prosphora.first_name.is_(None)), "
+                            "PaymentSubProsphora.first_name==Prosphora.first_name))",
+        order_by=lambda: [PaymentSubProsphora.paid_from, PaymentSubProsphora.paid_through]
+    )
 
     __table_args__ = (
         db.PrimaryKeyConstraint('last_name', 'first_name'),
@@ -211,11 +219,15 @@ class Person(IdentityMixin, db.Model):
         return f'{self.full_name()} ({self.address}, {self.city} {self.state_region} {self.postal_code})'
 
     @property
-    def spouse(self):
+    def spouse(self) -> 'Person':
         m = self.marriage
         if m is None:
             return None
         return m.wife if m.husband == self else m.husband
+
+    @property
+    def status(self) -> str:
+        return 'Deceased' if self.date_of_death else 'Active'
 
 class Marriage(db.Model):
     __tablename__ = 'marriage'
@@ -583,11 +595,7 @@ class PaymentSubProsphora(PaymentSubMixin, NameAndRangeMixin, db.Model):
         )
 
     payment   = db.relationship(Payment, back_populates='prosphora')
-    membership = db.relationship(
-        Prosphora,
-        back_populates='payments',
-        order_by=lambda: [PaymentSubProsphora.paid_from, PaymentSubProsphora.paid_through]
-    )
+    membership = db.relationship(Prosphora, back_populates='payments')
 
     def description(self):
         """Return a formatted description of the prosphora payment range."""

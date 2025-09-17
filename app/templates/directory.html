@@ -14,7 +14,7 @@
     
     <div class="list-group">
         {% for member in members %}
-        <a href="{{ url_for(member_url, guid=member['GUID']) }}" class="list-group-item">{{ member.format_name() }}</a>
+        <a href="{{ url_for(member_url, guid=member.guid) }}" class="list-group-item">{{ member.format_name() }}</a>
         {% endfor %}
     </div>
 {% endblock %}

@@ -31,9 +31,7 @@ def _directory(redirect_url, member_url, entity, template):
     search_term = session.get('search_term')
     if search_term:
         form.search_term.data = search_term
-        connection = stjb.connect(db_path)
-        members = entity.find_all_by_name(connection, search_term)
-        connection.close()
+        members = entity.find_all_by_name(search_term)
         if len(members) == 0:
             flash('Nothing found, please try again')
     return render_template(
@@ -44,23 +42,15 @@ def _directory(redirect_url, member_url, entity, template):
 
 @main.route('/member/<guid>')
 def member(guid):
-    connection = stjb.connect(db_path)
-    entity = m.Member.find_by_guid(connection, guid)
+    entity = m.Member.find_by_guid(guid)
     if not entity:
-        connection.close()
         abort(404)
-    entity.load_payments(connection)
-    connection.close()
     return render_template('member.html', member=entity)
 
 @main.route('/book/<guid>')
 def book(guid):
-    connection = stjb.connect(db_path)
-    entity = p.Member.find_by_guid(connection, guid)
+    entity = p.Member.find_by_guid(guid)
     if not entity:
-        connection.close()
         abort(404)
-    entity.load_payments(connection)
-    connection.close()
     return render_template('member.html', member=entity)
 

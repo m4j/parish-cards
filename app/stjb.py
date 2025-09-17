@@ -1,14 +1,9 @@
-import sqlite3
 import decimal
 from abc import ABC, abstractmethod
 from functools import reduce
 from . import db
 from .models import PaymentMethod, PaymentSubMiscCategory
-
-def connect(database):
-    conn = sqlite3.connect(database)
-    conn.row_factory = sqlite3.Row
-    return conn
+import uuid
 
 ARCHIVE_CELL = '...'
 DISTANT_PAST = '1970-01'
@@ -22,44 +17,28 @@ NON_MEMBER_CELL = f'{"" :░<{TABLE_CELL_WIDTH}}'
 
 class AbstractMember(ABC):
 
-    sql_members_by_name = None
-    sql_member_by_guid = None
-    sql_payments_by_member = None
+    model = None
 
     def __init__(self, row):
         self.row = row
-        self.payments = []
-        self.payment_methods = {}
+        self.payments = row.payments
+        self.payment_methods = load_payment_methods()
 
     @classmethod
-    def find_all_by_name(cls, conn, name):
-        selected = f'%{name}%'
-        cursor = conn.cursor()
-        cursor.execute(cls.sql_members_by_name, {'name': selected})
-        rows = cursor.fetchall()
-        members = list(map(cls, rows))
-        return members
+    @abstractmethod
+    def find_all_by_name(cls, name):
+        pass
 
     @classmethod
-    def find_by_guid(cls, conn, guid):
-        cursor = conn.cursor()
-        cursor.execute(cls.sql_member_by_guid, {'guid': guid})
-        row = cursor.fetchone()
+    def find_by_guid(cls, guid):
+        row = db.session.execute(
+            db.select(cls.model).filter_by(guid=uuid.UUID(guid))
+        ).scalar()
         return None if row is None else cls(row)
 
-    def find_payments(self, conn):
-        cursor = conn.cursor()
-        query_parameters = {
-            'fname': self.fname,
-            'lname': self.lname
-        }
-        cursor.execute(self.sql_payments_by_member, query_parameters)
-        return cursor.fetchall()
-
-    def load_payments(self, conn):
-        self.payments = self.find_payments(conn)
-        self.payment_methods = load_payment_methods()
-        return self
+    @property
+    def guid(self):
+        return self.row.guid
 
     @property
     @abstractmethod
@@ -96,7 +75,7 @@ class AbstractMember(ABC):
         if l == 0:
             return None
         last = all_payments[l-1]
-        last_paid_through = last['Paid_Through']
+        last_paid_through = last.paid_through
         month = last_paid_through.split('-')[1]
         return MONTHS_DICT[month]
 
@@ -178,15 +157,15 @@ class AbstractMember(ABC):
                 f'{format_two_columns(left, right, TABLE_CELL_WIDTH+2)}'
                 )
 
-    def payment_info(self, rows, date):
-        found_rows = [row for row in rows if row['Paid_From'] <= date <= row['Paid_Through']]
-        if len(found_rows) > 0:
-            found = found_rows[0]
-            method = self.convert_payment_method(found['Method'])
-            identifier = found['Identifier']
-            amount = found['Amount']
-            date = found['Date']
-            number_of_payments = number_of_payments_between(found['Paid_From'], found['Paid_Through'])
+    def payment_info(self, payments, date):
+        payments_with_date = [payment for payment in payments if payment.paid_from <= date <= payment.paid_through]
+        if len(payments_with_date) > 0:
+            found = payments_with_date[0]
+            method = self.convert_payment_method(found.method)
+            identifier = found.identifier
+            amount = found.amount
+            date = found.date
+            number_of_payments = number_of_payments_between(found.paid_from, found.paid_through)
             payments_this_month = None
             if number_of_payments is not None and amount is not None:
                 amount = decimal.Decimal(amount)
@@ -199,30 +178,6 @@ class AbstractMember(ABC):
             return None
         methodrow = self.payment_methods[method] or {}
         return methodrow.display_short or method
-
-def print_error_incorrect():
-    print('--------------------')
-    print('Incorrect, try again')
-    print('--------------------')
-
-def pick_by_index(rows):
-    count = len(rows)
-    if count == 0:
-        return None
-    if count == 1:
-        return 0
-    while True:
-        for i, row in enumerate(rows):
-            print('{}) {}'.format(i+1, row))
-        try:
-            selected = int(input('Pick one from the list:'))
-        except ValueError:
-            print_error_incorrect()
-            continue
-        if selected-1 not in range(0, count):
-            print_error_incorrect()
-            continue
-        return selected-1
 
 def date_of_previous_month(year, month_number):
     y = year
