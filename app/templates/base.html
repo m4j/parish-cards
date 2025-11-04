@@ -10,11 +10,12 @@
 {% endblock %}
 
 {% block navbar %}
-<nav class="navbar navbar-default">
+<!-- Horizontal Navbar for Mobile -->
+<nav class="navbar navbar-default visible-xs">
   <div class="container-fluid">
     <!-- Brand and toggle get grouped for better mobile display -->
     <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#mobile-navbar-collapse" aria-expanded="false">
         <span class="sr-only">Toggle navigation</span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -27,7 +28,7 @@
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <div class="collapse navbar-collapse" id="mobile-navbar-collapse">
       <ul class="nav navbar-nav">
         <li><a href="/">Membership</a></li>
         <li><a href="{{ url_for('main.books') }}">Books & Prosphoras</a></li>
@@ -52,22 +53,55 @@
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
 </nav>
+
+<!-- Vertical Sidebar for Desktop -->
+<nav id="sidebar" class="sidebar hidden-xs">
+  <div class="sidebar-header">
+    <a href="/" class="sidebar-brand">
+      <!-- <img src="/static/stjohndc.png"/> -->
+      St John's Parish Directory
+    </a>
+  </div>
+  
+  <ul class="nav nav-sidebar">
+    <li><a href="/">Membership</a></li>
+    <li><a href="{{ url_for('main.books') }}">Books & Prosphoras</a></li>
+    <li class="nav-item-group">
+      <a href="#" class="nav-item-parent">Payments</a>
+      <ul class="nav-submenu">
+        <li><a href="{{ url_for('payment.all') }}">All Payments</a></li>
+        <li><a href="{{ url_for('payment.dues') }}">Membership Dues</a></li>
+        <li><a href="{{ url_for('payment.prosphora') }}">Prosphora Payments</a></li>
+        <li class="divider"></li>
+        <li><a href="{{ url_for('report.record_sheets') }}">Reports</a></li>
+      </ul>
+    </li>
+    <li class="nav-item-group">
+      <a href="#" class="nav-item-parent">Applications</a>
+      <ul class="nav-submenu">
+        <li><a href="{{ url_for('application.applications') }}">All Applications</a></li>
+        <li><a href="{{ url_for('application.application_add') }}">New</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  {% block page_content %}{% endblock%}
-<!-- Loading overlay -->
-<div id="loading-overlay" style="display: none;">
-    <div class="loading-dialog">
-        <div class="loading-content">
-            <div class="loading-body">
-                <img src="{{ url_for('static', filename='loading.svg') }}" alt="Loading...">
-            </div>
-        </div>
-    </div>
-</div>
-
+<div class="main-content-wrapper">
+  <div class="container main-content">
+    {% block page_content %}{% endblock%}
+  </div>
+  <!-- Loading overlay -->
+  <div id="loading-overlay" style="display: none;">
+      <div class="loading-dialog">
+          <div class="loading-content">
+              <div class="loading-body">
+                  <img src="{{ url_for('static', filename='loading.svg') }}" alt="Loading...">
+              </div>
+          </div>
+      </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -76,6 +110,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/js/selectize.min.js"></script>
 <script>
+
 function clearSearch() {
     var searchInput = document.querySelector('[name="search_term"]');
     searchInput.value = '';
