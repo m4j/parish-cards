@@ -2,6 +2,40 @@
 
 {% block title %}St John the Baptist ROC{% endblock %}
 
+{# Macro to render menu item toggle/label #}
+{% macro menu_item_toggle(label, mode='mobile') %}
+    {% if mode == 'mobile' %}
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ label }}<span class="caret"></span></a>
+    {% else %}
+        <a href="#" class="nav-item-parent">{{ label }}</a>
+    {% endif %}
+{% endmacro %}
+
+{# Macro to render navigation menu items #}
+{% macro render_nav_menu_items(mode='mobile') %}
+    <li><a href="/">Membership__{{ mode }}</a></li>
+    <li><a href="{{ url_for('main.books') }}">Books & Prosphoras</a></li>
+    {% set l2_class = 'dropdown' if mode == 'mobile' else 'nav-item-group' %}
+    {% set l3_class = 'dropdown-menu' if mode == 'mobile' else 'nav-submenu' %}
+    <li class="{{ l2_class }}">
+        {{ menu_item_toggle('Payments', mode) }}
+        <ul class="{{ l3_class }}">
+            <li><a href="{{ url_for('payment.all') }}">All Payments</a></li>
+            <li><a href="{{ url_for('payment.dues') }}">Membership Dues</a></li>
+            <li><a href="{{ url_for('payment.prosphora') }}">Prosphora Payments</a></li>
+            <li class="divider"></li>
+            <li><a href="{{ url_for('report.record_sheets') }}">Reports</a></li>
+        </ul>
+    </li>
+    <li class="{{ l2_class }}">
+        {{ menu_item_toggle('Applications', mode) }}
+        <ul class="{{ l3_class }}">
+            <li><a href="{{ url_for('application.applications') }}">All Applications</a></li>
+            <li><a href="{{ url_for('application.application_add') }}">New</a></li>
+        </ul>
+    </li>
+{% endmacro %}
+
 {% block styles %}
     {{ super() }}
     <link href="/static/css/base.css" rel="stylesheet">
@@ -30,25 +64,7 @@
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="mobile-navbar-collapse">
       <ul class="nav navbar-nav">
-        <li><a href="/">Membership</a></li>
-        <li><a href="{{ url_for('main.books') }}">Books & Prosphoras</a></li>
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Payments<span class="caret"></span></a>
-          <ul class="dropdown-menu">
-            <li><a href="{{ url_for('payment.all') }}">All Payments</a></li>
-            <li><a href="{{ url_for('payment.dues') }}">Membership Dues</a></li>
-            <li><a href="{{ url_for('payment.prosphora') }}">Prosphora Payments</a></li>
-            <li class="divider"></li>
-            <li><a href="{{ url_for('report.record_sheets') }}">Reports</a></li>
-          </ul>
-        </li>
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Applications<span class="caret"></span></a>
-          <ul class="dropdown-menu">
-            <li><a href="{{ url_for('application.applications') }}">All Applications</a></li>
-            <li><a href="{{ url_for('application.application_add') }}">New</a></li>
-          </ul>
-        </li>
+        {{ render_nav_menu_items('mobile') }}
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
@@ -64,25 +80,7 @@
   </div>
   
   <ul class="nav nav-sidebar">
-    <li><a href="/">Membership</a></li>
-    <li><a href="{{ url_for('main.books') }}">Books & Prosphoras</a></li>
-    <li class="nav-item-group">
-      <a href="#" class="nav-item-parent">Payments</a>
-      <ul class="nav-submenu">
-        <li><a href="{{ url_for('payment.all') }}">All Payments</a></li>
-        <li><a href="{{ url_for('payment.dues') }}">Membership Dues</a></li>
-        <li><a href="{{ url_for('payment.prosphora') }}">Prosphora Payments</a></li>
-        <li class="divider"></li>
-        <li><a href="{{ url_for('report.record_sheets') }}">Reports</a></li>
-      </ul>
-    </li>
-    <li class="nav-item-group">
-      <a href="#" class="nav-item-parent">Applications</a>
-      <ul class="nav-submenu">
-        <li><a href="{{ url_for('application.applications') }}">All Applications</a></li>
-        <li><a href="{{ url_for('application.application_add') }}">New</a></li>
-      </ul>
-    </li>
+    {{ render_nav_menu_items('desktop') }}
   </ul>
 </nav>
 {% endblock %}
