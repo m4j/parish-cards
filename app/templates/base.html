@@ -13,7 +13,7 @@
 
 {# Macro to render navigation menu items #}
 {% macro render_nav_menu_items(mode='mobile') %}
-    <li><a href="/">Membership__{{ mode }}</a></li>
+    <li><a href="/">Membership</a></li>
     <li><a href="{{ url_for('main.books') }}">Books & Prosphoras</a></li>
     {% set l2_class = 'dropdown' if mode == 'mobile' else 'nav-item-group' %}
     {% set l3_class = 'dropdown-menu' if mode == 'mobile' else 'nav-submenu' %}

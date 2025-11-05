@@ -195,3 +195,27 @@
     color: #333 !important;
     margin-bottom: 0 !important;
 }
+
+/* Print styles - Hide navigation menu */
+@media print {
+    /* Hide mobile navbar */
+    .navbar,
+    .navbar-default {
+        display: none !important;
+    }
+    
+    /* Hide desktop sidebar */
+    .sidebar {
+        display: none !important;
+    }
+    
+    /* Remove sidebar margin from main content */
+    .main-content-wrapper {
+        margin-left: 0 !important;
+    }
+    
+    /* Hide loading overlay */
+    #loading-overlay {
+        display: none !important;
+    }
+}
