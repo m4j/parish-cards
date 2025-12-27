@@ -16,6 +16,21 @@ class CaseInsensitiveComparator(Comparator):
     def __eq__(self, other):
         return func.lower(self.__clause_element__()) == func.lower(other)
 
+class Service(db.Model):
+    __tablename__ = 'service'
+    name          = db.Column(db.String)
+    ru_name       = db.Column(db.String, unique=True)
+    prosphoras    = db.relationship('Prosphora', back_populates='service')
+
+    __table_args__ = (
+        db.PrimaryKeyConstraint('name'),
+        db.UniqueConstraint('ru_name'),
+    )
+
+    def __init__(self, name, ru_name):
+        self.name = name
+        self.ru_name = ru_name
+
 class Prosphora(IdentityMixin, db.Model):
     __tablename__ = 'prosphora'
     last_name           = db.Column(db.String)
@@ -28,7 +43,8 @@ class Prosphora(IdentityMixin, db.Model):
     p_first_name        = db.Column(db.String)
     quantity            = db.Column(db.Integer, default=1)
     paid_through        = db.Column(db.String)
-    liturgy             = db.Column(db.String)
+    liturgy             = db.Column(db.String, db.ForeignKey('service.name'))
+    service             = db.relationship('Service', uselist=False, back_populates='prosphoras')
     notes               = db.Column(db.String)
     person              = db.relationship('Person', back_populates='prosphora')
 
@@ -45,6 +61,9 @@ class Prosphora(IdentityMixin, db.Model):
         db.PrimaryKeyConstraint('last_name', 'first_name'),
         db.ForeignKeyConstraint(
             ['p_last_name', 'p_first_name'], ['person.last', 'person.first']
+        ),
+        db.ForeignKeyConstraint(
+            ['liturgy'], ['service.name']
         )
     )
 
