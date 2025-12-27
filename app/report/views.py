@@ -225,7 +225,7 @@ def generate_prosphora_pdf_ajax():
         data = []
         for row in result:
             row_dict = dict(row._mapping)
-            row_dict_strings = {k: str(v or '') for k, v in row_dict.items()}
+            row_dict_strings = {k: str(v if v is not None else '') for k, v in row_dict.items()}
             # Escape special LaTeX characters
             data.append(escape_special_latex_characters(row_dict_strings))
         

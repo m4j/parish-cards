@@ -64,7 +64,7 @@
     \BLOCK{set quantity = row["quantity"]}
     \BLOCK{set liturgy = row["liturgy"]}
     \BLOCK{set comment = row["comment"]}
-    \BLOCK{if liturgy.strip().lower() == "english"}
+    \BLOCK{if liturgy == "English Liturgy"}
 
         \BLOCK{set enSurname = row["en_last_name"]}
         \BLOCK{set enName = row["en_first_name"]}
@@ -103,7 +103,7 @@
     \BLOCK{set quantity = row["quantity"]}
     \BLOCK{set liturgy = row["liturgy"]}
     \BLOCK{set comment = row["comment"]}
-    \BLOCK{if liturgy.strip().lower() != "english"}
+    \BLOCK{if liturgy == "Slavonic Liturgy"}
 
         \BLOCK{set enSurname = row["en_last_name"]}
         \BLOCK{set enName = row["en_first_name"]}
@@ -142,9 +142,7 @@
 
 \BLOCK{for row in data}
     \BLOCK{set quantity = row["quantity"]}
-    \BLOCK{set liturgy = row["liturgy"]}
-    \BLOCK{set comment = row["comment"]}
-    \BLOCK{if comment.strip().lower() == "+12 feasts" or liturgy.strip().lower() == "every"}
+    \BLOCK{if row["with_twelve_feasts"]}
 
         \BLOCK{set enSurname = row["en_last_name"]}
         \BLOCK{set enName = row["en_first_name"]}
