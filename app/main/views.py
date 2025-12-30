@@ -12,7 +12,8 @@ def index():
             redirect_url=url_for('.index'),
             entity=m.Member,
             template='index.html',
-            member_url='.member')
+            member_url='.member',
+            edit_url='')
 
 @main.route('/books', methods=['GET', 'POST'])
 def books():
@@ -20,9 +21,10 @@ def books():
             redirect_url=url_for('.books'),
             entity=p.Member,
             template='books.html',
-            member_url='.book')
+            member_url='.book',
+            edit_url='.book_edit')
 
-def _directory(redirect_url, member_url, entity, template):
+def _directory(redirect_url, member_url, entity, template, edit_url):
     form = SearchForm()
     members = []
     if form.validate_on_submit():
@@ -38,7 +40,8 @@ def _directory(redirect_url, member_url, entity, template):
             template,
             form=form,
             members=members,
-            member_url=member_url)
+            member_url=member_url,
+            edit_url=edit_url)
 
 @main.route('/member/<guid>')
 def member(guid):
@@ -54,3 +57,6 @@ def book(guid):
         abort(404)
     return render_template('member.html', member=entity)
 
+@main.route('/book/edit/<guid>')
+def book_edit(guid):
+    pass
