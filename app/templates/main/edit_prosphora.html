@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>{{ "Edit" if form.original_guid else "New" }} Prosphora</h2>
+</div>
+
+{% for field, errors in form.errors.items() %}
+<div class="alert alert-danger">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>{{ form[field].label.text }}:</strong> {{ ', '.join(errors) }}
+</div>
+{% endfor %}
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+</div>
+{% endfor %}
+
+<form method="POST" class="form" role="form">
+    {{ form.csrf_token }}
+    {{ wtf.form_errors(form, hiddens="only") }}
+    
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Name Information</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.last_name) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.first_name) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.family_name) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Russian Name Information</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.ru_last_name) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.ru_first_name) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.ru_family_name) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Person Reference</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.p_last_name) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.p_first_name) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Prosphora Details</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.quantity) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.paid_through) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.liturgy) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    {{ wtf.form_field(form.notes) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-2 col-xs-12 col-md-offset-8" style="margin-bottom: 15px;">
+            <a href="{{ url_for('main.books') }}" class="btn btn-default">Cancel</a>
+        </div>
+        <div class="col-md-2 col-xs-12" style="margin-bottom: 15px;">
+            {{ form.save_changes(class="btn btn-primary") }}
+        </div>
+    </div>
+</form>
+{% endblock %}
+

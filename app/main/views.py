@@ -4,7 +4,7 @@ from .. import db_path
 from .. import member as m
 from .. import prosphora as p
 from . import main
-from .forms import SearchForm
+from .forms import SearchForm, ProsphoraForm
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -57,6 +57,21 @@ def book(guid):
         abort(404)
     return render_template('member.html', member=entity)
 
-@main.route('/book/edit/<guid>')
-def book_edit(guid):
-    pass
+@main.route('/book/edit', methods=['GET', 'POST'])
+@main.route('/book/edit/<guid>', methods=['GET', 'POST'])
+def book_edit(guid=None):
+    if guid:
+        form = ProsphoraForm.load(guid)
+    else:
+        form = ProsphoraForm()
+    if not form:
+        abort(404)
+    
+    if form.validate_on_submit():
+        if form.save(guid):
+            flash('Prosphora entry successfully updated.')
+            return redirect(url_for('.books'))
+        else:
+            flash('Error updating prosphora entry.', 'error')
+    
+    return render_template('main/edit_prosphora.html', form=form)
