@@ -135,7 +135,7 @@ def generate_record_sheet_pdf_ajax(record_id):
         data = []
         for row in result:
             row_dict = dict(row._mapping)
-            row_dict_strings = {k: str(v or '') for k, v in row_dict.items()}
+            row_dict_strings = {k: str(v if v is not None else '') for k, v in row_dict.items()}
             # Convert markdown to LaTeX, but only for the purpose field
             row_dict_strings['purpose'] = md_to_latex(row_dict_strings['purpose'])
             # Escape special LaTeX characters
