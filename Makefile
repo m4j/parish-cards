@@ -42,10 +42,10 @@ $(DISTR_DIR):
 	mkdir -p $@
 
 $(DISTR_PAYMENTS): $(PAYMENTS).pdf
-	cp $< $@
+	cp "$<" "$@"
 
 $(DISTR_PROSPHORAS): $(PROSPHORAS).pdf
-	cp $< $@
+	cp "$<" "$@"
 
 %.pdf: %.tex
 	aux_hash_prev="zzz" ; \
