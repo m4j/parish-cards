@@ -1,1 +1,221 @@
 .right { text-align: right; }
+
+/* Vertical Sidebar Styles for Bootstrap 3 - Desktop Only */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100vh;
+  background-color: #f8f8f8;
+  border-right: 1px solid #e7e7e7;
+  z-index: 1000;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-header {
+  padding: 15px 20px;
+  background-color: #fff;
+  border-bottom: 1px solid #e7e7e7;
+}
+
+.sidebar-brand {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  text-decoration: none;
+  display: block;
+}
+
+.sidebar-brand:hover,
+.sidebar-brand:focus {
+  color: #333;
+  text-decoration: none;
+}
+
+.nav-sidebar {
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.nav-sidebar > li > a {
+  display: block;
+  padding: 10px 20px;
+  color: #333;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+
+.nav-sidebar > li > a:hover,
+.nav-sidebar > li > a:focus {
+  background-color: #e7e7e7;
+  border-left-color: #337ab7;
+  color: #333;
+  text-decoration: none;
+}
+
+.nav-sidebar > li.active > a,
+.nav-sidebar > li.active > a:hover,
+.nav-sidebar > li.active > a:focus {
+  background-color: #e7e7e7;
+  border-left-color: #337ab7;
+  color: #333;
+  font-weight: bold;
+}
+
+
+/* Always-expanded submenu styles for Bootstrap 3 */
+.nav-sidebar .nav-item-parent {
+  display: block;
+  padding: 10px 20px;
+  color: #333;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  font-weight: 500;
+  cursor: default;
+  pointer-events: none;
+}
+
+.nav-sidebar .nav-item-parent:hover,
+.nav-sidebar .nav-item-parent:focus {
+  background-color: transparent;
+  border-left-color: transparent;
+  color: #333;
+  text-decoration: none;
+}
+
+.nav-sidebar .nav-submenu {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  background-color: #fff;
+  border-left: 3px solid #337ab7;
+  display: block !important; /* Always visible */
+}
+
+.nav-sidebar .nav-submenu > li > a {
+  display: block;
+  padding: 8px 20px 8px 45px;
+  color: #666;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+
+.nav-sidebar .nav-submenu > li > a:hover,
+.nav-sidebar .nav-submenu > li > a:focus {
+  background-color: #f5f5f5;
+  color: #333;
+  text-decoration: none;
+  border-left-color: #337ab7;
+}
+
+.nav-sidebar .nav-submenu .divider {
+  height: 1px;
+  margin: 5px 15px;
+  overflow: hidden;
+  background-color: #e7e7e7;
+  border: 0;
+}
+
+/* Main content wrapper - Desktop only */
+.main-content-wrapper {
+  min-height: 100vh;
+}
+
+.main-content {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+/* Desktop: Show sidebar and adjust content margin (Bootstrap 3 sm breakpoint: 768px) */
+@media (min-width: 768px) {
+  .main-content-wrapper {
+    margin-left: 250px;
+  }
+}
+
+/* Mobile: No sidebar margin, default navbar behavior (Bootstrap 3 xs: <768px) */
+@media (max-width: 767px) {
+  .main-content-wrapper {
+    margin-left: 0;
+  }
+}
+
+/* Loading overlay styles for Bootstrap 3 compatibility */
+#loading-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    z-index: 9999 !important;
+    display: none !important;
+}
+
+#loading-overlay.show {
+    display: block !important;
+}
+
+#loading-overlay .loading-dialog {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    width: auto !important;
+}
+
+#loading-overlay .loading-content {
+    text-align: center !important;
+    padding: 20px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+#loading-overlay .loading-body {
+    padding: 20px !important;
+}
+
+#loading-overlay img {
+    width: 200px !important;
+    height: 200px !important;
+    display: block !important;
+    margin: 0 auto !important;
+}
+
+#loading-overlay p {
+    margin-top: 15px !important;
+    font-size: 16px !important;
+    color: #333 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Print styles - Hide navigation menu */
+@media print {
+    /* Hide mobile navbar */
+    .navbar,
+    .navbar-default {
+        display: none !important;
+    }
+    
+    /* Hide desktop sidebar */
+    .sidebar {
+        display: none !important;
+    }
+    
+    /* Remove sidebar margin from main content */
+    .main-content-wrapper {
+        margin-left: 0 !important;
+    }
+    
+    /* Hide loading overlay */
+    #loading-overlay {
+        display: none !important;
+    }
+}

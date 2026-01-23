@@ -7,23 +7,15 @@
             %headsep=15pt,
             verbose]{geometry}
 \usepackage[russian,english]{babel}
-\usepackage[normalem]{ulem}
-\usepackage[inline]{enumitem}
-\usepackage{amssymb}
-\usepackage{adjustbox}
-\usepackage[table]{xcolor}
 \usepackage[useregional]{datetime2}
-\usepackage{eso-pic}
-\usepackage{bigdelim}
 \usepackage{multicol}
 \usepackage{longtable}
 \usepackage{booktabs}
-\usepackage{arydshln}
-\usepackage{array}
 \usepackage{fontspec}
-\setmainfont{Helvetica Neue}
+\setmainfont{Liberation Sans}
 
-\title{Помянники и просфоры\\{\large Commemoration books and prosphoras}}
+
+\title{\vspace{-3\baselineskip}Помянники и просфоры\\{\large Commemoration books and prosphoras}}
 \date{\vspace{-2\baselineskip}\today\\{\small \selectlanguage{english}\today}}
 
 % Disable hyphenation, see https://tex.stackexchange.com/a/177179
@@ -46,7 +38,6 @@
 \renewcommand{\cftsecleader}{\cftdotfill{\cftsecdotsep}}
 \renewcommand\cftsecdotsep{\cftdot}
 %\renewcommand\cfttoctitlefont{\huge}
-\usepackage[object=vectorian]{pgfornament}
 
 %\newcommand{\endornament}{\vspace{1cm}
 %\hfil  \pgfornament[width=4cm]{84}\hfil}
@@ -64,7 +55,7 @@
 
 \pagebreak
 
-\section{Воскресная английская литургия\\Sunday English Liturgy}
+\section{Воскресная английская Литургия\\Sunday English Liturgy}
 
 \bigskip
 
@@ -73,19 +64,18 @@
 \BLOCK{for row in data}
     \BLOCK{set quantity = row["quantity"]}
     \BLOCK{set liturgy = row["liturgy"]}
-    \BLOCK{set comment = row["comment"]}
-    \BLOCK{if liturgy.strip().lower() == "english"}
+    \BLOCK{if liturgy == "English Liturgy"}
 
-        \BLOCK{set enSurname = row["en\_last\_name"]}
-        \BLOCK{set enName = row["en\_first\_name"]}
+        \BLOCK{set enSurname = row["en_last_name"]}
+        \BLOCK{set enName = row["en_first_name"]}
         \BLOCK{if enSurname.strip()}
             \BLOCK{set enSurname = enSurname.upper()}
         \BLOCK{else}
             \BLOCK{set enSurname = enName.upper()}
             \BLOCK{set enName = ""}
         \BLOCK{endif}
-        \BLOCK{set ruSurname = row["ru\_last\_name"]}
-        \BLOCK{set ruName = row["ru\_first\_name"]}
+        \BLOCK{set ruSurname = row["ru_last_name"]}
+        \BLOCK{set ruName = row["ru_first_name"]}
         \BLOCK{if ruSurname.strip()}
             \BLOCK{set ruSurname = ruSurname.upper()}
         \BLOCK{else}
@@ -105,26 +95,27 @@
 
 \pagebreak
 
-\section{Воскресная славянская литургия\\Sunday Slavonic Liturgy}
+\section{Воскресная славянская Литургия\\Sunday Slavonic Liturgy}
+
+\bigskip
 
 \begin{multicols}{2}
 
 \BLOCK{for row in data}
     \BLOCK{set quantity = row["quantity"]}
     \BLOCK{set liturgy = row["liturgy"]}
-    \BLOCK{set comment = row["comment"]}
-    \BLOCK{if liturgy.strip().lower() != "english"}
+    \BLOCK{if liturgy == "Slavonic Liturgy"}
 
-        \BLOCK{set enSurname = row["en\_last\_name"]}
-        \BLOCK{set enName = row["en\_first\_name"]}
+        \BLOCK{set enSurname = row["en_last_name"]}
+        \BLOCK{set enName = row["en_first_name"]}
         \BLOCK{if enSurname.strip()}
             \BLOCK{set enSurname = enSurname.upper()}
         \BLOCK{else}
             \BLOCK{set enSurname = enName.upper()}
             \BLOCK{set enName = ""}
         \BLOCK{endif}
-        \BLOCK{set ruSurname = row["ru\_last\_name"]}
-        \BLOCK{set ruName = row["ru\_first\_name"]}
+        \BLOCK{set ruSurname = row["ru_last_name"]}
+        \BLOCK{set ruName = row["ru_first_name"]}
         \BLOCK{if ruSurname.strip()}
             \BLOCK{set ruSurname = ruSurname.upper()}
         \BLOCK{else}
@@ -144,7 +135,7 @@
 
 \pagebreak
 
-\section{Литургия по двунадесятым праздникам\\12 Great Feasts Liturgy}
+\section{Воскресная единая Литургия\\Sunday One Liturgy}
 
 \bigskip
 
@@ -152,57 +143,16 @@
 
 \BLOCK{for row in data}
     \BLOCK{set quantity = row["quantity"]}
-    \BLOCK{set liturgy = row["liturgy"]}
-    \BLOCK{set comment = row["comment"]}
-    \BLOCK{if comment.strip().lower() == "+12 feasts" or liturgy.strip().lower() == "every"}
-
-        \BLOCK{set enSurname = row["en\_last\_name"]}
-        \BLOCK{set enName = row["en\_first\_name"]}
-        \BLOCK{if enSurname.strip()}
-            \BLOCK{set enSurname = enSurname.upper()}
-        \BLOCK{else}
-            \BLOCK{set enSurname = enName.upper()}
-            \BLOCK{set enName = ""}
-        \BLOCK{endif}
-        \BLOCK{set ruSurname = row["ru\_last\_name"]}
-        \BLOCK{set ruName = row["ru\_first\_name"]}
-        \BLOCK{if ruSurname.strip()}
-            \BLOCK{set ruSurname = ruSurname.upper()}
-        \BLOCK{else}
-            \BLOCK{set ruSurname = ruName.upper()}
-            \BLOCK{set ruName = ""}
-        \BLOCK{endif}
-
-        \parbox{0.4\textwidth}{
-            \textbf{\VAR{enSurname}} {\small \VAR{enName}}\\
-            \textbf{\VAR{ruSurname}} {\small \VAR{ruName}}
-        }
-        \framebox{{\large\bfseries \VAR{quantity}}}
-    \BLOCK{endif}
-\BLOCK{endfor}
-
-\end{multicols}
-
-\pagebreak
-
-\section{Единая литургия на английском и славянском\\One Liturgy in English and Slavonic}
-
-\bigskip
-
-\begin{multicols}{2}
-
-\BLOCK{for row in data}
-    \BLOCK{set quantity = row["quantity"]}
-    \BLOCK{set enSurname = row["en\_last\_name"]}
-    \BLOCK{set enName = row["en\_first\_name"]}
+    \BLOCK{set enSurname = row["en_last_name"]}
+    \BLOCK{set enName = row["en_first_name"]}
     \BLOCK{if enSurname.strip()}
         \BLOCK{set enSurname = enSurname.upper()}
     \BLOCK{else}
         \BLOCK{set enSurname = enName.upper()}
         \BLOCK{set enName = ""}
     \BLOCK{endif}
-    \BLOCK{set ruSurname = row["ru\_last\_name"]}
-    \BLOCK{set ruName = row["ru\_first\_name"]}
+    \BLOCK{set ruSurname = row["ru_last_name"]}
+    \BLOCK{set ruName = row["ru_first_name"]}
     \BLOCK{if ruSurname.strip()}
         \BLOCK{set ruSurname = ruSurname.upper()}
     \BLOCK{else}
@@ -215,8 +165,129 @@
         \textbf{\VAR{ruSurname}} {\small \VAR{ruName}}
     }
     \framebox{{\large\bfseries \VAR{quantity}}}
-
 \BLOCK{endfor}
+
+\end{multicols}
+
+\pagebreak
+
+\section{Невоскресная английская Литургия по двунадесятым праздникам\\English Liturgy on 12 Great Feasts, Any Day Except Sundays}
+
+\bigskip
+
+\begin{multicols}{2}
+
+\BLOCK{for row in data}
+    \BLOCK{set quantity = row["quantity"]}
+    \BLOCK{set liturgy = row["liturgy"]}
+    \BLOCK{set with_twelve_feasts = row["with_twelve_feasts"]}
+    \BLOCK{if liturgy == "English Liturgy" and with_twelve_feasts == "1"}
+        \BLOCK{set enSurname = row["en_last_name"]}
+        \BLOCK{set enName = row["en_first_name"]}
+        \BLOCK{if enSurname.strip()}
+            \BLOCK{set enSurname = enSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set enSurname = enName.upper()}
+            \BLOCK{set enName = ""}
+        \BLOCK{endif}
+        \BLOCK{set ruSurname = row["ru_last_name"]}
+        \BLOCK{set ruName = row["ru_first_name"]}
+        \BLOCK{if ruSurname.strip()}
+            \BLOCK{set ruSurname = ruSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set ruSurname = ruName.upper()}
+            \BLOCK{set ruName = ""}
+        \BLOCK{endif}
+
+        \parbox{0.4\textwidth}{
+            \textbf{\VAR{enSurname}} {\small \VAR{enName}}\\
+            \textbf{\VAR{ruSurname}} {\small \VAR{ruName}}
+        }
+        \framebox{{\large\bfseries \VAR{quantity}}}
+    \BLOCK{endif}
+\BLOCK{endfor}
+
+\end{multicols}
+
+\pagebreak
+
+\section{Невоскресная славянская Литургия по двунадесятым праздникам\\Slavonic Liturgy on 12 Great Feasts, Any Day Except Sundays}
+
+\bigskip
+
+\begin{multicols}{2}
+
+\BLOCK{for row in data}
+    \BLOCK{set quantity = row["quantity"]}
+    \BLOCK{set liturgy = row["liturgy"]}
+    \BLOCK{set with_twelve_feasts = row["with_twelve_feasts"]}
+    \BLOCK{if liturgy == "Slavonic Liturgy" and with_twelve_feasts == "1"}
+
+        \BLOCK{set enSurname = row["en_last_name"]}
+        \BLOCK{set enName = row["en_first_name"]}
+        \BLOCK{if enSurname.strip()}
+            \BLOCK{set enSurname = enSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set enSurname = enName.upper()}
+            \BLOCK{set enName = ""}
+        \BLOCK{endif}
+        \BLOCK{set ruSurname = row["ru_last_name"]}
+        \BLOCK{set ruName = row["ru_first_name"]}
+        \BLOCK{if ruSurname.strip()}
+            \BLOCK{set ruSurname = ruSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set ruSurname = ruName.upper()}
+            \BLOCK{set ruName = ""}
+        \BLOCK{endif}
+
+        \parbox{0.4\textwidth}{
+            \textbf{\VAR{enSurname}} {\small \VAR{enName}}\\
+            \textbf{\VAR{ruSurname}} {\small \VAR{ruName}}
+        }
+        \framebox{{\large\bfseries \VAR{quantity}}}
+    \BLOCK{endif}
+\BLOCK{endfor}
+
+\end{multicols}
+
+\pagebreak
+
+\section{Невоскресная единая Литургия по двунадесятым праздникам\\One Liturgy on 12 Great Feasts, Any Day Except Sundays}
+
+\bigskip
+
+\begin{multicols}{2}
+
+\BLOCK{for row in data}
+    \BLOCK{set quantity = row["quantity"]}
+    \BLOCK{set with_twelve_feasts = row["with_twelve_feasts"]}
+    \BLOCK{if with_twelve_feasts == "1"}
+
+        \BLOCK{set enSurname = row["en_last_name"]}
+        \BLOCK{set enName = row["en_first_name"]}
+        \BLOCK{if enSurname.strip()}
+            \BLOCK{set enSurname = enSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set enSurname = enName.upper()}
+            \BLOCK{set enName = ""}
+        \BLOCK{endif}
+        \BLOCK{set ruSurname = row["ru_last_name"]}
+        \BLOCK{set ruName = row["ru_first_name"]}
+        \BLOCK{if ruSurname.strip()}
+            \BLOCK{set ruSurname = ruSurname.upper()}
+        \BLOCK{else}
+            \BLOCK{set ruSurname = ruName.upper()}
+            \BLOCK{set ruName = ""}
+        \BLOCK{endif}
+
+        \parbox{0.4\textwidth}{
+            \textbf{\VAR{enSurname}} {\small \VAR{enName}}\\
+            \textbf{\VAR{ruSurname}} {\small \VAR{ruName}}
+        }
+        \framebox{{\large\bfseries \VAR{quantity}}}
+    \BLOCK{endif}
+\BLOCK{endfor}
+
 \end{multicols}
 
 \end{document}

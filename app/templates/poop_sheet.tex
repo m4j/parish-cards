@@ -5,24 +5,15 @@
             %headsep=15pt,
             verbose]{geometry}
 \usepackage[utf8]{inputenc}
-% \usepackage[T1]{fontenc}
 \usepackage[russian,english]{babel}
-\usepackage[normalem]{ulem}
-\usepackage[inline]{enumitem}
-\usepackage{amssymb}
-\usepackage{adjustbox}
 \usepackage[table]{xcolor}
-\usepackage[yyyymmdd,hhmmss]{datetime}
-\usepackage{eso-pic}
 \usepackage{longtable}
 \usepackage{multirow}
-\usepackage{arydshln}
-\usepackage{array}
 \usepackage{bigdelim}
+\usepackage{arydshln}
 
 \usepackage{fontspec}
-\setmainfont{Helvetica}
-%\setmainfont{Arial Unicode MS}
+\setmainfont{Liberation Sans}
 
 \setlength{\parindent}{0pt}
 \setlength{\tabcolsep}{3pt}
@@ -50,8 +41,8 @@
 \BLOCK{set previous = namespace(payor = "",method="",identifier="",section="")}
 {\renewcommand{\arraystretch}{1.5}
 \begin{longtable}[l]{p{0.07in} p{2in} p{3.45in} p{0.4in} p{0.5in} p{0.5in}l}
-    & \large Служба/Service & ~ & ~ & \multicolumn{2}{l}{\large Record \#} & \tabularnewline 
-    & \multicolumn{4}{l}{\large Число/Date} & & \tabularnewline
+    & \large Служба/Service & \large \VAR{description} & ~ & \multicolumn{2}{l}{\large Record \#} & \tabularnewline 
+    & \large Число/Date & \large \VAR{date} & & & & \tabularnewline
 \end{longtable}
 }
 
@@ -75,8 +66,8 @@
     \BLOCK{set method = row["method"]}
     \BLOCK{set identifier = row["identifier"]}
     \BLOCK{set section = row["section"]}
-    \BLOCK{set sectionName = row["section\_name"]}
-    \BLOCK{set numberOfItems = row["number\_of\_items"]}
+    \BLOCK{set sectionName = row["section_name"]}
+    \BLOCK{set numberOfItems = row["number_of_items"]}
     \BLOCK{set amount = row["amount"]}
     \BLOCK{set total = row["total"]}
     \BLOCK{set purpose = row["purpose"]}

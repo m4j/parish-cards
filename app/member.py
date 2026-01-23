@@ -1,70 +1,84 @@
 from sys import argv
+
+from types import SimpleNamespace
 from . import stjb
 import re
 import os
 import sys
+from . import db
+from .models import Card
 
 class Member(stjb.AbstractMember):
 
-    sql_members_by_name = """select * from member_v c
-            where c.last_name like :name or
-                  c.first_name like :name or
-                  c.other_name like :name or
-                  c.middle_name like :name or
-                  c.maiden_name like :name or
-                  c.ru_last_name like :name or
-                  c.ru_maiden_name like :name or
-                  c.ru_first_name like :name or
-                  c.ru_patronymic_name like :name
-             order by last_name, first_name"""
+    model = Card
 
-    sql_member_by_guid = "select * from member_v where guid = :guid"
-
-    sql_payments_by_member = """select * from payment_sub_dues
-                where last_name like :lname AND
-                      first_name like :fname
-                 order by paid_from, paid_through"""
+    @classmethod
+    def find_all_by_name(cls, name):
+        selected = f'%{name}%'
+        rows = db.session.scalars(
+            db.select(Card).filter(
+                db.or_(
+                    Card.last_name.like(selected),
+                    Card.first_name.like(selected),
+                    Card.other_name.like(selected),
+                    Card.middle_name.like(selected),
+                    Card.maiden_name.like(selected),
+                    Card.ru_last_name.like(selected),
+                    Card.ru_maiden_name.like(selected),
+                    Card.ru_first_name.like(selected),
+                    Card.ru_other_name.like(selected),
+                    Card.ru_patronymic_name.like(selected)
+                )
+            ).order_by(
+                Card.last_name, Card.first_name
+            )).all()
+        return [cls(row) for row in rows]
 
     def _format_name(self, first, last, ru_first, ru_patronymic, ru_last, status):
         ru_name = ru_patronymic
         ru_name = '' if ru_name is None else (' ' + ru_name)
-        name = '%s, %s (%s, %s%s)' % (last, first, ru_last, ru_first, ru_name)
+        if ru_name:
+            name = '%s, %s (%s, %s%s)' % (last, first, ru_last, ru_first, ru_name)
+        else:
+            name = '%s, %s' % (last, first)
         return f'{name} †' if status == 'Deceased' else name
 
     def format_name(self):
         return self._format_name(
-            first=self['first_name'],
-            last=self['last_name'],
-            ru_first=self['ru_first_name'],
-            ru_patronymic=self['ru_patronymic_name'],
-            ru_last=self['ru_last_name'],
-            status=self['member_status']
+            first=self.row.first_name,
+            last=self.row.last_name,
+            ru_first=self.row.ru_first_name,
+            ru_patronymic=self.row.ru_patronymic_name,
+            ru_last=self.row.ru_last_name,
+            status=self.row.person.status
         )
 
     def format_spouse_name(self):
+        spouse_card = self.row.person.spouse.card
         return self._format_name(
-            first=self['spouse_first_name'],
-            last=self['spouse_last_name'],
-            ru_first=self['ru_spouse_first_name'],
-            ru_patronymic=self['ru_spouse_patronymic_name'],
-            ru_last=self['ru_spouse_last_name'],
-            status=self['spouse_status']
+            first=self.row.person.spouse.first,
+            last=self.row.person.spouse.last,
+            ru_first=spouse_card.ru_first_name if spouse_card else None,
+            ru_patronymic=spouse_card.ru_patronymic_name if spouse_card else None,
+            ru_last=spouse_card.ru_last_name if spouse_card else None,
+            status=self.row.person.spouse.status
         )
 
     @property
     def member_from(self):
-        return self['membership_from'] or stjb.DISTANT_PAST
+        return self.row.membership_from or stjb.DISTANT_PAST
 
     def historical_payments(self):
-        historical_paid_thru = self['dues_paid_through'] or stjb.DISTANT_PAST
-        return [{
-                'Date' : None,
-                'Amount' : None,
-                'Identifier' : None,
-                'Method' : None,
-                'Paid_From' : self.member_from,
-                'Paid_Through' : historical_paid_thru,
-                }]
+        historical_paid_thru = self.row.dues_paid_through or stjb.DISTANT_PAST
+        p_dict = {
+                'date' : None,
+                'amount' : None,
+                'identifier' : None,
+                'method' : None,
+                'paid_from' : self.member_from,
+                'paid_through' : historical_paid_thru,
+                }
+        return [SimpleNamespace(**p_dict)]
 
     def format_card(self):
         return (
@@ -77,41 +91,43 @@ class Member(stjb.AbstractMember):
     def format_details_header(self):
         left = []
         right = []
-        status = self['member_status']
-        dues_amount = self['dues_amount']
+        status = self.row.person.status
+        dues_amount = self.row.dues_amount
         name = self.format_name()
         left.append(f'✼ {name}')
         right.append(f'{status}, ${dues_amount}')
-        if self['spouse_first_name'] and self['spouse_last_name']:
+        if self.row.person.spouse:
             spouse = self.format_spouse_name()
             left.append(f'  {spouse}')
-            spouse_status = self['spouse_status']
-            spouse_type = self['spouse_type']
+            spouse_status = self.row.person.spouse.status
+            if not self.row.person.spouse.card:
+                spouse_status = 'not a member'
+            spouse_type = 'Wife' if self.row.person.gender == 'M' else 'Husband'
             right.append(f'{spouse_type}, {spouse_status}')
         return stjb.format_two_columns(left, right, 59)
 
     def format_details_footer(self):
         left = []
-        left.append(self['Address'])
-        city = self['City']
-        state = self['State_Region']
-        postal_code = self['Postal_Code'] or ''
-        plus4 = self['Plus_4']
+        left.append(self.row.person.address)
+        city = self.row.person.city
+        state = self.row.person.state_region
+        postal_code = self.row.person.postal_code or ''
+        plus4 = self.row.person.plus_4
         zip_code = postal_code + (f'-{plus4}' if plus4 else '')
         city_state_zip = f'{city}, {state} {zip_code}'
         left.append(city_state_zip)
-        member_from = stjb.format_date(self['Membership_From']) or '?'
+        member_from = stjb.format_date(self.row.membership_from) or '?'
         left.append('')
         left.append(f'Member from: {member_from}')
 
         right = []
-        home_phone = self['Home_Phone']
+        home_phone = self.row.person.home_phone
         if home_phone:
             right.append(f'{home_phone} (home)')
-        mobile_phone = self['Mobile_Phone']
+        mobile_phone = self.row.person.mobile_phone
         if mobile_phone:
             right.append(f'{mobile_phone} (mobile)')
-        email_address = self['EMail_Address']
+        email_address = self.row.person.email
         if email_address:
             addresses = re.split(',|;| ', email_address)
             addresses = [addr for addr in addresses if addr != '']
@@ -120,9 +136,9 @@ class Member(stjb.AbstractMember):
 
     @property
     def fname(self):
-        return self['first_name']
+        return self.row.first_name
 
     @property
     def lname(self):
-        return self['last_name']
+        return self.row.last_name
 

@@ -3,8 +3,6 @@
 
 {% block page_content %}
 
-    {% include "search_form.html" %}
-
     <div style="margin-top: 20px;"/>
 
     {% for message in get_flashed_messages() %}
@@ -14,9 +12,30 @@
         </div>
     {% endfor %}
     
-    <div class="list-group">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
         {% for member in members %}
-        <a href="{{ url_for(member_url, guid=member['GUID']) }}" class="list-group-item">{{ member.format_name() }}</a>
+            <tr>
+                <td style="vertical-align: middle;">
+                    <a href="{{ url_for(member_url, guid=member.guid) }}">{{ member.format_name() }}</a>
+                </td>
+                <td style="vertical-align: middle;">
+                    {% if edit_url %}
+                    <a href="{{ url_for(edit_url, guid=member.guid) }}" class="btn btn-sm btn-default" title="Edit Payment">
+                        <span class="glyphicon glyphicon-edit"></span>
+                    </a>
+                    {% else %}
+                        <span>&nbsp;</span>
+                    {% endif %}
+                </td>
+            </tr>
         {% endfor %}
-    </div>
+        </tbody>
+    </table>
 {% endblock %}

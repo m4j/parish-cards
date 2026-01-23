@@ -53,6 +53,9 @@
                         <a href="{{ url_for('.edit_record_sheet', record_id=record.identifier) }}" class="btn btn-sm btn-default" title="Edit Record Sheet">
                             <span class="glyphicon glyphicon-edit"></span>
                         </a>
+                        <a href="#" class="btn btn-sm btn-default print-record-sheet" title="Print Record Sheet" data-record-id="{{ record.identifier }}">
+                            <span class="glyphicon glyphicon-print"></span>
+                        </a>
                     </td>
                 </tr>
                 <tr style="padding: 0;">
@@ -106,6 +109,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+    });
+    
+    // Handle print record sheet button clicks
+    $('.print-record-sheet').on('click', function(e) {
+        e.preventDefault();
+        
+        // Get the record ID from the button
+        const recordId = $(this).data('record-id');
+
+        // Make AJAX request to get PDF data
+        loadPdfFromUrl(`/report/record_sheet/${recordId}/print_ajax`);
     });
 });
 </script>
