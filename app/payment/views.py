@@ -231,7 +231,8 @@ def search_prosphora():
             (Prosphora.ru_first_name.ilike(f'%{query}%')) |
             (Prosphora.ru_family_name.ilike(f'%{query}%')) |
             (Prosphora.p_last_name.ilike(f'%{query}%')) |
-            (Prosphora.p_first_name.ilike(f'%{query}%'))
+            (Prosphora.p_first_name.ilike(f'%{query}%')) |
+            (Prosphora.notes.ilike(f'%{query}%'))
         )
     
     # Limit results and order by name

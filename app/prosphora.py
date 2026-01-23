@@ -22,7 +22,8 @@ class Member(stjb.AbstractMember):
                     Prosphora.family_name.like(selected),
                     Prosphora.ru_last_name.like(selected),
                     Prosphora.ru_first_name.like(selected),
-                    Prosphora.ru_family_name.like(selected)
+                    Prosphora.ru_family_name.like(selected),
+                    Prosphora.notes.like(selected)
                 )
             ).order_by(
                 Prosphora.last_name, Prosphora.first_name

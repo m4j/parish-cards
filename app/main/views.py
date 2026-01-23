@@ -1,9 +1,10 @@
-from flask import render_template, abort, session, redirect, url_for, flash
+from flask import render_template, abort, session, redirect, url_for, flash, jsonify, request
 from .. import stjb
-from .. import db_path
+from .. import db
 from .. import member as m
 from .. import prosphora as p
 from . import main
+from ..models import Person
 from .forms import SearchForm, ProsphoraForm
 
 @main.route('/', methods=['GET', 'POST'])
@@ -75,3 +76,20 @@ def book_edit(guid=None):
             flash('Error updating prosphora entry.', 'error')
     
     return render_template('main/edit_prosphora.html', form=form)
+
+@main.route('/search_people')
+def search_people():
+    """Search for people by name and return JSON results"""
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify([])
+    
+    # Build the query
+    q = db.select(Person)
+    if query:
+        q = q.filter(
+            Person.last.ilike(f'%{query}%') |
+            Person.first.ilike(f'%{query}%')
+        )
+    people = db.session.scalars(q.order_by(Person.last, Person.first).limit(10)).all()
+    return jsonify([{'value': person.full_name(), 'text': person.full_name()} for person in people])

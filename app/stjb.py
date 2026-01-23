@@ -266,3 +266,13 @@ def load_payment_methods():
     rows = db.session.scalars(db.select(PaymentMethod)).all()
     return reduce(_add_payment_method, rows, {})
 
+def get_last_name(member_name):
+    if member_name:
+        return member_name.split(',')[0].strip()
+    return None
+
+def get_first_name(member_name):
+    if member_name:
+        parts = member_name.split(',')
+        return parts[1].strip() if len(parts) > 1 else None
+    return None

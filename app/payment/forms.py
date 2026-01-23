@@ -7,6 +7,7 @@ from .. import db
 from ..models import PaymentMethod, PaymentSubMiscCategory
 from ..models import PaymentSubDues, PaymentSubProsphora, PaymentSubMisc
 from ..models import dues_range_containing_date, prosphora_range_containing_date
+from ..stjb import get_first_name, get_last_name
 import uuid
 
 class PaymentSubMixin:
@@ -39,15 +40,10 @@ class PaymentRangeSubMixin:
             raise ValidationError(f'Date within another paid range')
 
     def get_last_name(self):
-        if self.member_name.data:
-            return self.member_name.data.split(',')[0].strip()
-        return None
+        return get_last_name(self.member_name.data)
 
     def get_first_name(self):
-        if self.member_name.data:
-            parts = self.member_name.data.split(',')
-            return parts[1].strip() if len(parts) > 1 else None
-        return None
+        return get_first_name(self.member_name.data)
 
 class PaymentSubDuesForm(PaymentSubMixin, PaymentRangeSubMixin, Form):
     def does_range_with_date_exists(self, date):

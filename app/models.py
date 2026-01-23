@@ -33,8 +33,8 @@ class Service(db.Model):
 
 class Prosphora(IdentityMixin, db.Model):
     __tablename__ = 'prosphora'
-    last_name           = db.Column(db.String)
-    first_name          = db.Column(db.String)
+    last_name           = db.Column(db.String, default='')
+    first_name          = db.Column(db.String, default='')
     family_name         = db.Column(db.String)
     ru_last_name        = db.Column(db.String)
     ru_first_name       = db.Column(db.String)
@@ -43,7 +43,7 @@ class Prosphora(IdentityMixin, db.Model):
     p_first_name        = db.Column(db.String)
     quantity            = db.Column(db.Integer, default=1)
     paid_through        = db.Column(db.String)
-    liturgy             = db.Column(db.String, db.ForeignKey('service.name'))
+    liturgy             = db.Column(db.String, db.ForeignKey('service.name'), nullable=False)
     service             = db.relationship('Service', uselist=False, back_populates='prosphoras')
     notes               = db.Column(db.String)
     person              = db.relationship('Person', back_populates='prosphora')

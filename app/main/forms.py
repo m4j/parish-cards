@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, IntegerField, SelectField, TextAreaField
 from wtforms.validators import DataRequired, Optional, ValidationError
-from ..models import Prosphora, Service
+from ..models import Prosphora, Service, find_person
+from ..stjb import get_first_name, get_last_name
 from .. import db
 import uuid
 
@@ -28,11 +29,10 @@ class ProsphoraForm(FlaskForm):
     ru_last_name = StringField('Last Name (Russian)', validators=[Optional()])
     ru_first_name = StringField('First Name (Russian)', validators=[Optional()])
     ru_family_name = StringField('Family Name (Russian)', validators=[Optional()])
-    p_last_name = StringField('Person Last Name', validators=[Optional()])
-    p_first_name = StringField('Person First Name', validators=[Optional()])
-    quantity = IntegerField('Quantity', validators=[Optional()], default=1)
+    person_name = StringField(label=None, validators=[Optional()])
+    quantity = IntegerField('Quantity', validators=[DataRequired()], default=1)
     paid_through = StringField('Paid Through', validators=[Optional()])
-    liturgy = SelectField('Liturgy', validators=[Optional()], choices=[])
+    liturgy = SelectField('Liturgy', validators=[DataRequired()], choices=[])
     notes = TextAreaField('Notes', validators=[Optional()])
     save_changes = SubmitField('Save Changes')
 
@@ -46,7 +46,7 @@ class ProsphoraForm(FlaskForm):
         services = db.session.scalars(
             db.select(Service).order_by(Service.name)
         ).all()
-        self.liturgy.choices = [('', '')] + [(service.name, service.name) for service in services]
+        self.liturgy.choices = [(service.name, service.name) for service in services]
 
     def validate_last_name(self, field):
         """Validate that the primary key (last_name, first_name) doesn't already exist."""
@@ -74,6 +74,10 @@ class ProsphoraForm(FlaskForm):
         if not prosphora:
             return None
         form = cls(obj=prosphora)
+        if prosphora.person:
+            form.person_name.data = prosphora.person.full_name()
+        else:
+            form.person_name.data = None
         return form
 
     def save(self, guid=None):
@@ -92,16 +96,22 @@ class ProsphoraForm(FlaskForm):
 
         # Update fields
         prosphora.last_name = self.last_name.data
-        prosphora.first_name = self.first_name.data or None
+        prosphora.first_name = self.first_name.data
         prosphora.family_name = self.family_name.data or None
         prosphora.ru_last_name = self.ru_last_name.data or None
         prosphora.ru_first_name = self.ru_first_name.data or None
         prosphora.ru_family_name = self.ru_family_name.data or None
-        prosphora.p_last_name = self.p_last_name.data or None
-        prosphora.p_first_name = self.p_first_name.data or None
+        if self.person_name.data:
+            person = find_person(
+                get_first_name(self.person_name.data),
+                get_last_name(self.person_name.data))
+            if person:
+                prosphora.person = person
+            else:
+                prosphora.person = None
         prosphora.quantity = self.quantity.data or 1
         prosphora.paid_through = self.paid_through.data or None
-        prosphora.liturgy = self.liturgy.data or None
+        prosphora.liturgy = self.liturgy.data
         prosphora.notes = self.notes.data or None
 
         db.session.commit()

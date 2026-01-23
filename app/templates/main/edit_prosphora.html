@@ -73,10 +73,10 @@
         <div class="panel-body">
             <div class="row">
                 <div class="col-md-6">
-                    {{ wtf.form_field(form.p_last_name) }}
-                </div>
-                <div class="col-md-6">
-                    {{ wtf.form_field(form.p_first_name) }}
+                    <div class="form-group" style="display: flex; align-items: center;">
+                        <label class="control-label" style="margin-right: 10px; margin-bottom: 0; white-space: nowrap;">Book belongs to</label>
+                        <div style="flex: 1;">{{ form.person_name }}</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -117,3 +117,57 @@
 </form>
 {% endblock %}
 
+{% block scripts %}
+{{ super() }}
+<script>
+
+$(document).ready(function() {
+    initializeNameSelects();
+});
+
+// Initialize Selectize on name fields
+function initializeNameSelects() {
+    $('input[name="person_name"]').each(function() {
+        const $input = $(this);
+        const searchUrl = '{{ url_for("main.search_people") }}'
+        
+        // Initialize Selectize on name field
+        $input.selectize({
+            placeholder: 'Search by name (English)...',
+            valueField: 'value',
+            labelField: 'text',
+            searchField: ['text'],
+            create: false,
+            maxItems: 1,
+            delimiter: ';', // need this because our values can contain commas
+            respect_word_boundaries: false,
+            load: function(query, callback) {
+                if (!query.length) return callback();
+                
+                $.ajax({
+                    url: searchUrl,
+                    data: { q: query },
+                    type: 'GET',
+                    error: function() {
+                        callback();
+                    },
+                    success: function(res) {
+                        callback(res);
+                    }
+                });
+            }
+        });
+
+        // If there's an initial value, set it
+        if ($input.val()) {
+            const selectize = $input[0].selectize;
+            selectize.addItem({
+                value: $input.val(),
+                text: $input.val()
+            });
+        }
+    });
+}
+
+</script>
+{% endblock %}
