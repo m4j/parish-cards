@@ -6,7 +6,7 @@ from ..validators import ISOYearMonthValidator, ISOYearMonthDayValidator
 from .. import db
 from ..models import PaymentMethod, PaymentSubMiscCategory
 from ..models import PaymentSubDues, PaymentSubProsphora, PaymentSubMisc
-from ..models import dues_range_containing_date, prosphora_range_containing_date
+from ..models import dues_range_containing_date, prosphora_range_containing_date, find_prosphora
 from ..stjb import get_first_name, get_last_name
 import uuid
 
@@ -235,8 +235,9 @@ class MultiPaymentForm(FlaskForm):
                 
             sub.amount = form_data['amount']
             sub.comment = form_data.get('comment') or None
-            sub.last_name = entry.form.get_last_name() or ''    # FIXME: use person
-            sub.first_name = entry.form.get_first_name() or ''
+            prosphora = find_prosphora(entry.form.get_first_name() or '', entry.form.get_last_name() or '')
+            if prosphora is not None:
+                sub.membership = prosphora
             sub.paid_from = form_data['paid_from']
             sub.paid_through = form_data['paid_through']
             sub.quantity = form_data['quantity']

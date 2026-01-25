@@ -768,6 +768,12 @@ def find_member(first_name, last_name):
                 Card.i_first_name==first_name, Card.i_last_name==last_name
                 )).scalar()
 
+def find_prosphora(first_name, last_name):
+    return db.session.execute(
+            db.select(Prosphora).filter(
+                Prosphora.first_name==first_name, Prosphora.last_name==last_name
+                )).scalar()
+
 def find_person(first_name, last_name):
     return db.session.execute(
             db.select(Person).filter(
