@@ -219,8 +219,8 @@ class MultiPaymentForm(FlaskForm):
                 
             sub.amount = form_data['amount']
             sub.comment = form_data.get('comment') or None
-            sub.last_name = entry.form.get_last_name()
-            sub.first_name = entry.form.get_first_name()
+            sub.last_name = entry.form.get_last_name() or ''    # FIXME: use person
+            sub.first_name = entry.form.get_first_name() or ''
             sub.paid_from = form_data['paid_from']
             sub.paid_through = form_data['paid_through']
 
@@ -235,8 +235,8 @@ class MultiPaymentForm(FlaskForm):
                 
             sub.amount = form_data['amount']
             sub.comment = form_data.get('comment') or None
-            sub.last_name = entry.form.get_last_name()
-            sub.first_name = entry.form.get_first_name()
+            sub.last_name = entry.form.get_last_name() or ''    # FIXME: use person
+            sub.first_name = entry.form.get_first_name() or ''
             sub.paid_from = form_data['paid_from']
             sub.paid_through = form_data['paid_through']
             sub.quantity = form_data['quantity']
