@@ -60,6 +60,10 @@ class Member(stjb.AbstractMember):
     def member_from(self):
         return stjb.DISTANT_PAST
 
+    @property
+    def member_through(self):
+        return stjb.DISTANT_FUTURE
+
     def format_card(self):
         return (
             f'{self.format_details_header()}\n'

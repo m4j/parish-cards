@@ -49,7 +49,12 @@ def member(guid):
     entity = m.Member.find_by_guid(guid)
     if not entity:
         abort(404)
-    return render_template('member.html', member=entity)
+    spouse_card = entity.row.person.spouse.card if entity.row.person.spouse else None
+    if spouse_card:
+        spouse = m.Member(row=spouse_card)
+    else:
+        spouse = None
+    return render_template('member.html', member=entity, spouse=spouse)
 
 @main.route('/book/<guid>')
 def book(guid):

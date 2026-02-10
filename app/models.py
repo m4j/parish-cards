@@ -172,7 +172,9 @@ class Person(IdentityMixin, db.Model):
     marriage       = db.relationship(
         'Marriage',
         uselist=False,
-        primaryjoin = 'and_(Marriage.status == "Active", or_(and_(foreign(Person.last) == Marriage.husband_last, foreign(Person.first) == Marriage.husband_first), and_(foreign(Person.last) == Marriage.wife_last, foreign(Person.first) == Marriage.wife_first)))'
+        primaryjoin = '\
+            or_(and_(foreign(Person.last) == Marriage.husband_last, foreign(Person.first) == Marriage.husband_first),\
+                and_(foreign(Person.last) == Marriage.wife_last, foreign(Person.first) == Marriage.wife_first))'
     )
 
     __table_args__ = (
@@ -254,7 +256,6 @@ class Marriage(db.Model):
     husband_first  = db.Column(db.String)
     wife_last      = db.Column(db.String)
     wife_first     = db.Column(db.String)
-    status         = db.Column(db.String)
 
     @hybrid_property
     def i_husband_first(self):
@@ -292,10 +293,9 @@ class Marriage(db.Model):
     def _i_wife_last_comparator(cls):
         return CaseInsensitiveComparator(cls.wife_last)
 
-    def __init__(self, husband, wife, status='Active'):
+    def __init__(self, husband, wife):
         self.husband = husband
         self.wife = wife
-        self.status = status
 
     __table_args__ = (
         db.PrimaryKeyConstraint(
@@ -789,8 +789,7 @@ def find_active_marriage(h_first, h_last, w_first, w_last):
                     Marriage.i_husband_first == h_first,
                     Marriage.i_husband_last == h_last,
                     Marriage.i_wife_first == w_first,
-                    Marriage.i_wife_last == w_last,
-                    Marriage.status == 'Active'
+                    Marriage.i_wife_last == w_last
                     ))).scalar()
 
 def find_active_marriage_of_husband(first_name, last_name):
@@ -798,8 +797,7 @@ def find_active_marriage_of_husband(first_name, last_name):
             db.select(Marriage).filter(
                 db.and_(
                     Marriage.i_husband_first == first_name,
-                    Marriage.i_husband_last == last_name,
-                    Marriage.status == 'Active'
+                    Marriage.i_husband_last == last_name
                     ))).scalar()
 
 def find_active_marriage_of_wife(first_name, last_name):
@@ -807,8 +805,7 @@ def find_active_marriage_of_wife(first_name, last_name):
             db.select(Marriage).filter(
                 db.and_(
                     Marriage.i_wife_first == first_name,
-                    Marriage.i_wife_last == last_name,
-                    Marriage.status == 'Active'
+                    Marriage.i_wife_last == last_name
                     ))).scalar()
 
 def find_sub_dues_payments(fragment):

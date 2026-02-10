@@ -10,5 +10,17 @@
             line-height: 1.25;
         ">
 {{member.format_card()}}</pre>
+</div>
+{% if spouse %}
+    <div class="page-header">
+        <h3>{{ spouse.format_name()}}</h3>
     </div>
+    <div>
+        <pre style="
+            color: black;
+            line-height: 1.25;
+        ">
+{{spouse.format_card()}}</pre>
+</div>
+{% endif %}
 {% endblock %}

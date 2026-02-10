@@ -7,12 +7,13 @@ import uuid
 
 ARCHIVE_CELL = '...'
 DISTANT_PAST = '1970-01'
+DISTANT_FUTURE = '9999-12'
 FIRST_FROM = '2021-01'
 LAST_THRU = '2026-12'
 MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 MONTH_NUMBERS = ['01','02','03','04','05','06','07','08','09','10','11','12']
 MONTHS_DICT = { number : MONTHS[int(number)-1] for number in MONTH_NUMBERS }
-TABLE_CELL_WIDTH = 11
+TABLE_CELL_WIDTH = 13
 NON_MEMBER_CELL = f'{"" :░<{TABLE_CELL_WIDTH}}'
 
 class AbstractMember(ABC):
@@ -62,6 +63,11 @@ class AbstractMember(ABC):
     def member_from(self):
         pass
 
+    @property
+    @abstractmethod
+    def member_through(self):
+        pass
+
     def historical_payments(self):
         return []
 
@@ -95,10 +101,16 @@ class AbstractMember(ABC):
                 payments_this_month = cells[2]
                 if payments_this_month:
                     year_totals[j] = year_totals[j] + payments_this_month
-                cell1 = cells[0]
-                cell2 = cells[1]
-                row1 = f'{row1}{cell1:^{TABLE_CELL_WIDTH}} '
-                row2 = f'{row2}{cell2:^{TABLE_CELL_WIDTH}} '
+                def fit(s, w=TABLE_CELL_WIDTH):
+                    return (s[: w - 3] + '...') if len(s) > w else s
+                cell1 = f'{fit(cells[0]):^{TABLE_CELL_WIDTH}}'
+                cell2 = f'{fit(cells[1]):^{TABLE_CELL_WIDTH}}'
+                payments_date = f'{year}-{month_number}'
+                if payments_date < self.member_from or payments_date > self.member_through:
+                    cell1 = cell1.replace(' ', '░')
+                    cell2 = cell2.replace(' ', '░')
+                row1 = f'{row1}{cell1} '
+                row2 = f'{row2}{cell2} '
             buffer += row1 + '\n'
             buffer += row2 + '\n'
         formatted_year_totals = list(map(lambda t: f'${round(t, 2)}' if t else '', year_totals))
@@ -110,32 +122,27 @@ class AbstractMember(ABC):
         cell2 = ''
         payments_this_month = None
         payments_date = f'{year}-{month_number}'
-        member_from = self.member_from
-        if payments_date < member_from:
-            cell1 = NON_MEMBER_CELL
-            cell2 = cell1
-        else:
-            all_payments = self.payments + self.historical_payments()
-            info = self.payment_info(all_payments, payments_date)
-            if info is not None:
-                if info == (None, None, None, None, None):
-                    cell1 = ARCHIVE_CELL
-                    cell2 = ARCHIVE_CELL
+        all_payments = self.payments + self.historical_payments()
+        info = self.payment_info(all_payments, payments_date)
+        if info is not None:
+            if info == (None, None, None, None, None):
+                cell1 = ARCHIVE_CELL
+                cell2 = ARCHIVE_CELL
+            else:
+                method = info[0]
+                identifier = info[1] or ''
+                amount = info[2]
+                payments_this_month = info[3]
+                previous = self.payment_info(all_payments, date_of_previous_month(year, int(month_number)))
+                if info == previous:
+                    cell1 = '─╮ ' if month_number == '01' else '│'
+                    following = self.payment_info(all_payments, date_of_next_month(year, int(month_number)))
+                    cell2 = '▼'
+                    if info == following:
+                        cell2 = '     ╰─▶︎   ' if month_number == '12' else '│'
                 else:
-                    method = info[0]
-                    identifier = info[1] or ''
-                    amount = info[2]
-                    payments_this_month = info[3]
-                    previous = self.payment_info(all_payments, date_of_previous_month(year, int(month_number)))
-                    if info == previous:
-                        cell1 = '─╮ ' if month_number == '01' else '│'
-                        following = self.payment_info(all_payments, date_of_next_month(year, int(month_number)))
-                        cell2 = '▼'
-                        if info == following:
-                            cell2 = '     ╰─▶︎   ' if month_number == '12' else '│'
-                    else:
-                        cell1 = f' {method} {identifier}'.rstrip()
-                        cell2 = f'${amount}' if amount else '?'
+                    cell1 = f' {method} {identifier}'.rstrip()
+                    cell2 = f'${amount}' if amount else '?'
         return (cell1, cell2, payments_this_month)
 
     def format_legend(self):
@@ -143,7 +150,7 @@ class AbstractMember(ABC):
         right = []
 
         left.append(NON_MEMBER_CELL)
-        right.append('not a member')
+        right.append('not a member or former member')
 
         left.append(ARCHIVE_CELL)
         right.append('archived, see paper cards')

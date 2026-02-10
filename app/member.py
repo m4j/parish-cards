@@ -27,7 +27,9 @@ class Member(stjb.AbstractMember):
                     Card.ru_maiden_name.like(selected),
                     Card.ru_first_name.like(selected),
                     Card.ru_other_name.like(selected),
-                    Card.ru_patronymic_name.like(selected)
+                    Card.ru_patronymic_name.like(selected),
+                    Card.notes.like(selected),
+                    Card.membership_termination_reason.like(selected)
                 )
             ).order_by(
                 Card.last_name, Card.first_name
@@ -35,12 +37,10 @@ class Member(stjb.AbstractMember):
         return [cls(row) for row in rows]
 
     def _format_name(self, first, last, ru_first, ru_patronymic, ru_last, status):
-        ru_name = ru_patronymic
-        ru_name = '' if ru_name is None else (' ' + ru_name)
-        if ru_name:
-            name = '%s, %s (%s, %s%s)' % (last, first, ru_last, ru_first, ru_name)
-        else:
-            name = '%s, %s' % (last, first)
+        name = f'{last}, {first}'
+        if ru_first and ru_last:
+            ru_name = f'{ru_first} {ru_patronymic}' if ru_patronymic else ru_first
+            name = f'{name} ({ru_last}, {ru_name})'
         return f'{name} †' if status == 'Deceased' else name
 
     def format_name(self):
@@ -68,6 +68,10 @@ class Member(stjb.AbstractMember):
     def member_from(self):
         return self.row.membership_from or stjb.DISTANT_PAST
 
+    @property
+    def member_through(self):
+        return self.row.membership_through or stjb.DISTANT_FUTURE
+
     def historical_payments(self):
         historical_paid_thru = self.row.dues_paid_through or stjb.DISTANT_PAST
         p_dict = {
@@ -91,20 +95,21 @@ class Member(stjb.AbstractMember):
     def format_details_header(self):
         left = []
         right = []
-        status = self.row.person.status
+        status = 'former member' if self.row.membership_through else 'member'
         dues_amount = self.row.dues_amount
         name = self.format_name()
         left.append(f'✼ {name}')
-        right.append(f'{status}, ${dues_amount}')
+        right.append(f'{status} ${dues_amount}')
         if self.row.person.spouse:
             spouse = self.format_spouse_name()
-            left.append(f'  {spouse}')
-            spouse_status = self.row.person.spouse.status
-            if not self.row.person.spouse.card:
-                spouse_status = 'not a member'
-            spouse_type = 'Wife' if self.row.person.gender == 'M' else 'Husband'
-            right.append(f'{spouse_type}, {spouse_status}')
-        return stjb.format_two_columns(left, right, 59)
+            spouse_type = 'wife' if self.row.person.gender == 'M' else 'husband'
+            left.append(f'  {spouse} ({spouse_type})')
+            spouse_status = 'not a member'
+            if self.row.person.spouse.card:
+                spouse_status = 'former member' if self.row.person.spouse.card.membership_through else 'member'
+                spouse_status = f'{spouse_status} ${self.row.person.spouse.card.dues_amount}'
+            right.append(f'{spouse_status}')
+        return stjb.format_two_columns(left, right, 64)
 
     def format_details_footer(self):
         left = []
@@ -116,9 +121,14 @@ class Member(stjb.AbstractMember):
         zip_code = postal_code + (f'-{plus4}' if plus4 else '')
         city_state_zip = f'{city}, {state} {zip_code}'
         left.append(city_state_zip)
-        member_from = stjb.format_date(self.row.membership_from) or '?'
         left.append('')
-        left.append(f'Member from: {member_from}')
+        member_from = stjb.format_date(self.row.membership_from) or '?'
+        member_through = stjb.format_date(self.row.membership_through)
+        member_term = f'Member from {member_from}'
+        if member_through:
+            member_term = f'{member_term} – {member_through}'
+            member_term = f'{member_term} ({self.row.membership_termination_reason})'
+        left.append(f'{member_term}')
 
         right = []
         home_phone = self.row.person.home_phone
