@@ -243,6 +243,7 @@
     content: "\00a0";
 }
 .payments-table th.month {
+    font-family: "Source Code Pro";
     text-align: left;
     min-width: 3em;
 }
@@ -279,11 +280,11 @@
     color: #888;
 }
 .payments-table .cell.jan-continuity {
-    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+    font-family: "Source Code Pro";
     padding-left: 0;
 }
 .payments-table .cell.dec-continuity {
-    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+    font-family: "Source Code Pro";
     padding-left: 1.8em;
 }
 .payments-table .cell.range-amount {
@@ -291,7 +292,7 @@
     border-top: none;
 }
 .payments-table .cell.continuity {
-    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+    font-family: "Source Code Pro";
     padding-left: 0.6em;
     border-bottom: none;
     border-top: none;

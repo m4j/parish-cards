@@ -1,0 +1,9 @@
+@font-face {
+    font-family: "Source Code Pro";
+    src: url("/static/Source_Code_Pro/SourceCodePro-VariableFont_wght.ttf")
+      format("woff2-variations");
+    font-weight: 125 950;
+    font-stretch: 75% 125%;
+  
+    font-style: normal;
+  }
