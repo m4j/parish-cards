@@ -9,8 +9,16 @@
             color: black;
             line-height: 1.25;
         ">
-{{member.format_card()}}</pre>
-</div>
+{{ member.format_card() }}</pre>
+    </div>
+    <div class="page-header">
+        <h3>{{ member.format_name()}}</h3>
+    </div>
+    <div>
+        <div class="payments-table-wrapper">
+            {{ member.format_html_payments_table() | safe }}
+        </div>
+    </div>
 {% if spouse %}
     <div class="page-header">
         <h3>{{ spouse.format_name()}}</h3>
@@ -20,7 +28,15 @@
             color: black;
             line-height: 1.25;
         ">
-{{spouse.format_card()}}</pre>
-</div>
+{{ spouse.format_card() }}</pre>
+    </div>
+    <div class="page-header">
+        <h3>{{ spouse.format_name()}}</h3>
+    </div>
+    <div>
+        <div class="payments-table-wrapper">
+            {{ spouse.format_html_payments_table() | safe }}
+        </div>
+    </div>
 {% endif %}
 {% endblock %}

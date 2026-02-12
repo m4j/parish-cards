@@ -218,4 +218,87 @@
     #loading-overlay {
         display: none !important;
     }
+    pre{
+      font-size: 0.88em;
+    }
 }
+
+/* Payments table (HTML version of ASCII card) */
+.payments-table-wrapper {
+    margin-top: 1.5rem;
+}
+.payments-table {
+    border-collapse: collapse;
+    font-size: 1em;
+    line-height: 1.25;
+}
+.payments-table th,
+.payments-table td {
+    border: 1px solid #ccc;
+    padding: 0 6px;
+    text-align: center;
+    min-width: 7em;
+}
+.payments-table td:empty::after{
+    content: "\00a0";
+}
+.payments-table th.month {
+    text-align: left;
+    min-width: 3em;
+}
+.payments-table tbody tr.cell1-row th,
+.payments-table tbody tr.cell1-row td {
+    border-bottom: none;
+}
+.payments-table tbody tr.cell2-row th,
+.payments-table tbody tr.cell2-row td {
+    border-top: none;
+    border-bottom: none;
+}
+.payments-table thead th {
+    border: 1px solid black;
+    border-top-width: 3px;
+    border-left-color: #ccc;
+    border-right-color: #ccc;
+    padding: 8px;
+}
+.payments-table tfoot th,
+.payments-table tfoot td {
+    font-weight: bold;
+    border: 1px solid black;
+    border-bottom-width: 3px;
+    border-left-color: #ccc;
+    border-right-color: #ccc;
+    padding: 8px;
+}
+.payments-table .cell-amount {
+    border-bottom: none;
+}
+.payments-table .cell.non-member {
+    background-color: #eee;
+    color: #888;
+}
+.payments-table .cell.jan-continuity {
+    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+    padding-left: 0;
+}
+.payments-table .cell.dec-continuity {
+    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+    padding-left: 1.8em;
+}
+.payments-table .cell.range-amount {
+    border-bottom: none;
+    border-top: none;
+}
+.payments-table .cell.continuity {
+    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+    padding-left: 0.6em;
+    border-bottom: none;
+    border-top: none;
+}
+.payments-table tr.paid-through th.month {
+    font-weight: bold;
+}
+/*
+    border: 1px solid #ccc;
+    */

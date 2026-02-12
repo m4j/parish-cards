@@ -1,11 +1,12 @@
 import decimal
+import html as html_module
 from abc import ABC, abstractmethod
 from functools import reduce
 from . import db
 from .models import PaymentMethod, PaymentSubMiscCategory
 import uuid
+from collections import namedtuple
 
-ARCHIVE_CELL = '...'
 DISTANT_PAST = '1970-01'
 DISTANT_FUTURE = '9999-12'
 FIRST_FROM = '2021-01'
@@ -14,7 +15,15 @@ MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 
 MONTH_NUMBERS = ['01','02','03','04','05','06','07','08','09','10','11','12']
 MONTHS_DICT = { number : MONTHS[int(number)-1] for number in MONTH_NUMBERS }
 TABLE_CELL_WIDTH = 13
-NON_MEMBER_CELL = f'{"" :░<{TABLE_CELL_WIDTH}}'
+
+Cell = namedtuple('Cell', ['text', 'cls'])
+
+NON_MEMBER_CELL = Cell(f'{"" :░<{TABLE_CELL_WIDTH}}', 'non-member')
+ARCHIVE_CELL = Cell('...', 'archive')
+JAN_CONTINUITY_CELL = Cell('─╮ ', 'jan-continuity')
+DEC_CONTINUITY_CELL = Cell('      ╰─▶    ', 'dec-continuity')
+CONTINUITY_CELL = Cell('│', 'continuity')
+DOWN_ARROW_CELL = Cell('▼', 'continuity end-of-range')
 
 class AbstractMember(ABC):
 
@@ -103,8 +112,8 @@ class AbstractMember(ABC):
                     year_totals[j] = year_totals[j] + payments_this_month
                 def fit(s, w=TABLE_CELL_WIDTH):
                     return (s[: w - 3] + '...') if len(s) > w else s
-                cell1 = f'{fit(cells[0]):^{TABLE_CELL_WIDTH}}'
-                cell2 = f'{fit(cells[1]):^{TABLE_CELL_WIDTH}}'
+                cell1 = f'{fit(cells[0].text):^{TABLE_CELL_WIDTH}}'
+                cell2 = f'{fit(cells[1].text):^{TABLE_CELL_WIDTH}}'
                 payments_date = f'{year}-{month_number}'
                 if payments_date < self.member_from or payments_date > self.member_through:
                     cell1 = cell1.replace(' ', '░')
@@ -117,9 +126,61 @@ class AbstractMember(ABC):
         buffer += format_footer(formatted_year_totals)
         return buffer
 
-    def format_payment_cells_for(self, year, month_number):
-        cell1 = ''
-        cell2 = ''
+    def format_html_payments_table(self):
+        first_year = int(FIRST_FROM.split('-')[0])
+        last_year = int(LAST_THRU.split('-')[0])
+        years = list(range(first_year, last_year + 1))
+        year_totals = [0] * len(years)
+        paid_through_m = self.paid_through_month()
+
+        def esc(s):
+            return html_module.escape(str(s))
+
+        parts = ['<table class="payments-table">']
+        # Header row: empty corner + year headers
+        parts.append('<thead><tr><th></th>')
+        for y in years:
+            parts.append(f'<th class="year">{esc(y)}</th>')
+        parts.append('</tr></thead><tbody>')
+
+        for i, month in enumerate(MONTHS):
+            month_number = MONTH_NUMBERS[i]
+            is_paid_through = month == paid_through_m
+            month_label = f'{month} *' if is_paid_through else month
+            row1_cells = []
+            row2_cells = []
+            for j, year in enumerate(years):
+                cells = self.format_payment_cells_for(year, month_number)
+                payments_this_month = cells[2]
+                if payments_this_month:
+                    year_totals[j] = year_totals[j] + payments_this_month
+                cell1 = cells[0]
+                cell2 = cells[1]
+                payments_date = f'{year}-{month_number}'
+                out_of_range = payments_date < self.member_from or payments_date > self.member_through
+                cls1 = ' non-member' if out_of_range else ''
+                cls2 = cls1
+                cls1 = f'{cls1} {cell1.cls}'
+                cls2 = f'{cls2} {cell2.cls}'
+                row1_cells.append(f'<td class="cell{cls1}">{esc(cell1.text)}</td>')
+                row2_cells.append(f'<td class="cell{cls2}">{esc(cell2.text)}</td>')
+            row1_cls = 'paid-through' if is_paid_through else ''
+            parts.append(f'<tr class="cell1-row {row1_cls}"><th class="month">{esc(month_label)}</th>')
+            parts.append(''.join(row1_cells))
+            parts.append('</tr>')
+            parts.append('<tr class="cell2-row"><th class="month"></th>')
+            parts.append(''.join(row2_cells))
+            parts.append('</tr>')
+        parts.append('</tbody><tfoot><tr><th></th>')
+        for t in year_totals:
+            val = f'${round(t, 2)}' if t else ''
+            parts.append(f'<td class="total">{esc(val)}</td>')
+        parts.append('</tr></tfoot></table>')
+        return ''.join(parts)
+
+    def format_payment_cells_for(self, year, month_number) -> tuple[Cell, Cell, float]:
+        cell1 = Cell('', '')
+        cell2 = Cell('', '')
         payments_this_month = None
         payments_date = f'{year}-{month_number}'
         all_payments = self.payments + self.historical_payments()
@@ -134,25 +195,25 @@ class AbstractMember(ABC):
                 amount = info[2]
                 payments_this_month = info[3]
                 previous = self.payment_info(all_payments, date_of_previous_month(year, int(month_number)))
+                following = self.payment_info(all_payments, date_of_next_month(year, int(month_number)))
                 if info == previous:
-                    cell1 = '─╮ ' if month_number == '01' else '│'
-                    following = self.payment_info(all_payments, date_of_next_month(year, int(month_number)))
-                    cell2 = '▼'
+                    cell1 = JAN_CONTINUITY_CELL if month_number == '01' else CONTINUITY_CELL
+                    cell2 = DOWN_ARROW_CELL
                     if info == following:
-                        cell2 = '     ╰─▶︎   ' if month_number == '12' else '│'
+                        cell2 = DEC_CONTINUITY_CELL if month_number == '12' else CONTINUITY_CELL
                 else:
-                    cell1 = f' {method} {identifier}'.rstrip()
-                    cell2 = f'${amount}' if amount else '?'
+                    cell1 = Cell(f' {method} {identifier}'.rstrip(), 'begin-of-range')
+                    cell2 = Cell(f'${amount}' if amount else '?', 'range-amount' if info == following else 'end-of-range')
         return (cell1, cell2, payments_this_month)
 
     def format_legend(self):
         left = []
         right = []
 
-        left.append(NON_MEMBER_CELL)
+        left.append(NON_MEMBER_CELL.text)
         right.append('not a member or former member')
 
-        left.append(ARCHIVE_CELL)
+        left.append(ARCHIVE_CELL.text)
         right.append('archived, see paper cards')
 
         for method in self.payment_methods.values():
