@@ -225,6 +225,27 @@ class AbstractMember(ABC):
                 f'{format_two_columns(left, right, TABLE_CELL_WIDTH+2)}'
                 )
 
+    def format_html_legend(self):
+        left = []
+        right = []
+        left.append(('', 'non-member'))
+        right.append(('not a member or former member', ''))
+        left.append((ARCHIVE_CELL.text, 'archive'))
+        right.append(('archived, see paper cards', ''))
+        for method in self.payment_methods.values():
+            left.append((method.display_short or method.method, ''))
+            right.append((method.display_long, ''))
+        parts = ['<table class="card-legend">']
+        for l, r in zip(left, right):
+            left_text, left_cls = l
+            right_text, right_cls = r
+            parts.append(
+                f'<tr><td class="legend-symbol {left_cls}">{html_module.escape(str(left_text))}</td>'
+                f'<td class="legend-desc {right_cls}">{html_module.escape(str(right_text))}</td></tr>'
+            )
+        parts.append('</table>')
+        return f'<div class="card-legend-container">{"".join(parts)}</div>'
+
     def payment_info(self, payments, date):
         payments_with_date = [payment for payment in payments if payment.paid_from <= date <= payment.paid_through]
         if len(payments_with_date) > 0:

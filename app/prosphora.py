@@ -1,4 +1,5 @@
 from sys import argv
+import html as html_module
 from . import stjb
 import re
 from datetime import datetime
@@ -71,6 +72,31 @@ class Member(stjb.AbstractMember):
             f'{self.format_legend()}'
         )
 
+    def format_html_card(self):
+        return (
+            '<div class="card-container">'
+            f'{self.format_html_details_header()}'
+            f'{self.format_html_payments_table()}'
+            f'{self.format_html_legend()}'
+            '</div>'
+        )
+
+    def format_html_details_header(self):
+        def esc(s):
+            return html_module.escape(str(s))
+        quantity = self.row.quantity
+        service = self.row.liturgy or 'Slavonic'
+        comment = ''
+        if len(self.row.payments) > 0:
+            comment = '+12 Great Feasts' if self.row.payments[-1].with_twelve_feasts else ''
+        comment = (comment + (self.row.notes or '')).strip()
+        parts = ['<table class="card-details-header prosphora-header">']
+        parts.append(f'<tr><td class="details-left">{esc("Liturgy: " + service)}</td></tr>')
+        parts.append(f'<tr><td class="details-left">{esc("Quantity: " + str(quantity))}</td></tr>')
+        if comment:
+            parts.append(f'<tr><td class="details-left">{esc(comment)}</td></tr>')
+        parts.append('</table>')
+        return ''.join(parts)
 
     def format_details_header(self):
         name = self.format_name()

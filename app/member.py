@@ -1,5 +1,5 @@
 from sys import argv
-
+import html as html_module
 from types import SimpleNamespace
 from . import stjb
 import re
@@ -92,24 +92,53 @@ class Member(stjb.AbstractMember):
             f'{self.format_legend()}'
         )
 
+    def format_html_card(self):
+        return (
+            '<div class="card-container">'
+            f'{self.format_html_details_header()}'
+            f'{self.format_html_payments_table()}'
+            f'{self.format_html_details_footer()}'
+            f'{self.format_html_legend()}'
+            '</div>'
+        )
+
     def format_details_header(self):
         left = []
         right = []
         status = 'former member' if self.row.membership_through else 'member'
         dues_amount = self.row.dues_amount
-        name = self.format_name()
-        left.append(f'✼ {name}')
-        right.append(f'{status} ${dues_amount}')
+        left.append(f'{self.format_member_term()}')
+        right.append(f'${dues_amount}')
         if self.row.person.spouse:
             spouse = self.format_spouse_name()
-            spouse_type = 'wife' if self.row.person.gender == 'M' else 'husband'
-            left.append(f'  {spouse} ({spouse_type})')
+            spouse_term = 'Wife' if self.row.person.gender == 'M' else 'Husband'
+            left.append(f'{spouse_term}: {spouse}')
             spouse_status = 'not a member'
             if self.row.person.spouse.card:
                 spouse_status = 'former member' if self.row.person.spouse.card.membership_through else 'member'
                 spouse_status = f'{spouse_status} ${self.row.person.spouse.card.dues_amount}'
             right.append(f'{spouse_status}')
         return stjb.format_two_columns(left, right, 64)
+
+    def format_html_details_header(self):
+        def esc(s):
+            return html_module.escape(str(s))
+        rows = []
+        dues_amount = self.row.dues_amount
+        rows.append((f'{self.format_member_term()}', f'${dues_amount}'))
+        if self.row.person.spouse:
+            spouse = self.format_spouse_name()
+            spouse_term = 'Wife' if self.row.person.gender == 'M' else 'Husband'
+            spouse_status = 'not a member'
+            if self.row.person.spouse.card:
+                spouse_status = 'former member' if self.row.person.spouse.card.membership_through else 'member'
+                spouse_status = f'{spouse_status} ${self.row.person.spouse.card.dues_amount}'
+            rows.append((f'{spouse_term}: {spouse}', spouse_status))
+        parts = ['<table class="card-details-header">']
+        for left, right in rows:
+            parts.append(f'<tr><td class="details-left">{esc(left)}</td><td class="details-right">{esc(right)}</td></tr>')
+        parts.append('</table>')
+        return ''.join(parts)
 
     def format_details_footer(self):
         left = []
@@ -122,13 +151,6 @@ class Member(stjb.AbstractMember):
         city_state_zip = f'{city}, {state} {zip_code}'
         left.append(city_state_zip)
         left.append('')
-        member_from = stjb.format_date(self.row.membership_from) or '?'
-        member_through = stjb.format_date(self.row.membership_through)
-        member_term = f'Member from {member_from}'
-        if member_through:
-            member_term = f'{member_term} – {member_through}'
-            member_term = f'{member_term} ({self.row.membership_termination_reason})'
-        left.append(f'{member_term}')
 
         right = []
         home_phone = self.row.person.home_phone
@@ -143,6 +165,47 @@ class Member(stjb.AbstractMember):
             addresses = [addr for addr in addresses if addr != '']
             right = right + addresses
         return stjb.format_two_columns(left, right, 45)
+
+    def format_member_term(self):
+        member_from = stjb.format_date(self.row.membership_from) or '?'
+        member_through = stjb.format_date(self.row.membership_through)
+        status = 'Former member' if self.row.membership_through else 'Member'
+        member_term = f'{status} from {member_from}'
+        if member_through:
+            member_term = f'{member_term} – {member_through}'
+            if self.row.membership_termination_reason:
+                member_term = f'{member_term} ({self.row.membership_termination_reason})'
+        return member_term
+
+    def format_html_details_footer(self):
+        def esc(s):
+            return html_module.escape(str(s))
+        left_rows = []
+        left_rows.append(self.row.person.address or '')
+        city = self.row.person.city or ''
+        state = self.row.person.state_region or ''
+        postal_code = self.row.person.postal_code or ''
+        plus4 = self.row.person.plus_4
+        zip_code = postal_code + (f'-{plus4}' if plus4 else '')
+        city_state_zip = f'{city}, {state} {zip_code}'.strip(', ')
+        left_rows.append(city_state_zip)
+        left_rows.append('')
+        right_rows = []
+        if self.row.person.home_phone:
+            right_rows.append(f'{self.row.person.home_phone} (home)')
+        if self.row.person.mobile_phone:
+            right_rows.append(f'{self.row.person.mobile_phone} (mobile)')
+        if self.row.person.email:
+            addresses = re.split(r'[,; ]', self.row.person.email)
+            right_rows.extend(addr for addr in addresses if addr)
+        max_rows = max(len(left_rows), len(right_rows))
+        parts = ['<table class="card-details-footer">']
+        for i in range(max_rows):
+            left = left_rows[i] if i < len(left_rows) else ''
+            right = right_rows[i] if i < len(right_rows) else ''
+            parts.append(f'<tr><td class="details-left">{esc(left)}</td><td class="details-right">{esc(right)}</td></tr>')
+        parts.append('</table>')
+        return ''.join(parts)
 
     @property
     def fname(self):

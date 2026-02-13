@@ -221,23 +221,28 @@
     pre{
       font-size: 0.88em;
     }
+    * {
+      print-color-adjust: exact !important;
+    }
 }
 
 /* Payments table (HTML version of ASCII card) */
-.payments-table-wrapper {
+.card-container {
     margin-top: 1.5rem;
+    width: 687px;
 }
 .payments-table {
     border-collapse: collapse;
     font-size: 1em;
     line-height: 1.25;
+    width: 100%;
 }
 .payments-table th,
 .payments-table td {
     border: 1px solid #ccc;
     padding: 0 6px;
     text-align: center;
-    min-width: 7em;
+    min-width: 6em;
 }
 .payments-table td:empty::after{
     content: "\00a0";
@@ -276,7 +281,7 @@
     border-bottom: none;
 }
 .payments-table .cell.non-member {
-    background-color: #eee;
+    background-color: #eee !important;
     color: #888;
 }
 .payments-table .cell.jan-continuity {
@@ -300,6 +305,51 @@
 .payments-table tr.paid-through th.month {
     font-weight: bold;
 }
-/*
-    border: 1px solid #ccc;
-    */
+
+/* HTML card sections (details header, footer, legend) */
+.card-details-header,
+.card-details-footer {
+    width: 100%;
+}
+.card-details-header,
+.card-details-footer,
+.card-legend {
+    border-collapse: collapse;
+    margin-bottom: 0.75rem;
+}
+.card-details-header td,
+.card-details-footer td,
+.card-legend td {
+    vertical-align: top;
+    padding: 1px 8px 1px 0;
+}
+.card-details-header .details-left {
+  width: 80%;
+}
+.card-details-footer .details-left {
+  width: 70%;
+}
+.card-details-header .details-left,
+.card-details-footer .details-left,
+.card-legend .legend-symbol {
+    padding-right: 1em;
+}
+.card-legend .legend-symbol {
+    white-space: pre;
+}
+.legend-symbol.non-member {
+    background-color: #eee !important;
+}
+.card-legend-container {
+  border: 1px solid;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+  width: 60%;
+  padding-top: 8px;
+  margin-top: 2em;
+  font-size: 0.9em
+}
+td.legend-desc {
+  padding-left: 10px;
+}
