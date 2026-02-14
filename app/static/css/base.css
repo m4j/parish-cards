@@ -250,7 +250,7 @@
 .payments-table th.month {
     font-family: "Source Code Pro";
     text-align: left;
-    min-width: 3em;
+    vertical-align: middle;
 }
 .payments-table tbody tr.cell1-row th,
 .payments-table tbody tr.cell1-row td {
@@ -279,6 +279,9 @@
 }
 .payments-table .cell-amount {
     border-bottom: none;
+}
+.payments-table .cell {
+  font-size: 0.95em;
 }
 .payments-table .cell.non-member {
     background-color: #eee !important;

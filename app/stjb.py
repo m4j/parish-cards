@@ -165,10 +165,10 @@ class AbstractMember(ABC):
                 row1_cells.append(f'<td class="cell{cls1}">{esc(cell1.text)}</td>')
                 row2_cells.append(f'<td class="cell{cls2}">{esc(cell2.text)}</td>')
             row1_cls = 'paid-through' if is_paid_through else ''
-            parts.append(f'<tr class="cell1-row {row1_cls}"><th class="month">{esc(month_label)}</th>')
+            parts.append(f'<tr class="cell1-row {row1_cls}"><th rowspan="2" class="month">{esc(month_label)}</th>')
             parts.append(''.join(row1_cells))
             parts.append('</tr>')
-            parts.append('<tr class="cell2-row"><th class="month"></th>')
+            parts.append('<tr class="cell2-row">')
             parts.append(''.join(row2_cells))
             parts.append('</tr>')
         parts.append('</tbody><tfoot><tr><th></th>')
