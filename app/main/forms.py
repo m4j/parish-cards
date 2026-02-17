@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, IntegerField, SelectField, TextAreaField
 from wtforms.validators import DataRequired, Optional, ValidationError
-from ..models import Prosphora, Service, find_person
+from ..models import Prosphora, Service, find_person, find_prosphora
 from ..stjb import get_first_name, get_last_name
 from .. import db
 import uuid
@@ -39,8 +39,6 @@ class ProsphoraForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         obj = kwargs.get('obj', None)
         self.original_guid = obj.guid if obj else None
-        self.original_last_name = obj.last_name if obj else None
-        self.original_first_name = obj.first_name if obj else None
         super(ProsphoraForm, self).__init__(*args, **kwargs)
         # Populate liturgy choices from Service model
         services = db.session.scalars(
@@ -50,15 +48,9 @@ class ProsphoraForm(FlaskForm):
 
     def validate_last_name(self, field):
         """Validate that the primary key (last_name, first_name) doesn't already exist."""
-        # Skip validation if both last_name and first_name haven't changed
-        new_first_name = self.first_name.data or None
-        if (self.original_last_name and 
-            field.data == self.original_last_name and
-            new_first_name == self.original_first_name):
-            return
-
+        new_first_name = self.first_name.data.strip()
         # Check if primary key already exists
-        existing = db.session.get(Prosphora, (field.data, new_first_name))
+        existing = find_prosphora(new_first_name, field.data.strip())
         if existing:
             # If editing, exclude the current record
             if self.original_guid and existing.guid == self.original_guid:
@@ -92,11 +84,10 @@ class ProsphoraForm(FlaskForm):
         else:
             # Creating new prosphora
             prosphora = Prosphora()
-            db.session.add(prosphora)
 
         # Update fields
-        prosphora.last_name = self.last_name.data
-        prosphora.first_name = self.first_name.data
+        prosphora.last_name = self.last_name.data.strip()
+        prosphora.first_name = self.first_name.data.strip()
         prosphora.family_name = self.family_name.data or None
         prosphora.ru_last_name = self.ru_last_name.data or None
         prosphora.ru_first_name = self.ru_first_name.data or None
@@ -113,7 +104,8 @@ class ProsphoraForm(FlaskForm):
         prosphora.paid_through = self.paid_through.data or None
         prosphora.liturgy = self.liturgy.data
         prosphora.notes = self.notes.data or None
-
+        if guid is None:
+            db.session.add(prosphora)
         db.session.commit()
         return True
 

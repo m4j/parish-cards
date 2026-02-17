@@ -1,4 +1,5 @@
 from flask import render_template, abort, session, redirect, url_for, flash, jsonify, request
+import uuid
 from .. import stjb
 from .. import db
 from .. import member as m
@@ -66,20 +67,19 @@ def book(guid):
 @main.route('/book/edit', methods=['GET', 'POST'])
 @main.route('/book/edit/<guid>', methods=['GET', 'POST'])
 def book_edit(guid=None):
-    if guid:
-        form = ProsphoraForm.load(guid)
-    else:
-        form = ProsphoraForm()
-    if not form:
-        abort(404)
-    
+    form = ProsphoraForm()
+    form.original_guid = uuid.UUID(guid) if guid else None
+
     if form.validate_on_submit():
         if form.save(guid):
             flash('Prosphora entry successfully updated.')
             return redirect(url_for('.books'))
         else:
             flash('Error updating prosphora entry.', 'error')
-    
+    if not form.save_changes.data and guid:
+        form = ProsphoraForm.load(guid)
+    if not form:
+        abort(404)
     return render_template('main/edit_prosphora.html', form=form)
 
 @main.route('/search_people')

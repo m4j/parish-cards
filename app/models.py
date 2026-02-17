@@ -76,6 +76,25 @@ class Prosphora(IdentityMixin, db.Model):
 
     def __repr__(self):
         return self.full_name()
+    
+    @hybrid_property
+    def i_last_name(self):
+        return self.last_name.lower()
+
+    @i_last_name.inplace.comparator
+    @classmethod
+    def _i_last_name_comparator(cls) -> CaseInsensitiveComparator:
+        return CaseInsensitiveComparator(cls.last_name)
+
+    @hybrid_property
+    def i_first_name(self):
+        return self.first_name.lower()
+
+    @i_first_name.inplace.comparator
+    @classmethod
+    def _i_first_name_comparator(cls) -> CaseInsensitiveComparator:
+        return CaseInsensitiveComparator(cls.first_name)
+
 
 class Card(IdentityMixin, db.Model):
     __tablename__ = 'card'
@@ -771,7 +790,7 @@ def find_member(first_name, last_name):
 def find_prosphora(first_name, last_name):
     return db.session.execute(
             db.select(Prosphora).filter(
-                Prosphora.first_name==first_name, Prosphora.last_name==last_name
+                Prosphora.i_first_name==first_name, Prosphora.i_last_name==last_name
                 )).scalar()
 
 def find_person(first_name, last_name):
