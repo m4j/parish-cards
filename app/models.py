@@ -100,14 +100,6 @@ class Card(IdentityMixin, db.Model):
     __tablename__ = 'card'
     last_name           = db.Column(db.String)
     first_name          = db.Column(db.String)
-    other_name          = db.Column(db.String)
-    middle_name         = db.Column(db.String)
-    maiden_name         = db.Column(db.String)
-    ru_last_name        = db.Column(db.String)
-    ru_maiden_name      = db.Column(db.String)
-    ru_first_name       = db.Column(db.String)
-    ru_other_name       = db.Column(db.String)
-    ru_patronymic_name  = db.Column(db.String)
     membership_from       = db.Column(db.String)
     membership_through    = db.Column(db.String)
     membership_termination_reason = db.Column(db.String)
@@ -140,9 +132,9 @@ class Card(IdentityMixin, db.Model):
     def __init__(self, app, person, applicant, as_of_date):
         self.application = app
         self.person = person
-        self.ru_last_name = applicant.ru_name_last
-        self.ru_first_name = applicant.ru_name_first
-        self.ru_patronymic_name = applicant.ru_name_patronymic
+        person.ru_last_name = applicant.ru_name_last
+        person.ru_first_name = applicant.ru_name_first
+        person.ru_patronymic_name = applicant.ru_name_patronymic
         self.membership_from = as_of_date
         self.dues_amount = applicant.dues_amount
 
@@ -173,6 +165,14 @@ class Person(IdentityMixin, db.Model):
     __tablename__ = 'person'
     last    = db.Column(db.String)
     first   = db.Column(db.String)
+    other_name          = db.Column(db.String)
+    middle_name         = db.Column(db.String)
+    maiden_name         = db.Column(db.String)
+    ru_last_name        = db.Column(db.String)
+    ru_maiden_name      = db.Column(db.String)
+    ru_first_name       = db.Column(db.String)
+    ru_other_name       = db.Column(db.String)
+    ru_patronymic_name  = db.Column(db.String)
     email   = db.Column(db.String)
     home_phone     = db.Column(db.String)
     mobile_phone   = db.Column(db.String)

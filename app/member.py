@@ -6,7 +6,7 @@ import re
 import os
 import sys
 from . import db
-from .models import Card
+from .models import Card, Person
 
 class Member(stjb.AbstractMember):
 
@@ -16,18 +16,18 @@ class Member(stjb.AbstractMember):
     def find_all_by_name(cls, name):
         selected = f'%{name}%'
         rows = db.session.scalars(
-            db.select(Card).filter(
+            db.select(Card).join(Card.person).filter(
                 db.or_(
                     Card.last_name.like(selected),
                     Card.first_name.like(selected),
-                    Card.other_name.like(selected),
-                    Card.middle_name.like(selected),
-                    Card.maiden_name.like(selected),
-                    Card.ru_last_name.like(selected),
-                    Card.ru_maiden_name.like(selected),
-                    Card.ru_first_name.like(selected),
-                    Card.ru_other_name.like(selected),
-                    Card.ru_patronymic_name.like(selected),
+                    Person.other_name.like(selected),
+                    Person.middle_name.like(selected),
+                    Person.maiden_name.like(selected),
+                    Person.ru_last_name.like(selected),
+                    Person.ru_maiden_name.like(selected),
+                    Person.ru_first_name.like(selected),
+                    Person.ru_other_name.like(selected),
+                    Person.ru_patronymic_name.like(selected),
                     Card.notes.like(selected),
                     Card.membership_termination_reason.like(selected)
                 )
@@ -47,9 +47,9 @@ class Member(stjb.AbstractMember):
         return self._format_name(
             first=self.row.first_name,
             last=self.row.last_name,
-            ru_first=self.row.ru_first_name,
-            ru_patronymic=self.row.ru_patronymic_name,
-            ru_last=self.row.ru_last_name,
+            ru_first=self.row.person.ru_first_name,
+            ru_patronymic=self.row.person.ru_patronymic_name,
+            ru_last=self.row.person.ru_last_name,
             status=self.row.person.status
         )
 
@@ -58,9 +58,9 @@ class Member(stjb.AbstractMember):
         return self._format_name(
             first=self.row.person.spouse.first,
             last=self.row.person.spouse.last,
-            ru_first=spouse_card.ru_first_name if spouse_card else None,
-            ru_patronymic=spouse_card.ru_patronymic_name if spouse_card else None,
-            ru_last=spouse_card.ru_last_name if spouse_card else None,
+            ru_first=spouse_card.person.ru_first_name if spouse_card else None,
+            ru_patronymic=spouse_card.person.ru_patronymic_name if spouse_card else None,
+            ru_last=spouse_card.person.ru_last_name if spouse_card else None,
             status=self.row.person.spouse.status
         )
 

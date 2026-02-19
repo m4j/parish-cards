@@ -2,7 +2,7 @@ from flask import render_template, abort, session, redirect, url_for, flash, Mar
 from .. import db
 from . import payment
 from ..main.forms import SearchForm
-from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora, find_all_payments, Card, Prosphora
+from ..models import find_sub_dues_payments, find_sub_prosphora_payments, Payment, PaymentSubDues, PaymentSubProsphora, find_all_payments, Card, Person, Prosphora
 from .forms import PaymentSubDuesForm, PaymentSubProsphoraForm, PaymentSubMiscForm, MultiPaymentForm
 import uuid
 from collections import namedtuple
@@ -185,19 +185,19 @@ def search_cards():
         return jsonify([])
     
     # Build the query
-    q = db.select(Card)
+    q = db.select(Card).join(Card.person)
     if query:
         q = q.filter(
             (Card.last_name.ilike(f'%{query}%')) |
             (Card.first_name.ilike(f'%{query}%')) |
-            (Card.other_name.ilike(f'%{query}%')) |
-            (Card.middle_name.ilike(f'%{query}%')) |
-            (Card.maiden_name.ilike(f'%{query}%')) |
-            (Card.ru_last_name.ilike(f'%{query}%')) |
-            (Card.ru_maiden_name.ilike(f'%{query}%')) |
-            (Card.ru_first_name.ilike(f'%{query}%')) |
-            (Card.ru_other_name.ilike(f'%{query}%')) |
-            (Card.ru_patronymic_name.ilike(f'%{query}%'))
+            (Person.other_name.ilike(f'%{query}%')) |
+            (Person.middle_name.ilike(f'%{query}%')) |
+            (Person.maiden_name.ilike(f'%{query}%')) |
+            (Person.ru_last_name.ilike(f'%{query}%')) |
+            (Person.ru_maiden_name.ilike(f'%{query}%')) |
+            (Person.ru_first_name.ilike(f'%{query}%')) |
+            (Person.ru_other_name.ilike(f'%{query}%')) |
+            (Person.ru_patronymic_name.ilike(f'%{query}%'))
         )
     
     # Limit results and order by name
