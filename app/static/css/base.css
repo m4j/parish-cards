@@ -226,6 +226,18 @@
     }
 }
 
+@media (min-width: 992px) {
+  .container {
+      width: 720px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+      width: 920px;
+  }
+}
+
 /* Payments table (HTML version of ASCII card) */
 .card-container {
     margin-top: 1.5rem;

@@ -18,7 +18,7 @@ _dues_template_values = TemplateValues(
 )
 
 _prosphora_template_values = TemplateValues(
-        header='Commemoration books/prosphoras',
+        header='Commemoration Books & Prosphoras',
         header_sub='Payments ordered by paid period (latest on top)',
         member_view='main.book',
         return_route='prosphora',
