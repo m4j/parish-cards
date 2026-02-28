@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, IntegerField, SelectField, TextAreaField
-from wtforms.validators import DataRequired, Optional, ValidationError
+from wtforms.validators import DataRequired, Optional, ValidationError, NumberRange, InputRequired
 from ..models import Prosphora, Service, find_person, find_prosphora
 from ..stjb import get_first_name, get_last_name
 from .. import db
@@ -30,7 +30,7 @@ class ProsphoraForm(FlaskForm):
     ru_first_name = StringField('First Name (Russian)', validators=[Optional()])
     ru_family_name = StringField('Family Name (Russian)', validators=[Optional()])
     person_name = StringField(label=None, validators=[Optional()])
-    quantity = IntegerField('Quantity', validators=[DataRequired()], default=1)
+    quantity = IntegerField('Quantity', validators=[InputRequired(), NumberRange(0, 100)], default=1)
     paid_through = StringField('Paid Through', validators=[Optional()])
     liturgy = SelectField('Liturgy', validators=[DataRequired()], choices=[])
     notes = TextAreaField('Notes', validators=[Optional()])
@@ -100,7 +100,7 @@ class ProsphoraForm(FlaskForm):
                 prosphora.person = person
             else:
                 prosphora.person = None
-        prosphora.quantity = self.quantity.data or 1
+        prosphora.quantity = self.quantity.data
         prosphora.paid_through = self.paid_through.data or None
         prosphora.liturgy = self.liturgy.data
         prosphora.notes = self.notes.data or None
