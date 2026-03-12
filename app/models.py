@@ -203,6 +203,9 @@ class Person(IdentityMixin, db.Model):
     def __init__(self, app, applicant):
         self.last = applicant.en_name_last
         self.first = applicant.en_name_first
+        self.ru_last_name = applicant.ru_name_last
+        self.ru_first_name = applicant.ru_name_first
+        self.ru_patronymic_name = applicant.ru_name_patronymic
         self.email = app.email
         self.home_phone = app.home_phone
         self.mobile_phone = app.cell_phone
@@ -234,15 +237,27 @@ class Person(IdentityMixin, db.Model):
     def update_from(self, other):
         self.last         = other.last
         self.first        = other.first
+        self.other_name   = other.other_name
+        self.middle_name  = other.middle_name
+        self.maiden_name  = other.maiden_name
+        self.ru_last_name = other.ru_last_name
+        self.ru_maiden_name = other.ru_maiden_name
+        self.ru_first_name = other.ru_first_name
+        self.ru_other_name = other.ru_other_name
+        self.ru_patronymic_name = other.ru_patronymic_name
         self.email        = other.email
         self.home_phone   = other.home_phone
         self.mobile_phone = other.mobile_phone
+        self.work_phone   = other.work_phone
         self.gender       = other.gender
         self.address      = other.address
         self.city         = other.city
         self.state_region = other.state_region
         self.postal_code  = other.postal_code
         self.plus_4       = other.plus_4
+        self.date_of_birth = other.date_of_birth
+        self.date_of_death = other.date_of_death
+        self.note         = other.note
 
     @classmethod
     def make_spouse(cls, app, applicant):

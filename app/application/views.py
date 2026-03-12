@@ -91,7 +91,7 @@ def redirect_on_another_active_marriage(guid, applicant_form, spouse_form):
     return None
 
 def finalize_registration_and_redirect(app, applicant, applicant_spouse, decisions_data, as_of_date):
-    decisions = iter(decisions_data)
+    decisions = map(lambda each: each['update_decision'], decisions_data)
     person = Person(app, applicant)
     member = None
     db_person = find_person(applicant.en_name_first, applicant.en_name_last)

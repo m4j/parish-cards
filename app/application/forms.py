@@ -69,7 +69,7 @@ class ApplicationForm(FlaskForm):
     spouse_signature_date = StringField('Spouse Signature (date only)', validators=[Optional(), ISOYearMonthDayValidator()])
 
     save = SubmitField('Save')
-    register = SubmitField('Register')
+    register = SubmitField('Continue')
 
     def load_application(self, app):
         self.ru_name.data = app.ru_name
