@@ -26,6 +26,15 @@ def books():
             member_url='.book',
             edit_url='.book_edit')
 
+@main.route('/people', methods=['GET', 'POST'])
+def people():
+    return _directory(
+            redirect_url=url_for('.people'),
+            entity=Person,
+            template='people.html',
+            member_url='',
+            edit_url='.person_edit')
+
 def _directory(redirect_url, member_url, entity, template, edit_url):
     form = SearchForm()
     members = []
@@ -81,6 +90,11 @@ def book_edit(guid=None):
     if not form:
         abort(404)
     return render_template('main/edit_prosphora.html', form=form)
+
+@main.route('/person/edit', methods=['GET', 'POST'])
+@main.route('/person/edit/<guid>', methods=['GET', 'POST'])
+def person_edit(guid=None):
+    return redirect(url_for('.people'))
 
 @main.route('/search_people')
 def search_people():

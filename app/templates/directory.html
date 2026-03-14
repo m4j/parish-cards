@@ -23,7 +23,11 @@
         {% for member in members %}
             <tr>
                 <td style="vertical-align: middle;">
-                    <a href="{{ url_for(member_url, guid=member.guid) }}">{{ member.format_name() }}</a>
+                    {% if member_url %}
+                        <a href="{{ url_for(member_url, guid=member.guid) }}">{{ member.format_name() }}</a>
+                    {% else %}
+                        {{ member.format_name() }}
+                    {% endif %}
                 </td>
                 <td style="vertical-align: middle;">
                     {% if edit_url %}

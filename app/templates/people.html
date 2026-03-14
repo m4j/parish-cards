@@ -1,0 +1,36 @@
+{% extends "directory.html" %}
+
+{% block page_content %}
+    <div class="page-header">
+        <h2>People<h2>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            {% include "search_form.html" %}
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{{ url_for('main.person_edit') }}" class="btn btn-sm btn-default">
+                <i class="glyphicon glyphicon-plus"></i>
+            </a>
+        </div>
+    </div>
+
+    {{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Handle print commemoration list button clicks
+    $('.print-commemoration-list').on('click', function(e) {
+        e.preventDefault();
+        
+        // Make AJAX request to get PDF data
+        loadPdfFromUrl(`/report/prosphora/print_ajax`);
+    });
+});
+</script>
+{% endblock %} 

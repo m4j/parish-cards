@@ -161,6 +161,13 @@ def get_plus4(zip_code):
     split = zip_code.split('-')
     return split[1].strip() if len(split) > 1 else None
 
+def _format_name(first, last, ru_first, ru_patronymic, ru_last, status):
+    name = f'{last}, {first}'
+    if ru_first and ru_last:
+        ru_name = f'{ru_first} {ru_patronymic}' if ru_patronymic else ru_first
+        name = f'{name} ({ru_last}, {ru_name})'
+    return f'{name} †' if status == 'Deceased' else name
+
 class Person(IdentityMixin, db.Model):
     __tablename__ = 'person'
     last    = db.Column(db.String)
@@ -283,6 +290,49 @@ class Person(IdentityMixin, db.Model):
     @property
     def status(self) -> str:
         return 'Deceased' if self.date_of_death else 'Active'
+
+    @classmethod
+    def find_all_by_name(cls, name):
+        selected = f'%{name}%'
+        rows = db.session.scalars(
+            db.select(Person).filter(
+                db.or_(
+                    Person.last.like(selected),
+                    Person.first.like(selected),
+                    Person.other_name.like(selected),
+                    Person.middle_name.like(selected),
+                    Person.maiden_name.like(selected),
+                    Person.ru_last_name.like(selected),
+                    Person.ru_maiden_name.like(selected),
+                    Person.ru_first_name.like(selected),
+                    Person.ru_other_name.like(selected),
+                    Person.ru_patronymic_name.like(selected),
+                    Person.email.like(selected),
+                    Person.home_phone.like(selected),
+                    Person.mobile_phone.like(selected),
+                    Person.work_phone.like(selected),
+                    Person.address.like(selected),
+                    Person.city.like(selected),
+                    Person.state_region.like(selected),
+                    Person.postal_code.like(selected),
+                    Person.plus_4.like(selected),
+                    Person.note.like(selected)
+                )
+            )
+            .order_by(Person.last, Person.first)
+        ).all()
+        return rows
+
+    def format_name(self):
+        return _format_name(
+            first=self.first,
+            last=self.last,
+            ru_first=self.ru_first_name,
+            ru_patronymic=self.ru_patronymic_name,
+            ru_last=self.ru_last_name,
+            status=self.status
+        )
+
 
 class Marriage(db.Model):
     __tablename__ = 'marriage'

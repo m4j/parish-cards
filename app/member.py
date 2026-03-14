@@ -28,6 +28,16 @@ class Member(stjb.AbstractMember):
                     Person.ru_first_name.like(selected),
                     Person.ru_other_name.like(selected),
                     Person.ru_patronymic_name.like(selected),
+                    Person.email.like(selected),
+                    Person.home_phone.like(selected),
+                    Person.mobile_phone.like(selected),
+                    Person.work_phone.like(selected),
+                    Person.address.like(selected),
+                    Person.city.like(selected),
+                    Person.state_region.like(selected),
+                    Person.postal_code.like(selected),
+                    Person.plus_4.like(selected),
+                    Person.note.like(selected),
                     Card.notes.like(selected),
                     Card.membership_termination_reason.like(selected)
                 )
@@ -36,33 +46,11 @@ class Member(stjb.AbstractMember):
             )).all()
         return [cls(row) for row in rows]
 
-    def _format_name(self, first, last, ru_first, ru_patronymic, ru_last, status):
-        name = f'{last}, {first}'
-        if ru_first and ru_last:
-            ru_name = f'{ru_first} {ru_patronymic}' if ru_patronymic else ru_first
-            name = f'{name} ({ru_last}, {ru_name})'
-        return f'{name} †' if status == 'Deceased' else name
-
     def format_name(self):
-        return self._format_name(
-            first=self.row.first_name,
-            last=self.row.last_name,
-            ru_first=self.row.person.ru_first_name,
-            ru_patronymic=self.row.person.ru_patronymic_name,
-            ru_last=self.row.person.ru_last_name,
-            status=self.row.person.status
-        )
+        return self.row.person.format_name()
 
     def format_spouse_name(self):
-        spouse_card = self.row.person.spouse.card
-        return self._format_name(
-            first=self.row.person.spouse.first,
-            last=self.row.person.spouse.last,
-            ru_first=spouse_card.person.ru_first_name if spouse_card else None,
-            ru_patronymic=spouse_card.person.ru_patronymic_name if spouse_card else None,
-            ru_last=spouse_card.person.ru_last_name if spouse_card else None,
-            status=self.row.person.spouse.status
-        )
+        return self.row.person.spouse.format_name()
 
     @property
     def member_from(self):
