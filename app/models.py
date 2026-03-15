@@ -207,7 +207,9 @@ class Person(IdentityMixin, db.Model):
         db.PrimaryKeyConstraint('last', 'first'),
     )
 
-    def __init__(self, app, applicant):
+    def __init__(self, app=None, applicant=None):
+        if app is None or applicant is None:
+            return
         self.last = applicant.en_name_last
         self.first = applicant.en_name_first
         self.ru_last_name = applicant.ru_name_last

@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, IntegerField, SelectField, TextAreaField
 from wtforms.validators import DataRequired, Optional, ValidationError, NumberRange, InputRequired
-from ..models import Prosphora, Service, find_person, find_prosphora
+from ..models import Prosphora, Service, Person, find_person, find_prosphora
 from ..stjb import get_first_name, get_last_name
 from .. import db
 import uuid
@@ -106,6 +106,125 @@ class ProsphoraForm(FlaskForm):
         prosphora.notes = self.notes.data or None
         if guid is None:
             db.session.add(prosphora)
+        db.session.commit()
+        return True
+
+
+class PersonForm(FlaskForm):
+    last = StringField('Last Name', validators=[DataRequired()])
+    first = StringField('First Name', validators=[DataRequired()])
+    other_name = StringField('Other Name', validators=[Optional()])
+    middle_name = StringField('Middle Name', validators=[Optional()])
+    maiden_name = StringField('Maiden Name', validators=[Optional()])
+    ru_last_name = StringField('Last Name', validators=[Optional()])
+    ru_maiden_name = StringField('Maiden Name', validators=[Optional()])
+    ru_first_name = StringField('First Name', validators=[Optional()])
+    ru_other_name = StringField('Other Name', validators=[Optional()])
+    ru_patronymic_name = StringField('Patronymic', validators=[Optional()])
+    email = StringField('Email', validators=[Optional()])
+    home_phone = StringField('Home Phone', validators=[Optional()])
+    mobile_phone = StringField('Mobile Phone', validators=[Optional()])
+    work_phone = StringField('Work Phone', validators=[Optional()])
+    gender = SelectField(
+        'Gender',
+        validators=[DataRequired()],
+        choices=[('M', 'Male'), ('F', 'Female')]
+    )
+    address = StringField('Address', validators=[Optional()])
+    city = StringField('City', validators=[Optional()])
+    state_region = StringField('State / Region', validators=[Optional()])
+    postal_code = StringField('Postal Code', validators=[Optional()])
+    plus_4 = StringField('Plus 4', validators=[Optional()])
+    date_of_birth = StringField('Date of Birth', validators=[Optional()])
+    date_of_death = StringField('Date of Death', validators=[Optional()])
+    note = TextAreaField('Note', validators=[Optional()])
+    save_changes = SubmitField('Save Changes')
+
+    def __init__(self, *args, **kwargs):
+        self.original_guid = kwargs.get('obj') and getattr(kwargs['obj'], 'guid', None)
+        super(PersonForm, self).__init__(*args, **kwargs)
+
+    def validate_last(self, field):
+        if not self.first.data:
+            return
+        existing = find_person(self.first.data.strip(), field.data.strip())
+        if not existing:
+            return
+        if self.original_guid and existing.guid == self.original_guid:
+            return
+        raise ValidationError('A person with this last name and first name already exists.')
+
+    @classmethod
+    def load(cls, guid, prefix=None):
+        person = db.session.scalars(
+            db.select(Person).filter_by(guid=uuid.UUID(guid))
+        ).first()
+        if not person:
+            return None
+        kwargs = {'obj': person}
+        if prefix:
+            kwargs['prefix'] = prefix
+        form = cls(**kwargs)
+        form.last.data = person.last or ''
+        form.first.data = person.first or ''
+        form.other_name.data = person.other_name or ''
+        form.middle_name.data = person.middle_name or ''
+        form.maiden_name.data = person.maiden_name or ''
+        form.ru_last_name.data = person.ru_last_name or ''
+        form.ru_maiden_name.data = person.ru_maiden_name or ''
+        form.ru_first_name.data = person.ru_first_name or ''
+        form.ru_other_name.data = person.ru_other_name or ''
+        form.ru_patronymic_name.data = person.ru_patronymic_name or ''
+        form.email.data = person.email or ''
+        form.home_phone.data = person.home_phone or ''
+        form.mobile_phone.data = person.mobile_phone or ''
+        form.work_phone.data = person.work_phone or ''
+        form.gender.data = person.gender or ''
+        form.address.data = person.address or ''
+        form.city.data = person.city or ''
+        form.state_region.data = person.state_region or ''
+        form.postal_code.data = person.postal_code or ''
+        form.plus_4.data = person.plus_4 or ''
+        form.date_of_birth.data = person.date_of_birth or ''
+        form.date_of_death.data = person.date_of_death or ''
+        form.note.data = person.note or ''
+        return form
+
+    def save(self, guid=None):
+        if guid:
+            person = db.session.scalars(
+                db.select(Person).filter_by(guid=uuid.UUID(guid))
+            ).first()
+            if not person:
+                return False
+        else:
+            person = Person()
+
+        person.last = self.last.data.strip()
+        person.first = self.first.data.strip()
+        person.other_name = self.other_name.data or None
+        person.middle_name = self.middle_name.data or None
+        person.maiden_name = self.maiden_name.data or None
+        person.ru_last_name = self.ru_last_name.data or None
+        person.ru_maiden_name = self.ru_maiden_name.data or None
+        person.ru_first_name = self.ru_first_name.data or None
+        person.ru_other_name = self.ru_other_name.data or None
+        person.ru_patronymic_name = self.ru_patronymic_name.data or None
+        person.email = self.email.data or None
+        person.home_phone = self.home_phone.data or None
+        person.mobile_phone = self.mobile_phone.data or None
+        person.work_phone = self.work_phone.data or None
+        person.gender = self.gender.data or None
+        person.address = self.address.data or None
+        person.city = self.city.data or None
+        person.state_region = self.state_region.data or None
+        person.postal_code = self.postal_code.data or None
+        person.plus_4 = self.plus_4.data or None
+        person.date_of_birth = self.date_of_birth.data or None
+        person.date_of_death = self.date_of_death.data or None
+        person.note = self.note.data or None
+        if guid is None:
+            db.session.add(person)
         db.session.commit()
         return True
 

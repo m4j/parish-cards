@@ -6,7 +6,7 @@ from .. import member as m
 from .. import prosphora as p
 from . import main
 from ..models import Person
-from .forms import SearchForm, ProsphoraForm
+from .forms import SearchForm, ProsphoraForm, PersonForm
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -94,7 +94,49 @@ def book_edit(guid=None):
 @main.route('/person/edit', methods=['GET', 'POST'])
 @main.route('/person/edit/<guid>', methods=['GET', 'POST'])
 def person_edit(guid=None):
-    return redirect(url_for('.people'))
+    if guid is None:
+        person = None
+        spouse = None
+        form = PersonForm(request.form) if request.method == 'POST' else PersonForm()
+        spouse_form = None
+        if request.method == 'POST' and form.validate_on_submit() and form.save_changes.data:
+            if form.save(None):
+                flash('Person successfully created.')
+                return redirect(url_for('.people'))
+            flash('Error creating person.', 'error')
+    else:
+        person = db.session.scalars(
+            db.select(Person).filter_by(guid=uuid.UUID(guid))
+        ).first()
+        if not person:
+            abort(404)
+        spouse = person.spouse
+        if request.method == 'POST':
+            form = PersonForm(request.form, obj=person, prefix='person')
+            spouse_form = PersonForm(request.form, obj=spouse, prefix='spouse') if spouse else None
+            if form.save_changes.data and form.validate_on_submit():
+                if form.save(guid):
+                    flash('Person successfully updated.')
+                    return redirect(url_for('.people'))
+                flash('Error updating person.', 'error')
+            elif spouse_form and spouse_form.save_changes.data and spouse_form.validate_on_submit():
+                if spouse_form.save(str(spouse.guid)):
+                    flash('Spouse successfully updated.')
+                    return redirect(url_for('.person_edit', guid=guid))
+                flash('Error updating spouse.', 'error')
+        else:
+            form = PersonForm.load(guid, prefix='person')
+            spouse_form = PersonForm.load(str(spouse.guid), prefix='spouse') if spouse else None
+        if not form:
+            abort(404)
+
+    return render_template(
+        'main/edit_person.html',
+        form=form,
+        spouse_form=spouse_form,
+        person=person,
+        spouse=spouse,
+    )
 
 @main.route('/search_people')
 def search_people():

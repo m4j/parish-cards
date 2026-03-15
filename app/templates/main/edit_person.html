@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% macro person_form_fields(form, cancel_url) %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Name (English)</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.last) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.first) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.other_name) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.middle_name) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.maiden_name) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Name (Russian)</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.ru_last_name) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.ru_first_name) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.ru_patronymic_name) }}
+                </div>
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.ru_other_name) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.ru_maiden_name) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Contact</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-12">
+                    {{ wtf.form_field(form.email) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.home_phone) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.mobile_phone) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.work_phone) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Address</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-12">
+                    {{ wtf.form_field(form.address) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ wtf.form_field(form.city) }}
+                </div>
+                <div class="col-md-2">
+                    {{ wtf.form_field(form.state_region) }}
+                </div>
+                <div class="col-md-2">
+                    {{ wtf.form_field(form.postal_code) }}
+                </div>
+                <div class="col-md-2">
+                    {{ wtf.form_field(form.plus_4) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Other</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.gender) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.date_of_birth) }}
+                </div>
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.date_of_death) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    {{ wtf.form_field(form.note) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-2 col-xs-12 col-md-offset-8" style="margin-bottom: 15px;">
+            <a href="{{ cancel_url }}" class="btn btn-default">Cancel</a>
+        </div>
+        <div class="col-md-2 col-xs-12" style="margin-bottom: 15px;">
+            {{ form.save_changes(class="btn btn-primary") }}
+        </div>
+    </div>
+{% endmacro %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>{{ "Edit" if person else "New" }} Person</h2>
+</div>
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+</div>
+{% endfor %}
+
+{% if spouse_form %}
+    {# Married: two forms in nav-tabs (Bootstrap 3.3.7) #}
+    <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active">
+            <a href="#person-tab" aria-controls="person-tab" role="tab" data-toggle="tab">{{ person.full_name() if person else 'Person' }}</a>
+        </li>
+        <li role="presentation">
+            <a href="#spouse-tab" aria-controls="spouse-tab" role="tab" data-toggle="tab">{{ spouse.full_name() if spouse else 'Spouse' }}</a>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="person-tab">
+            <form method="POST" class="form" role="form">
+                {{ form.csrf_token }}
+                {{ wtf.form_errors(form, hiddens="only") }}
+                {% for field, errors in form.errors.items() %}
+                    {% if field != 'csrf_token' and errors %}
+                    <div class="alert alert-danger">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <strong>{{ form[field].label.text }}:</strong> {{ ', '.join(errors) }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                {{ person_form_fields(form, url_for('main.people')) }}
+            </form>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="spouse-tab">
+            <form method="POST" class="form" role="form">
+                {{ spouse_form.csrf_token }}
+                {{ wtf.form_errors(spouse_form, hiddens="only") }}
+                {% for field, errors in spouse_form.errors.items() %}
+                    {% if field != 'csrf_token' and errors %}
+                    <div class="alert alert-danger">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        <strong>{{ spouse_form[field].label.text }}:</strong> {{ ', '.join(errors) }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                {{ person_form_fields(spouse_form, url_for('main.people')) }}
+            </form>
+        </div>
+    </div>
+{% else %}
+    {# Single person (new or not married) #}
+    <form method="POST" class="form" role="form">
+        {{ form.csrf_token }}
+        {{ wtf.form_errors(form, hiddens="only") }}
+        {% for field, errors in form.errors.items() %}
+        <div class="alert alert-danger">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>{{ form[field].label.text }}:</strong> {{ ', '.join(errors) }}
+        </div>
+        {% endfor %}
+        {{ person_form_fields(form, url_for('main.people')) }}
+    </form>
+{% endif %}
+{% endblock %}
