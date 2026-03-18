@@ -6,7 +6,7 @@ from .. import member as m
 from .. import prosphora as p
 from . import main
 from ..models import Person
-from .forms import SearchForm, ProsphoraForm, PersonForm
+from .forms import SearchForm, ProsphoraForm, PersonForm, PersonEditForm
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -98,7 +98,6 @@ def person_edit(guid=None):
         person = None
         spouse = None
         form = PersonForm(request.form) if request.method == 'POST' else PersonForm()
-        spouse_form = None
         if request.method == 'POST' and form.validate_on_submit() and form.save_changes.data:
             if form.save(None):
                 flash('Person successfully created.')
@@ -111,29 +110,33 @@ def person_edit(guid=None):
         if not person:
             abort(404)
         spouse = person.spouse
-        if request.method == 'POST':
-            form = PersonForm(request.form, obj=person, prefix='person')
-            spouse_form = PersonForm(request.form, obj=spouse, prefix='spouse') if spouse else None
-            if form.save_changes.data and form.validate_on_submit():
-                if form.save(guid):
-                    flash('Person successfully updated.')
-                    return redirect(url_for('.people'))
-                flash('Error updating person.', 'error')
-            elif spouse_form and spouse_form.save_changes.data and spouse_form.validate_on_submit():
-                if spouse_form.save(str(spouse.guid)):
-                    flash('Spouse successfully updated.')
-                    return redirect(url_for('.person_edit', guid=guid))
-                flash('Error updating spouse.', 'error')
+        if spouse:
+            if request.method == 'POST':
+                form = PersonEditForm(request.form)
+                if form.save_changes.data and form.validate_on_submit():
+                    if form.save(guid):
+                        flash('Person and spouse successfully updated.')
+                        return redirect(url_for('.people'))
+                    flash('Error updating.', 'error')
+            else:
+                form = PersonEditForm.load(guid, person, spouse)
         else:
-            form = PersonForm.load(guid, prefix='person')
-            spouse_form = PersonForm.load(str(spouse.guid), prefix='spouse') if spouse else None
-        if not form:
-            abort(404)
+            if request.method == 'POST':
+                form = PersonForm(request.form)
+                form.original_guid = person.guid
+                if form.save_changes.data and form.validate_on_submit():
+                    if form.save(guid):
+                        flash('Person successfully updated.')
+                        return redirect(url_for('.people'))
+                    flash('Error updating person.', 'error')
+            else:
+                form = PersonForm.load(guid)
+            if not form:
+                abort(404)
 
     return render_template(
         'main/edit_person.html',
         form=form,
-        spouse_form=spouse_form,
         person=person,
         spouse=spouse,
     )

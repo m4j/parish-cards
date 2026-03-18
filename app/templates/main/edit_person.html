@@ -1,8 +1,18 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% macro person_form_fields(form, cancel_url) %}
+{% block styles %}
+{{ super() }}
+<style>
+.datepicker {
+    z-index: 1051 !important;
+}
+</style>
+{% endblock %}
+
+{% macro person_form_fields(form, cancel_url, include_actions=1) %}
     <div class="panel panel-default">
+        {{ form.guid }}
         <div class="panel-heading">
             <h3 class="panel-title">Name (English)</h3>
         </div>
@@ -135,6 +145,7 @@
         </div>
     </div>
 
+    {% if include_actions %}
     <div class="row">
         <div class="col-md-2 col-xs-12 col-md-offset-8" style="margin-bottom: 15px;">
             <a href="{{ cancel_url }}" class="btn btn-default">Cancel</a>
@@ -143,11 +154,12 @@
             {{ form.save_changes(class="btn btn-primary") }}
         </div>
     </div>
+    {% endif %}
 {% endmacro %}
 
 {% block page_content %}
 <div class="page-header">
-    <h2>{{ "Edit" if person else "New" }} Person</h2>
+    <h2>{{ "Edit" if person else "New" }} {{ "Family" if spouse else "Person" }}</h2>
 </div>
 
 {% for message in get_flashed_messages() %}
@@ -157,48 +169,64 @@
 </div>
 {% endfor %}
 
-{% if spouse_form %}
-    {# Married: two forms in nav-tabs (Bootstrap 3.3.7) #}
-    <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active">
-            <a href="#person-tab" aria-controls="person-tab" role="tab" data-toggle="tab">{{ person.full_name() if person else 'Person' }}</a>
-        </li>
-        <li role="presentation">
-            <a href="#spouse-tab" aria-controls="spouse-tab" role="tab" data-toggle="tab">{{ spouse.full_name() if spouse else 'Spouse' }}</a>
-        </li>
-    </ul>
-    <div class="tab-content">
-        <div role="tabpanel" class="tab-pane active" id="person-tab">
-            <form method="POST" class="form" role="form">
-                {{ form.csrf_token }}
-                {{ wtf.form_errors(form, hiddens="only") }}
-                {% for field, errors in form.errors.items() %}
-                    {% if field != 'csrf_token' and errors %}
-                    <div class="alert alert-danger">
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        <strong>{{ form[field].label.text }}:</strong> {{ ', '.join(errors) }}
-                    </div>
-                    {% endif %}
-                {% endfor %}
-                {{ person_form_fields(form, url_for('main.people')) }}
-            </form>
+{% if spouse %}
+    {# Married: one form with person + spouse in nav-tabs, single submit (Bootstrap 3.3.7) #}
+    <form method="POST" class="form" role="form">
+        {{ form.csrf_token }}
+        {{ wtf.form_errors(form, hiddens="only") }}
+        {% for field, errors in form.errors.items() %}
+            {% if field != 'csrf_token' and errors %}
+            <div class="alert alert-danger">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {% if field == 'person' or field == 'spouse' %}
+                    <strong>{{ field|capitalize }}:</strong> {{ ', '.join(errors) }}
+                {% else %}
+                    <strong>{{ form[field].label.text }}:</strong> {{ ', '.join(errors) }}
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+        {% for subform_name in ['person', 'spouse'] %}
+            {% set subform = form[subform_name] %}
+            {% for field, errors in subform.errors.items() %}
+                {% if errors %}
+                {% if subform_name == 'person' %}
+                    {% set husband_or_wife = 'Husband' if person.gender == 'M' else 'Wife' %}
+                {% else %}
+                    {% set husband_or_wife = 'Wife' if spouse.gender == 'F' else 'Husband' %}
+                {% endif %}
+                <div class="alert alert-danger">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>{{ husband_or_wife }} – {{ subform[field].label.text }}:</strong> {{ ', '.join(errors) }}
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active">
+                <a href="#person-tab" aria-controls="person-tab" role="tab" data-toggle="tab">{{ person.full_name() }} ({{ 'Husband' if person.gender == 'M' else 'Wife' }})</a>
+            </li>
+            <li role="presentation">
+                <a href="#spouse-tab" aria-controls="spouse-tab" role="tab" data-toggle="tab">{{ spouse.full_name() }} ({{ 'Wife' if spouse.gender == 'F' else 'Husband' }})</a>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div role="tabpanel" class="tab-pane active" id="person-tab">
+                {{ person_form_fields(form.person, url_for('main.people'), 0) }}
+            </div>
+            <div role="tabpanel" class="tab-pane" id="spouse-tab">
+                {{ person_form_fields(form.spouse, url_for('main.people'), 0) }}
+            </div>
         </div>
-        <div role="tabpanel" class="tab-pane" id="spouse-tab">
-            <form method="POST" class="form" role="form">
-                {{ spouse_form.csrf_token }}
-                {{ wtf.form_errors(spouse_form, hiddens="only") }}
-                {% for field, errors in spouse_form.errors.items() %}
-                    {% if field != 'csrf_token' and errors %}
-                    <div class="alert alert-danger">
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        <strong>{{ spouse_form[field].label.text }}:</strong> {{ ', '.join(errors) }}
-                    </div>
-                    {% endif %}
-                {% endfor %}
-                {{ person_form_fields(spouse_form, url_for('main.people')) }}
-            </form>
+        <div class="row">
+            <div class="col-md-2 col-xs-12 col-md-offset-8" style="margin-bottom: 15px;">
+                <a href="{{ url_for('main.people') }}" class="btn btn-default">Cancel</a>
+            </div>
+            <div class="col-md-2 col-xs-12" style="margin-bottom: 15px;">
+                {{ form.save_changes(class="btn btn-primary") }}
+            </div>
         </div>
-    </div>
+    </form>
 {% else %}
     {# Single person (new or not married) #}
     <form method="POST" class="form" role="form">
@@ -213,4 +241,22 @@
         {{ person_form_fields(form, url_for('main.people')) }}
     </form>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+    initializeDatePickers();
+});
+
+function initializeDatePickers() {
+    $('input[name$="-date_of_birth"], input[name$="-date_of_death"]').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        orientation: 'bottom auto'
+    });
+}
+</script>
 {% endblock %}
