@@ -270,6 +270,16 @@ class PersonEditForm(FlaskForm):
             subform.note.data = p.note or ''
         return form
 
+    def validate(self, extra_validators=None):
+        if not super(PersonEditForm, self).validate(extra_validators=extra_validators):
+            return False
+        p_g = self.person.gender.data
+        s_g = self.spouse.gender.data
+        if p_g and s_g and p_g == s_g:
+            self.spouse.gender.errors.append('Person and spouse must have different gender.')
+            return False
+        return True
+
     def save(self, guid):
         person = db.session.scalars(
             db.select(Person).filter_by(guid=uuid.UUID(guid))
