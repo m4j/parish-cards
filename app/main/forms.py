@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import Form, StringField, SubmitField, IntegerField, SelectField, TextAreaField, FormField, HiddenField
+from wtforms import Form
+from wtforms import StringField, SubmitField, IntegerField, SelectField, TextAreaField, FormField, HiddenField
 from wtforms.validators import DataRequired, Optional, ValidationError, NumberRange, InputRequired
-from ..models import Prosphora, Service, Person, find_person, find_prosphora
+from ..models import Prosphora, Service, Person, MembershipTermination, find_person, find_prosphora
 from ..stjb import get_first_name, get_last_name
 from .. import db
 import uuid
@@ -141,6 +142,23 @@ class PersonSubForm(Form):
     date_of_death = StringField('Date of Death', validators=[Optional()])
     note = TextAreaField('Note', validators=[Optional()])
 
+    # Membership (Card) fields (edited only when Person has an associated Card)
+    membership_from = StringField('From', validators=[Optional()])
+    membership_through = StringField('End of Membership', validators=[Optional()])
+    membership_termination_reason = SelectField('Reason', validators=[Optional()], choices=[])
+    dues_amount = IntegerField('Monthly dues', validators=[Optional()])
+    dues_paid_through = StringField('Dues Paid Through', validators=[Optional()])
+    card_notes = TextAreaField('Notes', validators=[Optional()])
+
+    def __init__(self, *args, **kwargs):
+        super(PersonSubForm, self).__init__(*args, **kwargs)
+        terminations = db.session.scalars(
+            db.select(MembershipTermination).order_by(MembershipTermination.reason)
+        ).all()
+        self.membership_termination_reason.choices = [('', '—')] + [
+            (t.reason, t.reason) for t in terminations
+        ]
+
     def validate_last(self, field):
         if not self.first.data:
             return
@@ -150,6 +168,37 @@ class PersonSubForm(Form):
         if self.guid.data and existing.guid == uuid.UUID(self.guid.data):
             return
         raise ValidationError('A person with this last name and first name already exists.')
+
+    @property
+    def _person(self):
+        """Load Person for this subform when guid is present (GET or POST). Used for Card-only rules."""
+        if not self.guid.data:
+            return None
+        return db.session.scalars(db.select(Person).filter_by(guid=uuid.UUID(self.guid.data))).first()
+
+    def validate(self, extra_validators=None):
+        if not super(PersonSubForm, self).validate(extra_validators=extra_validators):
+            return False
+        if self._person and self._person.card:
+            return self.validate_membership()
+        return True
+
+    def validate_membership(self):
+        if not (self.membership_from.data or '').strip():
+            self.membership_from.errors.append('Membership start date is required for members.')
+            return False
+        if not (self.dues_amount.data or 0) > 0:
+            self.dues_amount.errors.append('Monthly dues is required for members.')
+            return False
+        membership_through = (self.membership_through.data or '').strip()
+        termination_reason = (self.membership_termination_reason.data or '').strip()
+        if membership_through and not termination_reason:
+            self.membership_termination_reason.errors.append('Reason is required when membership end date is set.')
+            return False
+        if not membership_through and termination_reason:
+            self.membership_through.errors.append(f'Membership end date is required when reason is "{termination_reason}".')
+            return False
+        return True
 
     def apply_to_person(self, person):
         """Write form data to Person (always updates last/first; DB handles FK cascade)."""
@@ -177,6 +226,58 @@ class PersonSubForm(Form):
         person.date_of_death = self.date_of_death.data or None
         person.note = self.note.data or None
 
+        # Only update membership if a Card exists for this person.
+        if person.card:
+            person.card.membership_from = self.membership_from.data or None
+            person.card.membership_through = self.membership_through.data or None
+            person.card.membership_termination_reason = self.membership_termination_reason.data or None
+            person.card.dues_amount = self.dues_amount.data if self.dues_amount.data is not None else None
+            person.card.dues_paid_through = self.dues_paid_through.data or None
+            person.card.notes = self.card_notes.data or None
+
+    def populate_from_person(self, person, guid_str):
+        """Fill subform fields from a Person (and Card when present). Used by PersonForm.load and PersonEditForm.load."""
+        self.guid.data = guid_str
+        self.last.data = person.last or ''
+        self.first.data = person.first or ''
+        self.other_name.data = person.other_name or ''
+        self.middle_name.data = person.middle_name or ''
+        self.maiden_name.data = person.maiden_name or ''
+        self.ru_last_name.data = person.ru_last_name or ''
+        self.ru_maiden_name.data = person.ru_maiden_name or ''
+        self.ru_first_name.data = person.ru_first_name or ''
+        self.ru_other_name.data = person.ru_other_name or ''
+        self.ru_patronymic_name.data = person.ru_patronymic_name or ''
+        self.email.data = person.email or ''
+        self.home_phone.data = person.home_phone or ''
+        self.mobile_phone.data = person.mobile_phone or ''
+        self.work_phone.data = person.work_phone or ''
+        self.gender.data = person.gender or ''
+        self.address.data = person.address or ''
+        self.city.data = person.city or ''
+        self.state_region.data = person.state_region or ''
+        self.postal_code.data = person.postal_code or ''
+        self.plus_4.data = person.plus_4 or ''
+        self.date_of_birth.data = person.date_of_birth or ''
+        self.date_of_death.data = person.date_of_death or ''
+        self.note.data = person.note or ''
+
+        card = person.card
+        if card:
+            self.membership_from.data = card.membership_from or ''
+            self.membership_through.data = card.membership_through or ''
+            self.membership_termination_reason.data = card.membership_termination_reason or ''
+            self.dues_amount.data = card.dues_amount if card.dues_amount is not None else None
+            self.dues_paid_through.data = card.dues_paid_through or ''
+            self.card_notes.data = card.notes or ''
+        else:
+            self.membership_from.data = ''
+            self.membership_through.data = ''
+            self.membership_termination_reason.data = ''
+            self.dues_amount.data = None
+            self.dues_paid_through.data = ''
+            self.card_notes.data = ''
+
 
 class PersonForm(PersonSubForm):
     """Single-person form (new or edit without spouse)."""
@@ -193,31 +294,9 @@ class PersonForm(PersonSubForm):
         if prefix:
             kwargs['prefix'] = prefix
         form = cls(**kwargs)
-        form.guid.data = guid
-        form.last.data = person.last or ''
-        form.first.data = person.first or ''
-        form.other_name.data = person.other_name or ''
-        form.middle_name.data = person.middle_name or ''
-        form.maiden_name.data = person.maiden_name or ''
-        form.ru_last_name.data = person.ru_last_name or ''
-        form.ru_maiden_name.data = person.ru_maiden_name or ''
-        form.ru_first_name.data = person.ru_first_name or ''
-        form.ru_other_name.data = person.ru_other_name or ''
-        form.ru_patronymic_name.data = person.ru_patronymic_name or ''
-        form.email.data = person.email or ''
-        form.home_phone.data = person.home_phone or ''
-        form.mobile_phone.data = person.mobile_phone or ''
-        form.work_phone.data = person.work_phone or ''
-        form.gender.data = person.gender or ''
-        form.address.data = person.address or ''
-        form.city.data = person.city or ''
-        form.state_region.data = person.state_region or ''
-        form.postal_code.data = person.postal_code or ''
-        form.plus_4.data = person.plus_4 or ''
-        form.date_of_birth.data = person.date_of_birth or ''
-        form.date_of_death.data = person.date_of_death or ''
-        form.note.data = person.note or ''
+        cls.populate_from_person(form, person, guid)
         return form
+
 
     def save(self, guid=None):
         if guid:
@@ -244,30 +323,7 @@ class PersonEditForm(FlaskForm):
     def load(cls, guid, person, spouse):
         form = cls()
         for subform, p in [(form.person, person), (form.spouse, spouse)]:
-            subform.guid.data = p.guid.hex
-            subform.last.data = p.last or ''
-            subform.first.data = p.first or ''
-            subform.other_name.data = p.other_name or ''
-            subform.middle_name.data = p.middle_name or ''
-            subform.maiden_name.data = p.maiden_name or ''
-            subform.ru_last_name.data = p.ru_last_name or ''
-            subform.ru_maiden_name.data = p.ru_maiden_name or ''
-            subform.ru_first_name.data = p.ru_first_name or ''
-            subform.ru_other_name.data = p.ru_other_name or ''
-            subform.ru_patronymic_name.data = p.ru_patronymic_name or ''
-            subform.email.data = p.email or ''
-            subform.home_phone.data = p.home_phone or ''
-            subform.mobile_phone.data = p.mobile_phone or ''
-            subform.work_phone.data = p.work_phone or ''
-            subform.gender.data = p.gender or ''
-            subform.address.data = p.address or ''
-            subform.city.data = p.city or ''
-            subform.state_region.data = p.state_region or ''
-            subform.postal_code.data = p.postal_code or ''
-            subform.plus_4.data = p.plus_4 or ''
-            subform.date_of_birth.data = p.date_of_birth or ''
-            subform.date_of_death.data = p.date_of_death or ''
-            subform.note.data = p.note or ''
+            subform.populate_from_person(p, p.guid.hex)
         return form
 
     def validate(self, extra_validators=None):

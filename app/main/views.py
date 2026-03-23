@@ -98,7 +98,7 @@ def person_edit(guid=None):
         person = None
         spouse = None
         form = PersonForm(request.form) if request.method == 'POST' else PersonForm()
-        if request.method == 'POST' and form.validate_on_submit() and form.save_changes.data:
+        if request.method == 'POST' and form.validate() and form.save_changes.data:
             if form.save(None):
                 flash('Person successfully created.')
                 return redirect(url_for('.people'))
@@ -113,7 +113,7 @@ def person_edit(guid=None):
         if spouse:
             if request.method == 'POST':
                 form = PersonEditForm(request.form)
-                if form.save_changes.data and form.validate_on_submit():
+                if form.save_changes.data and form.validate():
                     if form.save(guid):
                         flash('Person and spouse successfully updated.')
                         return redirect(url_for('.people'))
@@ -124,7 +124,7 @@ def person_edit(guid=None):
             if request.method == 'POST':
                 form = PersonForm(request.form)
                 form.original_guid = person.guid
-                if form.save_changes.data and form.validate_on_submit():
+                if form.save_changes.data and form.validate():
                     if form.save(guid):
                         flash('Person successfully updated.')
                         return redirect(url_for('.people'))

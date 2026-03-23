@@ -10,7 +10,7 @@
 </style>
 {% endblock %}
 
-{% macro person_form_fields(form, cancel_url, include_actions=1) %}
+{% macro person_form_fields(form, cancel_url, include_actions=1, card=None) %}
     <div class="panel panel-default">
         {{ form.guid }}
         <div class="panel-heading">
@@ -145,6 +145,42 @@
         </div>
     </div>
 
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Membership</h3>
+        </div>
+        <div class="panel-body">
+            {% if card %}
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ wtf.form_field(form.membership_from) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ wtf.form_field(form.membership_through) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ wtf.form_field(form.membership_termination_reason) }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ wtf.form_field(form.dues_amount) }}
+                    </div>
+                    <div class="col-md-8">
+                        {{ wtf.form_field(form.dues_paid_through) }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        {{ wtf.form_field(form.card_notes) }}
+                    </div>
+                </div>
+            {% else %}
+                Not a dues paying member
+            {% endif %}
+        </div>
+    </div>
+
     {% if include_actions %}
     <div class="row">
         <div class="col-md-2 col-xs-12 col-md-offset-8" style="margin-bottom: 15px;">
@@ -174,18 +210,6 @@
     <form method="POST" class="form" role="form">
         {{ form.csrf_token }}
         {{ wtf.form_errors(form, hiddens="only") }}
-        {% for field, errors in form.errors.items() %}
-            {% if field != 'csrf_token' and errors %}
-            <div class="alert alert-danger">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                {% if field == 'person' or field == 'spouse' %}
-                    <strong>{{ field|capitalize }}:</strong> {{ ', '.join(errors) }}
-                {% else %}
-                    <strong>{{ form[field].label.text }}:</strong> {{ ', '.join(errors) }}
-                {% endif %}
-            </div>
-            {% endif %}
-        {% endfor %}
         {% for subform_name in ['person', 'spouse'] %}
             {% set subform = form[subform_name] %}
             {% for field, errors in subform.errors.items() %}
@@ -212,10 +236,10 @@
         </ul>
         <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="person-tab">
-                {{ person_form_fields(form.person, url_for('main.people'), 0) }}
+                {{ person_form_fields(form.person, url_for('main.people'), 0, person.card) }}
             </div>
             <div role="tabpanel" class="tab-pane" id="spouse-tab">
-                {{ person_form_fields(form.spouse, url_for('main.people'), 0) }}
+                {{ person_form_fields(form.spouse, url_for('main.people'), 0, spouse.card) }}
             </div>
         </div>
         <div class="row">
@@ -238,7 +262,7 @@
             <strong>{{ form[field].label.text }}:</strong> {{ ', '.join(errors) }}
         </div>
         {% endfor %}
-        {{ person_form_fields(form, url_for('main.people')) }}
+        {{ person_form_fields(form, url_for('main.people'), 1, person.card if person else None) }}
     </form>
 {% endif %}
 {% endblock %}
@@ -251,8 +275,16 @@ $(document).ready(function() {
 });
 
 function initializeDatePickers() {
-    $('input[name$="-date_of_birth"], input[name$="-date_of_death"]').datepicker({
+    $('input[name$="date_of_birth"], input[name$="date_of_death"]').datepicker({
         format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        orientation: 'bottom auto'
+    });
+    $('input[name$="membership_from"], input[name$="membership_through"], input[name$="dues_paid_through"]').datepicker({
+        format: 'yyyy-mm',
+        viewMode: 'months',
+        minViewMode: 'months',
         autoclose: true,
         todayHighlight: true,
         orientation: 'bottom auto'

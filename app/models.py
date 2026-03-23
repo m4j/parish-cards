@@ -10,7 +10,7 @@ from markupsafe import Markup
 logger = logging.getLogger(__name__)
 
 class IdentityMixin:
-    guid = db.Column(db.Uuid(native_uuid=False), unique=True, default=uuid.uuid4)
+    guid = db.Column(db.Uuid(native_uuid=False), unique=True, nullable=False, default=uuid.uuid4)
 
 class CaseInsensitiveComparator(Comparator):
     def __eq__(self, other):
@@ -102,7 +102,8 @@ class Card(IdentityMixin, db.Model):
     first_name          = db.Column(db.String)
     membership_from       = db.Column(db.String)
     membership_through    = db.Column(db.String)
-    membership_termination_reason = db.Column(db.String)
+    membership_termination_reason = db.Column(db.String, db.ForeignKey('membership_termination.reason'))
+    membership_termination = db.relationship('MembershipTermination', uselist=False, viewonly=True)
     dues_amount           = db.Column(db.Integer)
     dues_paid_through     = db.Column(db.String)
     notes                 = db.Column(db.String)
@@ -153,6 +154,15 @@ class Card(IdentityMixin, db.Model):
 
     def __repr__(self):
         return f'{self.full_name()}{" †" if self.membership_termination_reason == "Deceased" else ""}'
+
+class MembershipTermination(IdentityMixin, db.Model):
+    __tablename__ = 'membership_termination'
+
+    reason = db.Column(db.String, nullable=False, primary_key=True)
+    note = db.Column(db.String)
+
+    def __repr__(self):
+        return f'MembershipTermination({self.reason})'
 
 def get_postal_code(zip_code):
     return zip_code.split('-')[0].strip()
