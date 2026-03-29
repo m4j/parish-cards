@@ -7,98 +7,75 @@
 .datepicker {
     z-index: 1051 !important;
 }
+.panel-membership {
+    border: 1px solid #ddd;
+    background-color: #e6f3ff;
+}
+.panel-membership > .panel-heading {
+    background-color: #e6f3ff;
+}
 </style>
 {% endblock %}
 
 {% macro person_form_fields(form, cancel_url, include_actions=1, card=None) %}
     <div class="panel panel-default">
         {{ form.guid }}
-        <div class="panel-heading">
-            <h3 class="panel-title">Name (English)</h3>
-        </div>
         <div class="panel-body">
             <div class="row">
                 <div class="col-md-6">
-                    {{ wtf.form_field(form.last) }}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Name (English)</h3>
+                        </div>
+                        <div class="panel-body">
+                            {{ wtf.form_field(form.last) }}
+                            {{ wtf.form_field(form.first) }}
+                            {{ wtf.form_field(form.middle_name) }}
+                            {{ wtf.form_field(form.other_name) }}
+                            {{ wtf.form_field(form.maiden_name) }}
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-6">
-                    {{ wtf.form_field(form.first) }}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Name (Russian)</h3>
+                        </div>
+                        <div class="panel-body">
+                            {{ wtf.form_field(form.ru_last_name) }}
+                            {{ wtf.form_field(form.ru_first_name) }}
+                            {{ wtf.form_field(form.ru_patronymic_name) }}
+                            {{ wtf.form_field(form.ru_other_name) }}
+                            {{ wtf.form_field(form.ru_maiden_name) }}
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-6">
-                    {{ wtf.form_field(form.other_name) }}
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.gender) }}
                 </div>
-                <div class="col-md-6">
-                    {{ wtf.form_field(form.middle_name) }}
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.date_of_birth) }}
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    {{ wtf.form_field(form.maiden_name) }}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">Name (Russian)</h3>
-        </div>
-        <div class="panel-body">
-            <div class="row">
-                <div class="col-md-6">
-                    {{ wtf.form_field(form.ru_last_name) }}
-                </div>
-                <div class="col-md-6">
-                    {{ wtf.form_field(form.ru_first_name) }}
+                <div class="col-md-4">
+                    {{ wtf.form_field(form.date_of_death) }}
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-6">
-                    {{ wtf.form_field(form.ru_patronymic_name) }}
-                </div>
-                <div class="col-md-6">
-                    {{ wtf.form_field(form.ru_other_name) }}
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    {{ wtf.form_field(form.ru_maiden_name) }}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">Contact</h3>
-        </div>
-        <div class="panel-body">
-            <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-3">
                     {{ wtf.form_field(form.email) }}
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ wtf.form_field(form.home_phone) }}
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ wtf.form_field(form.mobile_phone) }}
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     {{ wtf.form_field(form.work_phone) }}
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">Address</h3>
-        </div>
-        <div class="panel-body">
             <div class="row">
                 <div class="col-md-12">
                     {{ wtf.form_field(form.address) }}
@@ -118,68 +95,53 @@
                     {{ wtf.form_field(form.plus_4) }}
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">Other</h3>
-        </div>
-        <div class="panel-body">
-            <div class="row">
-                <div class="col-md-4">
-                    {{ wtf.form_field(form.gender) }}
-                </div>
-                <div class="col-md-4">
-                    {{ wtf.form_field(form.date_of_birth) }}
-                </div>
-                <div class="col-md-4">
-                    {{ wtf.form_field(form.date_of_death) }}
-                </div>
-            </div>
             <div class="row">
                 <div class="col-md-12">
                     {{ wtf.form_field(form.note) }}
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default panel-membership">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Membership</h3>
+                        </div>
+                        <div class="panel-body">
+                            {% if card %}
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        {{ wtf.form_field(form.membership_from) }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ wtf.form_field(form.membership_through) }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ wtf.form_field(form.membership_termination_reason) }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        {{ wtf.form_field(form.dues_amount) }}
+                                    </div>
+                                    <div class="col-md-8">
+                                        {{ wtf.form_field(form.dues_paid_through) }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {{ wtf.form_field(form.card_notes) }}
+                                    </div>
+                                </div>
+                            {% else %}
+                                Not a dues paying member
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">Membership</h3>
-        </div>
-        <div class="panel-body">
-            {% if card %}
-                <div class="row">
-                    <div class="col-md-4">
-                        {{ wtf.form_field(form.membership_from) }}
-                    </div>
-                    <div class="col-md-4">
-                        {{ wtf.form_field(form.membership_through) }}
-                    </div>
-                    <div class="col-md-4">
-                        {{ wtf.form_field(form.membership_termination_reason) }}
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4">
-                        {{ wtf.form_field(form.dues_amount) }}
-                    </div>
-                    <div class="col-md-8">
-                        {{ wtf.form_field(form.dues_paid_through) }}
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        {{ wtf.form_field(form.card_notes) }}
-                    </div>
-                </div>
-            {% else %}
-                Not a dues paying member
-            {% endif %}
-        </div>
-    </div>
 
     {% if include_actions %}
     <div class="row">

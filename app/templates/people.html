@@ -18,19 +18,3 @@
 
     {{ super() }}
 {% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // Handle print commemoration list button clicks
-    $('.print-commemoration-list').on('click', function(e) {
-        e.preventDefault();
-        
-        // Make AJAX request to get PDF data
-        loadPdfFromUrl(`/report/prosphora/print_ajax`);
-    });
-});
-</script>
-{% endblock %} 
