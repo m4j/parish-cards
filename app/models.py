@@ -947,8 +947,8 @@ def _range_containing_date(model, date, first_name, last_name):
     return db.session.execute(
         db.select(model).filter(
             db.and_(
-                model.last_name == last_name,
-                model.first_name == first_name,
+                model.last_name == func.coalesce(last_name, ''),
+                model.first_name == func.coalesce(first_name, ''),
                 model.paid_from <= date,
                 date <= model.paid_through,
             ))).scalar()
