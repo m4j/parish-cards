@@ -64,14 +64,19 @@ def member(guid):
         spouse = m.Member(row=spouse_card)
     else:
         spouse = None
-    return render_template('member.html', member=entity, spouse=spouse)
+    return render_template('member.html',
+        member=entity,
+        spouse=spouse,
+        redirect_url=url_for('.member', guid=guid))
 
 @main.route('/book/<guid>')
 def book(guid):
     entity = p.Member.find_by_guid(guid)
     if not entity:
         abort(404)
-    return render_template('member.html', member=entity)
+    return render_template('member.html',
+        member=entity,
+        redirect_url=url_for('.book', guid=guid))
 
 @main.route('/book/edit', methods=['GET', 'POST'])
 @main.route('/book/edit/<guid>', methods=['GET', 'POST'])

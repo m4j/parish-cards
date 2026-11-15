@@ -2,8 +2,9 @@ import decimal
 import html as html_module
 from abc import ABC, abstractmethod
 from functools import reduce
+import flask
 from . import db
-from .models import PaymentMethod, PaymentSubMiscCategory
+from .models import PaymentMethod, PaymentSubMiscCategory, Card, Prosphora, Payment
 import uuid
 from collections import namedtuple
 
@@ -79,6 +80,9 @@ class AbstractMember(ABC):
 
     def historical_payments(self):
         return []
+
+    def payments_ordered_by_date(self):
+        return sorted(self.payments, key=lambda p: p.date, reverse=True)
 
     @abstractmethod
     def format_card(self):

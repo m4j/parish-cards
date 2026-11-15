@@ -86,7 +86,6 @@ class Member(stjb.AbstractMember):
             f'{self.format_html_details_header()}'
             f'{self.format_html_payments_table()}'
             f'{self.format_html_details_footer()}'
-            f'{self.format_html_legend()}'
             '</div>'
         )
 

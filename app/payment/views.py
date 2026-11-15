@@ -1,4 +1,6 @@
 from flask import render_template, abort, session, redirect, url_for, flash, Markup, request, jsonify, current_app
+from urllib.parse import urlparse
+from sqlalchemy.exc import IntegrityError
 from .. import db
 from . import payment
 from ..main.forms import SearchForm
@@ -8,21 +10,38 @@ import uuid
 from collections import namedtuple
 import time  # Add time module import
 
-TemplateValues = namedtuple('TemplateValues', 'header header_sub member_view return_route')
+TemplateValues = namedtuple('TemplateValues', 'header header_sub member_view next')
 
 _dues_template_values = TemplateValues(
         header='Membership Dues',
         header_sub='Payments ordered by paid period (latest on top)',
         member_view='main.member',
-        return_route='dues',
+        next='dues',
 )
 
 _prosphora_template_values = TemplateValues(
         header='Commemoration Books & Prosphoras',
         header_sub='Payments ordered by paid period (latest on top)',
         member_view='main.book',
-        return_route='prosphora',
+        next='prosphora',
 )
+
+def _safe_redirect_url(default_endpoint='payment.all'):
+    """Honor ?redirect= only when it is an in-app path (no external host)."""
+    fallback = url_for(default_endpoint)
+    target = request.args.get('redirect')
+    if not target:
+        return fallback
+    # Browsers treat '\' as '/'; control chars can hide a protocol-relative URL.
+    if '\\' in target or target != target.strip() or any(ord(c) < 32 for c in target):
+        return fallback
+    parsed = urlparse(target)
+    if parsed.scheme or parsed.netloc:
+        return fallback
+    # Path-only: /member/... is OK; //evil.com and ///evil.com are not.
+    if not target.startswith('/') or target.startswith('//'):
+        return fallback
+    return target
 
 def payments(find_sub_payments, parameters):
     form = SearchForm(search_label='Search by payor, date, method, identifier, amount, or comment')
@@ -121,9 +140,9 @@ def all():
 
 @payment.route('/edit', methods=['GET', 'POST'])
 @payment.route('/edit/<guid>', methods=['GET', 'POST'])
-@payment.route('/edit/<guid>/<return_route>', methods=['GET', 'POST'])
-def edit_payment(guid=None, return_route='all'):
+def edit_payment(guid=None):
     """Handle creating new payments and editing existing ones"""
+    redirect_url = _safe_redirect_url()
     form = MultiPaymentForm()
     payment = None
     
@@ -138,22 +157,26 @@ def edit_payment(guid=None, return_route='all'):
             payment.guid = uuid.uuid4()
             db.session.add(payment)
         
-        form.save_to_payment(payment)
-        db.session.commit()
-        
-        flash('Payment saved successfully')
-        return redirect(url_for(f'.{return_route}'))
+        try:
+            form.save_to_payment(payment)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash('Payment already exists, please verify')
+        else:
+            flash('Payment saved successfully')
+            return redirect(redirect_url)
         
     if guid and not form.submit_btn.data:
         form.load_from_payment(payment)
     return render_template('payment/edit_payment.html',
                          form=form,
                          payment=payment,
-                         return_route=return_route)
+                         redirect_url=redirect_url)
 
 @payment.route('/repeat/<guid>', methods=['GET', 'POST'])
-@payment.route('/repeat/<guid>/<return_route>', methods=['GET', 'POST'])
-def repeat_payment(guid, return_route='all'):
+def repeat_payment(guid):
+    redirect_url = _safe_redirect_url()
     """Clone existing payment and edit the clone"""
     payment = db.session.scalar(db.select(Payment).filter(Payment.guid == uuid.UUID(guid)))
     if not payment:
@@ -162,11 +185,16 @@ def repeat_payment(guid, return_route='all'):
     if form.validate_on_submit():
         new_payment = Payment()
         new_payment.guid = uuid.uuid4()
-        form.save_to_payment(new_payment)
-        db.session.add(new_payment)
-        db.session.commit()
-        flash('Payment repeated successfully')
-        return redirect(url_for(f'.{return_route}'))
+        try:
+            form.save_to_payment(new_payment)
+            db.session.add(new_payment)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash('Payment already exists, please verify')
+        else:
+            flash('Payment repeated successfully')
+            return redirect(redirect_url)
     if not form.submit_btn.data:
         form.load_from_payment(payment)
         form.payment.identifier.data = None
@@ -175,7 +203,7 @@ def repeat_payment(guid, return_route='all'):
     return render_template('payment/edit_payment.html',
                          form=form,
                          payment=payment,
-                         return_route=return_route)
+                         redirect_url=redirect_url)
 
 @payment.route('/search_cards')
 def search_cards():
@@ -249,8 +277,8 @@ def search_prosphora():
     return jsonify(results)
 
 @payment.route('/delete/<guid>', methods=['POST'])
-@payment.route('/delete/<guid>/<return_route>', methods=['POST'])
-def delete_payment(guid, return_route='all'):
+def delete_payment(guid):
+    redirect_url = _safe_redirect_url()
     """Delete a payment (sub-payments will be deleted by cascade)"""
     payment = db.session.scalar(db.select(Payment).filter(Payment.guid == uuid.UUID(guid)))
     if not payment:
@@ -261,4 +289,4 @@ def delete_payment(guid, return_route='all'):
     db.session.commit()
     
     flash('Payment deleted successfully')
-    return redirect(url_for(f'.{return_route}'))
+    return redirect(redirect_url)

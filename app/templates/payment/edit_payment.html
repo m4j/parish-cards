@@ -50,6 +50,13 @@
     <div class="page-header">
         <h2>{% if form.payment.guid.data %}Edit Payment{% else %}New Payment{% endif %}</h2>
     </div>
+
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
+        </div>
+    {% endfor %}
     
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel">
@@ -72,6 +79,7 @@
     
     <form method="POST" class="form" role="form" style="margin-bottom: 100px;">
         {{ form.csrf_token }}
+        {{ form.payment.guid }}
         
         <!-- Base Payment Section -->
         <div class="panel panel-default">
@@ -159,7 +167,7 @@
             </div>
             {% endif %}
             <div class="col-md-2 col-xs-12 col-md-offset-{% if form.payment.guid.data %}6{% else %}8{% endif %}" style="margin-bottom: 15px;">
-                <a href="{{ url_for('payment.' + return_route) }}" class="btn btn-default btn-block">Cancel</a>
+                <a href="{{ redirect_url }}" class="btn btn-default btn-block">Cancel</a>
             </div>
             <div class="col-md-2 col-xs-12" style="margin-bottom: 15px;">
                 {{ wtf.form_field(form.submit_btn, class="btn btn-primary btn-block") }}
@@ -268,7 +276,7 @@ $(document).ready(function() {
     // Handle delete confirmation
     $('#confirmDelete').click(function() {
         const form = document.querySelector('form');
-        form.action = "{{ url_for('payment.delete_payment', guid=form.payment.guid.data, return_route=return_route) if form.payment.guid.data else '' }}";
+        form.action = "{{ url_for('payment.delete_payment', guid=form.payment.guid.data, redirect=redirect_url) if form.payment.guid.data else '' }}";
         form.method = 'POST';
         form.submit();
     });
