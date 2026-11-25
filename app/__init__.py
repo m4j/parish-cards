@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
+from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import logging
 from logging.handlers import RotatingFileHandler
@@ -44,6 +45,12 @@ def create_app(config_name):
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', '606d2fc4-31cb-4ce1-a35b-346ec660994d')
 
+    # nginx terminates TLS and forwards the original scheme and client address.
+    if os.environ.get('BEHIND_PROXY') in ['YES', 'TRUE', '1']:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+        app.config['PREFERRED_URL_SCHEME'] = 'https'
+        app.config['SESSION_COOKIE_SECURE'] = True
+
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     db.init_app(app)
 
@@ -73,4 +80,6 @@ from sqlalchemy import event
 def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
+    # Gunicorn runs more than one worker; wait instead of failing when SQLite is busy.
+    cursor.execute("PRAGMA busy_timeout=5000")
     cursor.close()

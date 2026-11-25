@@ -1,0 +1,37 @@
+name: parish-cards
+
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      # Directory that contains StJohnDC.db. Mounting the directory keeps
+      # SQLite's journal file beside the database across container restarts.
+      - "${CARDS_DATABASE_DIR:-./data}:/data"
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('127.0.0.1', 8000), 2); s.close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  nginx:
+    build: ./nginx
+    environment:
+      SSL_PORT: ${SSL_PORT:-443}
+      SSL_CERTIFICATE: ${SSL_CERTIFICATE:-/etc/ssl/certs/ssl-cert-snakeoil.pem}
+      SSL_CERTIFICATE_KEY: ${SSL_CERTIFICATE_KEY:-/etc/ssl/private/ssl-cert-snakeoil.key}
+    volumes:
+      # Host directory for a certificate you supply. The default paths above
+      # stay on the snakeoil pair built into the image.
+      - ${SSL_CERT_DIR:-./certs}:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "${SSL_PORT:-443}:${SSL_PORT:-443}"
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped

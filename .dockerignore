@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+**/__pycache__
+**/*.pyc
+**/.DS_Store
+.env
+data
+output
+nginx
+.vscode
+*.pdf
+session.vim

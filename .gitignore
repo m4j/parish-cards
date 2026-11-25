@@ -42,3 +42,9 @@ output
 *.pyc
 venv
 .vscode
+
+.env
+data/*
+!data/.gitkeep
+certs/*
+!certs/.gitkeep
